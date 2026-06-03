@@ -1,6 +1,6 @@
 {
   "name": "live-comment-hub",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Live Comment Hub (こめはぶ) - YouTube Live のコメントとリアクションをリアルタイムに取得・配信するツール",
   "main": "electron/main.js",
   "scripts": {

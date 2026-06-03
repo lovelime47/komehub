@@ -3919,6 +3919,29 @@ if (!gotLock) {
     // 通常 ~300ms で onReady なので体感ロスは小さい。失敗時はダイアログ → 終了で完結する。
     // EADDRINUSE 自動復旧フローのため、options を変数化して retry 時に再利用できるように。
     var zombieRecoveryAttempted = false;
+    // アップグレード受け渡し (= 旧版終了 → 新版即起動) の隙間で旧コアの port 解放が
+    // 間に合わない一過性 EADDRINUSE を、 短い遅延 + 数回のバインド再試行で無音吸収する。
+    // kill 対象が居る恒久ゾンビは attemptZombieRecovery 側で処理する。
+    var transientBindRetries = 0;
+    var MAX_TRANSIENT_BIND_RETRIES = 5;
+    var TRANSIENT_BIND_RETRY_DELAY_MS = 1500;
+    // 一過性 EADDRINUSE (= no_listen / no_descendants 等、 倒す相手が居ないレース) で
+    // バインドをやり直す。 ポートは数秒で解放されるので PC 再起動は不要
+    // (= memory `feedback_user_capability_assumption`)。 上限超過で初めて致命ダイアログ。
+    function retryTransientBind(err, reason) {
+      if (transientBindRetries >= MAX_TRANSIENT_BIND_RETRIES) {
+        L.warn('Transient EADDRINUSE: retries exhausted (' + transientBindRetries + '), giving up');
+        showFatalCoreErrorDialog('EADDRINUSE', err, { recovered: false, reason: reason || 'transient_exhausted' });
+        return;
+      }
+      transientBindRetries += 1;
+      L.info('Transient EADDRINUSE (reason=' + (reason || 'unknown') + '): retry '
+        + transientBindRetries + '/' + MAX_TRANSIENT_BIND_RETRIES + ' in '
+        + TRANSIENT_BIND_RETRY_DELAY_MS + 'ms');
+      setTimeout(function () {
+        coreBridge.start(coreStartOptions);
+      }, TRANSIENT_BIND_RETRY_DELAY_MS);
+    }
     var coreStartOptions = {
       dataDir: userDataDir,
       onReady: function (port) {
@@ -4017,26 +4040,38 @@ if (!gotLock) {
         var code = err && err.code ? err.code : 'EUNKNOWN';
         var port = err && typeof err.port === 'number' ? err.port : null;
 
-        // EADDRINUSE 自動復旧:
-        //   真因 = 死んだハブ親 PID の子プロセス (= かつての VOICEVOX 等) が
-        //   socket handle を継承して LISTEN を保持している
-        //   (= memory `project_zombie_listen_root_cause`)。
-        //   ハブ自身で子孫プロセスを taskkill /T /F すれば復旧する (admin 不要)。
-        //   通常は codex 修正後で発生しないが、バグ等で再発した時の備え。
-        //   1 回だけ試行 → 失敗したら従来の PC 再起動ダイアログに落とす。
-        if (code === 'EADDRINUSE' && port != null && !zombieRecoveryAttempted) {
-          zombieRecoveryAttempted = true;
-          attemptZombieRecovery(port).then(function (result) {
-            if (result && result.recovered) {
-              L.info('Zombie recovery succeeded, retrying core init');
-              coreBridge.start(coreStartOptions);
-            } else {
-              showFatalCoreErrorDialog(code, err, result);
-            }
-          }).catch(function (e) {
-            L.error('Zombie recovery threw:', e && e.message ? e.message : e);
-            showFatalCoreErrorDialog(code, err, null);
-          });
+        // EADDRINUSE 復旧:
+        //   (1) 恒久ゾンビ = 死んだハブ親 PID の子プロセス (= かつての VOICEVOX 等) が
+        //       socket handle を継承して LISTEN を保持しているケース
+        //       (= memory `project_zombie_listen_root_cause`)。 初回だけ probe し、
+        //       倒せる相手が居れば taskkill /T /F で解放 (admin 不要) → 再起動。
+        //   (2) 一過性レース = アップグレード受け渡し等で旧コアの port 解放が間に合わず、
+        //       倒す相手も居ない (no_listen / no_descendants) ケース。 ポートは数秒で
+        //       解放されるので、 PC 再起動ダイアログを出す前にバインドを数回リトライする。
+        if (code === 'EADDRINUSE' && port != null) {
+          if (!zombieRecoveryAttempted) {
+            zombieRecoveryAttempted = true;
+            attemptZombieRecovery(port).then(function (result) {
+              if (result && result.recovered) {
+                L.info('Zombie recovery succeeded, retrying core init');
+                coreBridge.start(coreStartOptions);
+                return;
+              }
+              // 別アプリが本当に 11280 を使用中 → リトライ無意味、 即ダイアログ
+              if (result && result.reason === 'owner_alive') {
+                showFatalCoreErrorDialog(code, err, result);
+                return;
+              }
+              // 倒す相手が居ない一過性レース → バインド再試行
+              retryTransientBind(err, result && result.reason);
+            }).catch(function (e) {
+              L.error('Zombie recovery threw:', e && e.message ? e.message : e);
+              retryTransientBind(err, 'probe_exception');
+            });
+            return;
+          }
+          // リトライ後もまだ握られている → さらにリトライ (上限到達で致命ダイアログ)
+          retryTransientBind(err, 'still_in_use');
           return;
         }
 

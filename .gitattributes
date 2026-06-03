@@ -1,3 +1,9 @@
 * text=auto eol=lf
 *.bat text eol=crlf
 *.cmd text eol=crlf
+
+# linguist: 第三者 vendored 資産を言語統計から除外する
+# (実態は Rust コア + JS の UI/テンプレートだが、minified ライブラリ等で JS が嵩んで見えるため)
+*.min.js linguist-vendored
+effects-overlay/onecomme/__origin/** linguist-vendored
+electron/renderer/vendor/** linguist-vendored

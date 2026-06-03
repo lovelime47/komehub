@@ -1,0 +1,66 @@
+{
+  "id": "com.comment-hub.template.sample.ticker-basic",
+  "name": "ticker-basic-sample",
+  "displayName": "Ticker Starter",
+  "version": "1.0.0",
+  "obsHint": "OBS幅 1280px 前後 / 高さ 160px 前後",
+  "fonts": ["Noto Sans JP"],
+  "uiSchema": [
+    {
+      "key": "fontSize",
+      "type": "slider",
+      "label": "文字サイズ",
+      "min": 18,
+      "max": 56,
+      "step": 1,
+      "default": 28,
+      "suffix": "px"
+    },
+    {
+      "key": "travelSeconds",
+      "type": "slider",
+      "label": "流れる時間",
+      "min": 4,
+      "max": 20,
+      "step": 1,
+      "default": 8,
+      "suffix": "s"
+    },
+    {
+      "key": "positionY",
+      "type": "slider",
+      "label": "表示位置・縦",
+      "min": -100,
+      "max": 100,
+      "step": 1,
+      "default": 0,
+      "suffix": "px"
+    },
+    {
+      "key": "nameColor",
+      "type": "color",
+      "label": "名前色",
+      "default": "#fde68a"
+    },
+    {
+      "key": "textColor",
+      "type": "color",
+      "label": "本文色",
+      "default": "#ffffff"
+    },
+    {
+      "key": "showBadge",
+      "type": "toggle",
+      "label": "メンバーバッジ表示",
+      "default": true,
+      "onLabel": "表示",
+      "offLabel": "非表示"
+    },
+    {
+      "key": "customCss",
+      "type": "textarea",
+      "label": "カスタムCSS",
+      "placeholder": ".comment { letter-spacing: 0.08em; }"
+    }
+  ]
+}

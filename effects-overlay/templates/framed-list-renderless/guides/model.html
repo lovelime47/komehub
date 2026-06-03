@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>元データを加工する - framed-list-renderless</title>
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow"><a href="../structure.html">structure</a> / model</p>
+    <h1>元データを加工する</h1>
+    <p class="lead">
+      raw comment を表示用の形に変える場所は <code>script.js</code> の
+      <code>beforeCommitComment()</code> です。ここでは DOM を触らず、HTML から参照する model の値だけを作ります。
+    </p>
+  </header>
+
+  <section>
+    <h2>責務</h2>
+    <div class="grid">
+      <div class="box ok">
+        <h3>ここでやる</h3>
+        <ul>
+          <li>表示ラベルを作る</li>
+          <li>本文 HTML を作る</li>
+          <li>テーマ key を選ぶ</li>
+          <li>長文、スパチャ、メンバーなどの派生情報を作る</li>
+        </ul>
+      </div>
+      <div class="box note">
+        <h3>ここではやらない</h3>
+        <ul>
+          <li>DOM を query して書き換える</li>
+          <li>timer を作る</li>
+          <li>一時 class を付ける</li>
+          <li>CSS の値を直接変更する</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>例: スパチャ文言を変える</h2>
+    <p>現在は <code>SUPER CHAT 金額</code> という prefix を作っています。</p>
+    <pre><code>if (rawComment.amountDisplay) {
+  prefix = 'THANKS ' + rawComment.amountDisplay;
+}</code></pre>
+    <p>
+      HTML 側では <code>data-kh="display.prefix"</code> の要素がこの値を表示します。
+    </p>
+  </section>
+
+  <section>
+    <h2>例: 名前表示を加工する</h2>
+    <div class="steps">
+      <div class="step">
+        <h3>JS で派生値を作る</h3>
+        <pre><code>var nameLabel = rawComment.isOwner
+  ? 'HOST ' + rawComment.name
+  : rawComment.name;
+
+return {
+  display: {
+    nameLabel: nameLabel,
+    prefix: prefix,
+    html: buildTypingHtml(rawComment, prevModel)
+  }
+};</code></pre>
+      </div>
+      <div class="step">
+        <h3>HTML で読む path を変える</h3>
+        <pre><code>&lt;span class="name" data-kh="display.nameLabel"&gt;&lt;/span&gt;</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>例: 長文だけ印を付ける</h2>
+    <p>
+      renderless bind では class 付与まで自動化しない場合があります。
+      まず model に派生値を作り、HTML で表示するのが分かりやすいです。
+    </p>
+    <pre><code>var plainText = rawComment.comment || '';
+var longNotice = Array.from(plainText).length > 80 ? 'LONG' : '';
+
+return {
+  display: {
+    longNotice: longNotice,
+    prefix: prefix,
+    html: buildTypingHtml(rawComment, prevModel)
+  }
+};</code></pre>
+    <pre><code>&lt;span class="notice" data-kh="display.longNotice" data-kh-empty="hide"&gt;&lt;/span&gt;</code></pre>
+  </section>
+
+  <section>
+    <h2><code>prevModel</code> を使う理由</h2>
+    <div class="box">
+      <p>
+        同じコメント id が更新されたとき、前回の model が <code>prevModel</code> に入ります。
+        このサンプルでは、本文が変わっていない場合に前回の <code>display.html</code> を再利用し、
+        typing animation が巻き戻らないようにしています。
+      </p>
+    </div>
+  </section>
+  <aside class="dev-guide-footer">
+    <p>
+      <strong>共通の仕組みやリファレンスを読むには:</strong>
+      こめはぶ本体の「テンプレート管理 → テンプレート開発ガイドを開く」から
+      アプリ内ヘルプを開いてください。テンプレート作成ガイド・API リファレンス・
+      わんコメ移植ガイド・チュートリアル例が読めます。
+    </p>
+  </aside>
+</div>
+</body>
+</html>

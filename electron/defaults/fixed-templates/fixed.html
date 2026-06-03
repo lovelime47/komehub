@@ -1,0 +1,23 @@
+<!-- 固定表示テンプレート（組み込みテンプレートのエクスポート用） -->
+<!-- ティア別スタイルはJS側で計算されます -->
+<div style="
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: {{padding}};
+  max-width: 500px;
+  background: linear-gradient(135deg, {{bg1}}, {{bg2}});
+  border-radius: {{radius}}px;
+  overflow: hidden;
+  font-family: 'Segoe UI', 'Yu Gothic UI', sans-serif;
+">
+  {{avatarHtml}}
+  <div style="flex:1;">
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:3px;">
+      <span style="font-size:{{fontSize}}px;font-weight:bold;color:{{nameColor}};">{{userName}}</span>
+      <span style="font-size:11px;opacity:0.6;color:{{amountColor}};">{{amountText}}</span>
+    </div>
+    <div style="font-size:{{fontSize}}px;color:{{commentColor}};line-height:1.4;">{{comment}}</div>
+  </div>
+</div>

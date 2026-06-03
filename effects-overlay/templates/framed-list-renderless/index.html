@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!--
+    テンプレート固有の CSS です。
+    runtime 共通 CSS は style.css の先頭で @import しています。
+    見た目だけを変える場合は、基本的に HTML/JS ではなく style.css を触ります。
+  -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!--
+    frame-shell はテンプレート全体の外枠です。
+    フレームの幅・高さ・背景・角丸を変えたい場合は style.css の .frame-shell と
+    :root の --panel-width / --frame-height / --surface-color を調整します。
+  -->
+  <section class="frame-shell" aria-label="Live comments">
+    <!--
+    固定ヘッダーです。表示/非表示は manifest.json の showHeader、
+    タイトル文言は script.js の headerText callback、右上バッジは statusText callback で制御しています。
+    ロゴや配信タイトルを足したい場合はこの中に DOM を追加します。
+    追加した要素を設定で差し替えたい場合は、script.js の config.callbacks に
+    新しい key の処理を追加します。
+    -->
+    <header class="frame-header">
+      <div>
+        <p class="frame-kicker">LIVE COMMENTS</p>
+        <h1 class="frame-title">Comment Board</h1>
+      </div>
+      <span class="frame-status">ON AIR</span>
+    </header>
+
+    <!--
+      #comments がコメント一覧の差し込み先です。
+      data-kh-start="list" なので、runtime は list starter として動きます。
+      data-kh-template は下の <template id="comment-template"> を指しています。
+      class の kh-* は common.css の opt-in プリセットです。
+
+      よく触る属性:
+      - data-kh-template: 1コメント分の template selector
+      - data-kh-style-id: config.customCss が差し込む <style> の id
+      - data-kh-options: 下の JSON 設定を読む selector
+      - data-kh-dev-preview: preview で使うサンプルコメントの種類
+    -->
+    <div
+      id="comments"
+      class="kh-superchat-cards kh-anim-slide-up"
+      data-kh-start="list"
+      data-kh-template="#comment-template"
+      data-kh-style-id="framed-list-renderless-config-style"
+      data-kh-options="#komehub-template-options"
+      data-kh-dev-preview="list-basic"></div>
+
+    <!--
+      固定フッターです。表示/非表示は showFooter、
+      文言は footerText callback で差し替えます。
+    -->
+    <footer class="frame-footer">
+      <span class="frame-footer-text">Thank you for watching</span>
+    </footer>
+  </section>
+
+  <!--
+    コメント 1 件分の HTML 骨格です。
+    renderless sample では JS で DOM を組み立てず、この template に data-kh を置いて
+    runtime に値を差し込ませます。
+
+    よく触る場所:
+    - 並び順を変える: この中の要素順を入れ替える
+    - 表示項目を増やす: data-kh="..." を持つ要素を追加する
+    - 見た目を変える: class 名を付けて style.css にルールを書く
+
+    data-kh の値は raw comment や beforeCommitComment() が返した model の path です。
+    例: data-kh="name" は model.name、data-kh="display.html" は model.display.html を入れます。
+  -->
+  <template id="comment-template">
+    <!--
+      article がコメント1件の root です。
+      data-kh="name" で本文値として name を持ち、data-kh-attr="title" により
+      同じ値を title 属性にも入れます。長い名前を省略表示しても hover で確認できます。
+    -->
+    <article class="comment comment-body" data-kh="name" data-kh-attr="title">
+      <!--
+        data-kh-empty="hide" は、data-kh で読んだ値が空のときに要素ごと隠す指定です。
+        avatar / badge / sticker はコメントによって値が無いので、空の画像枠が残らないようにしています。
+        画像を使わないテンプレートにする場合は、対応する img を削除して CSS の列も調整します。
+      -->
+      <img class="avatar" data-kh="avatar" data-kh-empty="hide" alt="">
+      <div class="comment-main">
+        <div class="comment-meta">
+          <img class="badge" data-kh="badge" data-kh-empty="hide" alt="">
+          <span class="name" data-kh="name"></span>
+          <span class="amount" data-kh="amount" data-kh-empty="hide"></span>
+        </div>
+        <!--
+          display.prefix は script.js の beforeCommitComment() で作っています。
+          raw comment に元からある値ではなく、SUPER CHAT / MEMBER などを作者が組み立てる例です。
+        -->
+        <div class="notice" data-kh="display.prefix" data-kh-empty="hide"></div>
+        <div class="membership-header" data-kh="membershipHeader" data-kh-empty="hide"></div>
+        <!--
+          display.html は HTML として差し込みます。typing 表現もここに入ります。
+          data-kh-mode="html" を外すとテキスト扱いになり、<span> などの HTML は文字として表示されます。
+        -->
+        <div class="comment-text" data-kh="display.html" data-kh-mode="html"></div>
+        <img class="sticker" data-kh="sticker" data-kh-empty="hide" alt="">
+      </div>
+    </article>
+  </template>
+
+  <!--
+    HTML-first 用の設定です。ここに書いた config は script.js の htmlFirst.start()
+    にマージされます。
+
+    cssVars:
+      設定値を CSS 変数へ流します。例: panelWidth -> --panel-width。
+      数値に単位が必要な場合は ["--変数名", "px"] の形にします。
+      panelWidth / frameHeight / fontSize は px 付き、accentColor / frameOpacity はそのまま入れています。
+    toggleCssVars:
+      ON/OFF 設定を CSS 変数にします。showAvatar は --avatar-display の block / none と対になります。
+    toggleClasses:
+      ON/OFF 設定で class を付け外しします。例: dense -> #comments.dense-list。
+      ["hide-header", "body", true] の true は「設定値が false のときに class を付ける」
+      という反転指定です。
+    preview:
+      docs / 開発 preview で最初に当てる設定です。本番の既定値は manifest.json と揃えます。
+      ユーザーが保存した実設定ではなく、作者が意図した「見本の状態」を置きます。
+
+    注意:
+      この <script type="application/json"> の中身は本物の JSON なので、
+      内側には // や /* ... */ のコメントを書けません。
+  -->
+  <script id="komehub-template-options" type="application/json">
+  {
+    "config": {
+      "maxComments": true,
+      "cssVars": {
+        "width": ["--panel-width", "px"],
+        "frameHeight": ["--frame-height", "px"],
+        "fontSize": ["--kh-font-size", "px"],
+        "commentGap": ["--kh-comment-gap", "px"],
+        "accentColor": "--accent-color",
+        "textColor": "--text-color",
+        "bgColor": "--bg-color",
+        "highlightColor": "--highlight-color",
+        "borderColor": "--border-color",
+        "memberColorValue": "--member-color",
+        "frameOpacity": "--frame-opacity",
+        "typingSpeed": ["--typing-step", "ms"]
+      },
+      "toggleCssVars": {
+        "showAvatar": ["--avatar-display", "block", "none"],
+        "showBadge": ["--badge-display", "inline", "none"]
+      },
+      "toggleClasses": {
+        "dense": "dense-list",
+        "memberColor": "member-color",
+        "showStatus": ["hide-status", "body", true],
+        "typingEnabled": ["no-typing", "body", true],
+        "showHeader": ["hide-header", "body", true],
+        "showFooter": ["hide-footer", "body", true]
+      },
+      "customCss": true
+    },
+    "preview": {
+      "preset": "list-basic",
+      "title": "Framed list renderless",
+      "applyConfig": {
+        "maxComments": 8,
+        "width": 460,
+        "frameHeight": 656,
+        "fontSize": 19,
+        "position": "left",
+        "commentGap": 10,
+        "colorPreset": "teal",
+        "accentColor": "#1fb6a6",
+        "textColor": "#f7fbff",
+        "bgColor": "#080d14",
+        "highlightColor": "#f0b429",
+        "borderColor": "#ffffff",
+        "frameOpacity": 0.9,
+        "showAvatar": true,
+        "showBadge": true,
+        "memberColor": true,
+        "memberColorValue": "#2ba640",
+        "showHeader": true,
+        "showStatus": true,
+        "statusText": "ON AIR",
+        "showFooter": true,
+        "dense": false,
+        "typingEnabled": true,
+        "typingSpeed": 35,
+        "kickerText": "LIVE COMMENTS",
+        "headerText": "Comment Board",
+        "footerText": "Thank you for watching",
+        "animationStyle": "slide-up"
+      }
+    }
+  }
+  </script>
+  <script src="script.js"></script>
+</body>
+</html>

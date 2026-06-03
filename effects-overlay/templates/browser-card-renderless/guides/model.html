@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>元データを加工する - browser-card-renderless</title>
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow"><a href="../structure.html">structure</a> / model</p>
+    <h1>元データを加工する</h1>
+    <p class="lead"><code>beforeCommitComment()</code> は、HTML が読むための <code>display.*</code> を作る場所です。DOM は触りません。</p>
+  </header>
+
+  <section>
+    <h2>このサンプルで作っている値</h2>
+    <div class="grid">
+      <div class="box"><h3><code>display.html</code></h3><p>typing 用の HTML。本文が変わらない同一 id 更新では前回値を再利用します。</p></div>
+      <div class="box"><h3><code>display.role</code></h3><p>OWNER / MOD / MEMBER の小さな pill 表示です。</p></div>
+      <div class="box"><h3><code>display.notice</code></h3><p>スパチャやメンバー加入の強調文です。</p></div>
+      <div class="box"><h3><code>display.themeKey</code></h3><p>CSS の <code>data-kh-theme</code> と <code>themeAssets</code> に使います。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>例: role 表示を変える</h2>
+    <pre><code>function roleLabel(rawComment) {
+  if (rawComment.isOwner) return 'HOST';
+  if (rawComment.isModerator) return 'STAFF';
+  if (rawComment.isMember || rawComment.isMembership) return 'MEMBER';
+  return '';
+}</code></pre>
+  </section>
+
+  <section>
+    <h2>例: 長文コメントに notice を出す</h2>
+    <pre><code>function noticeLabel(rawComment) {
+  if (rawComment.amountDisplay) return 'SUPER CHAT ' + rawComment.amountDisplay;
+  if (Array.from(rawComment.comment || '').length &gt; 80) return 'LONG COMMENT';
+  if (rawComment.isMembershipGift) return 'MEMBERSHIP GIFT';
+  if (rawComment.isMembership) return rawComment.membershipHeader || 'NEW MEMBER';
+  return '';
+}</code></pre>
+  </section>
+
+  <section>
+    <h2><code>prevModel</code> を使う理由</h2>
+    <div class="box ok">
+      <p>同じ id のコメントが更新されたときに typing HTML と theme を維持するためです。これをしないと、既存カードが更新のたびに再アニメーションして見えます。</p>
+    </div>
+  </section>
+</div>
+</body>
+</html>

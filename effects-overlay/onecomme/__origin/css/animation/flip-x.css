@@ -1,0 +1,15 @@
+.comment-enter-active,
+.comment-leave-active {
+  transition: opacity var(--lcv-enter-duration) var(--lcv-enter-easing),
+              transform var(--lcv-enter-duration) var(--lcv-enter-easing);
+  transform-origin: center center;
+  backface-visibility: hidden;
+}
+.comment-enter-from {
+  opacity: 0 !important;
+  transform: rotateX(90deg) !important;
+}
+.comment-leave-to {
+  opacity: 0 !important;
+  transform: rotateX(-90deg) !important;
+}

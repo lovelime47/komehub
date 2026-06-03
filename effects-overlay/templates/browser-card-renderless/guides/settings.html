@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>設定 UI を増やす - browser-card-renderless</title>
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow"><a href="../structure.html">structure</a> / settings</p>
+    <h1>設定 UI を増やす</h1>
+    <p class="lead">設定は <code>manifest.json</code> に UI を追加し、<code>index.html</code> の JSON config か <code>script.js</code> callback へつなぎます。</p>
+  </header>
+
+  <section>
+    <h2>3つのつなぎ方</h2>
+    <div class="grid">
+      <div class="box"><h3>CSS 変数</h3><p>幅、文字サイズ、角丸、色など。<code>cssVars</code> に書きます。</p></div>
+      <div class="box"><h3>toggle</h3><p>表示/非表示や compact 切替。<code>toggleCssVars</code> または <code>toggleClasses</code> に書きます。</p></div>
+      <div class="box"><h3>callback</h3><p>テーマ固定のように JS の状態を変える設定。<code>config.callbacks</code> に書きます。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>例: カード幅 (width) が CSS 変数へ流れる仕組み</h2>
+    <p>表示位置 (左/右) と横幅 (<code>width</code>) は全テンプレ共通の設定として自動で付きます。このテンプレートは共通の <code>width</code> をカード幅として <code>--card-width</code> に流しています。</p>
+    <pre><code>{
+  "key": "width",
+  "type": "slider",
+  "label": "カード幅",
+  "min": 340,
+  "max": 760,
+  "default": 520,
+  "suffix": "px"
+}</code></pre>
+    <pre><code>"cssVars": {
+  "width": ["--card-width", "px"]
+}</code></pre>
+  </section>
+
+  <section>
+    <h2>例: typing ON/OFF</h2>
+    <pre><code>"toggleClasses": {
+  "typingEnabled": "typing-enabled"
+}</code></pre>
+    <pre><code>#comments:not(.typing-enabled) .typing-char {
+  opacity: 1;
+  transform: none;
+  animation: none;
+}</code></pre>
+  </section>
+
+  <section>
+    <h2>例: テーマ固定</h2>
+    <pre><code>themeMode: function (value) {
+  var mode = String(value || 'rotate');
+  var nextTheme = 'theme-' + mode;
+  fixedTheme = mode === 'rotate' || !THEME_LABELS[nextTheme] ? '' : nextTheme;
+}</code></pre>
+  </section>
+</div>
+</body>
+</html>

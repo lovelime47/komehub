@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+  <title>テンプレート開発ガイド - Live Comment Hub</title>
+  <link rel="stylesheet" href="template-dev-guide.css">
+</head>
+<body>
+  <aside id="sidebar" aria-label="ナビゲーション">
+    <header class="sidebar-header">
+      <h1>テンプレート開発ガイド</h1>
+      <p class="hint">Live Comment Hub</p>
+    </header>
+    <section class="guide-mode-panel" aria-label="目的別の入口">
+      <div>
+        <strong>配信者向け調整</strong>
+        <p>色、文字サイズ、表示件数はテンプレート設定で変更します。</p>
+      </div>
+      <div>
+        <strong>開発者向け実装</strong>
+        <p>HTML / CSS / JS / manifest を編集するときにこのガイドを読みます。</p>
+      </div>
+    </section>
+    <nav id="doc-list" aria-label="ドキュメント一覧"></nav>
+    <nav id="toc" aria-label="目次" hidden></nav>
+  </aside>
+  <main id="content" tabindex="-1" aria-live="polite">
+    <article id="article" aria-label="本文">
+      <p class="loading">読み込み中…</p>
+    </article>
+  </main>
+  <script src="vendor/marked.min.js"></script>
+  <script src="template-dev-guide.js"></script>
+</body>
+</html>

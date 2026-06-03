@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <section class="frame-shell" aria-label="Live comments">
+    <header class="frame-header">
+      <div class="frame-title-wrap">
+        <p class="frame-kicker">SECTOR 7</p>
+        <h1 class="frame-title">COMMS</h1>
+      </div>
+      <span class="frame-status">CH-01</span>
+    </header>
+
+    <div
+      id="comments"
+      class="kh-anim-slide-up"
+      data-kh-start="list"
+      data-kh-template="#comment-template"
+      data-kh-style-id="frame-scifi-hud-config-style"
+      data-kh-options="#komehub-template-options"
+      data-kh-dev-preview="list-basic"></div>
+
+    <footer class="frame-footer">
+      <span class="frame-footer-text">SIGNAL 87% / OPS 0214Z</span>
+    </footer>
+  </section>
+
+  <template id="comment-template">
+    <article class="comment comment-body" data-kh="name" data-kh-attr="title">
+      <img class="avatar" data-kh="avatar" data-kh-empty="hide" alt="">
+      <div class="comment-main">
+        <div class="comment-meta">
+          <img class="badge" data-kh="badge" data-kh-empty="hide" alt="">
+          <span class="name" data-kh="name"></span>
+          <span class="amount" data-kh="amount" data-kh-empty="hide"></span>
+        </div>
+        <div class="notice" data-kh="display.prefix" data-kh-empty="hide"></div>
+        <div class="membership-header" data-kh="membershipHeader" data-kh-empty="hide"></div>
+        <div class="comment-text" data-kh="display.html" data-kh-mode="html"></div>
+        <img class="sticker" data-kh="sticker" data-kh-empty="hide" alt="">
+      </div>
+    </article>
+  </template>
+
+  <script id="komehub-template-options" type="application/json">
+  {
+    "config": {
+      "maxComments": true,
+      "cssVars": {
+        "width": ["--panel-width", "px"],
+        "frameHeight": ["--frame-height", "px"],
+        "fontSize": ["--kh-font-size", "px"],
+        "accentColor": "--accent-color",
+        "highlightColor": "--highlight-color",
+        "textColor": "--text-color",
+        "bgColor": "--bg-color",
+        "borderColor": "--border-color",
+        "memberColorValue": "--member-color",
+        "frameOpacity": "--frame-opacity"
+      },
+      "toggleCssVars": {
+        "showAvatar": ["--avatar-display", "block", "none"],
+        "showBadge": ["--badge-display", "inline", "none"]
+      },
+      "toggleClasses": {
+        "dense": "dense-list",
+        "memberColor": "member-color",
+        "showHeader": ["hide-header", "body", true],
+        "showFooter": ["hide-footer", "body", true]
+      },
+      "customCss": true
+    },
+    "preview": {
+      "preset": "list-basic",
+      "title": "SF-HUD",
+      "applyConfig": {
+        "maxComments": 8,
+        "width": 460,
+        "position": "left",
+        "frameHeight": 600,
+        "fontSize": 18,
+        "colorPreset": "cyan-orange",
+        "accentColor": "#00ddff",
+        "highlightColor": "#ffaa00",
+        "textColor": "#ffffff",
+        "bgColor": "#000f1e",
+        "borderColor": "#00ddff",
+        "frameOpacity": 0.85,
+        "showAvatar": true,
+        "showBadge": true,
+        "memberColor": true,
+        "memberColorValue": "#80ff80",
+        "showHeader": true,
+        "showFooter": true,
+        "dense": false,
+        "kickerText": "SECTOR 7",
+        "headerText": "COMMS",
+        "footerText": "SIGNAL 87% / OPS 0214Z",
+        "animationStyle": "slide-up"
+      }
+    }
+  }
+  </script>
+  <script src="script.js"></script>
+</body>
+</html>

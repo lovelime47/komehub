@@ -1,0 +1,145 @@
+/*
+ * game-rainbow
+ *
+ * ゲーム配信向けのカラフルなコメントテンプレートです。
+ * 名前色をリスナーごとに振り分けつつ、game-compact / game-fps と同じ
+ * 高視認ハローと行揃えの仕組みで、明るいゲーム画面でも読みやすくします。
+ */
+
+/* ── Reset ── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: transparent;
+  font-size: var(--font-size, 18px);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+#comments {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--comment-gap, 1px);
+  padding: 12px;
+  overflow: hidden;
+}
+
+/* 表示位置 (左/右) + 横幅: 共通機構 (runtime applyCommonLayout) が body.kh-pos-* と
+   --kh-stage-width を付与する。common.css 未読込のため同一ルールを自前で持つ。
+   縦配置はテンプレ既定を尊重し、左右と横幅のみ上書き。 */
+body.kh-pos-left > #comments,
+body.kh-pos-right > #comments {
+  width: var(--kh-stage-width, 480px);
+  max-width: 100%;
+}
+body.kh-pos-left > #comments { left: var(--kh-stage-edge, 0px); right: auto; }
+body.kh-pos-right > #comments { left: auto; right: var(--kh-stage-edge, 0px); }
+
+#comments.direction-down { justify-content: flex-start; }
+
+/* ── 行の高さの基準値 ── */
+:root {
+  --line-h: calc(var(--line-height, 1.5) * 1em);
+  /* hhea メトリクス補正: アバターやバッジを文字の視覚中心に寄せる。 */
+  --glyph-offset: 0.056em;
+  /* レインボー名色が背景に負けないよう、硬い縁取りと広めのblurを重ねる。 */
+  --halo:
+    -2px -2px 0 rgba(0,0,0,0.9),
+     0   -2px 0 rgba(0,0,0,0.9),
+     2px -2px 0 rgba(0,0,0,0.9),
+    -2px  0   0 rgba(0,0,0,0.9),
+     2px  0   0 rgba(0,0,0,0.9),
+    -2px  2px 0 rgba(0,0,0,0.9),
+     0    2px 0 rgba(0,0,0,0.9),
+     2px  2px 0 rgba(0,0,0,0.9),
+     0 0 4px rgba(0,0,0,0.95),
+     0 0 12px rgba(0,0,0,0.72),
+     0 0 22px rgba(0,0,0,0.45);
+}
+
+.comment {
+  /* 1 コメント行。背景カードを持たず、名前色のバリエーションで個性を出す。 */
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-family: var(--font-family, 'Noto Sans JP', sans-serif);
+  line-height: var(--line-height, 1.5);
+  text-shadow: var(--halo);
+}
+
+.avatar {
+  --avatar-size: 1.4em;
+  width: var(--avatar-size); height: var(--avatar-size); border-radius: 50%; flex-shrink: 0;
+  display: var(--avatar-display, none);
+  border: 1.5px solid rgba(255,255,255,0.15);
+  /* 2ライン時: 名前行のグリフ視覚中心に揃える */
+  margin-top: calc((var(--line-height, 1.5) * var(--name-size, 0.9em) - var(--avatar-size)) / 2 + var(--glyph-offset) * var(--name-size, 0.9));
+}
+
+.name-wrap { display: flex; align-items: center; gap: 4px; }
+.badge {
+  width: 1em; height: 1em; border-radius: 2px; flex-shrink: 0;
+  display: var(--badge-display, none);
+  margin-top: calc(var(--glyph-offset) * 2);
+}
+
+.name {
+  font-size: var(--name-size, 0.9em);
+  font-family: var(--name-font-family, inherit);
+  color: var(--name-color, #7ec8e3);
+  font-weight: 700;
+  display: var(--name-display, inline);
+}
+.name::after {
+  content: ':';
+  margin-left: 0.1em;
+}
+
+/* body-wrap */
+.body-wrap { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+
+/* ── 1ライン（名前インライン） ── */
+.name-inline .body-wrap {
+  /* ゲーム画面では縦幅を節約するため、既定でこの形を使います。 */
+  flex-direction: row; flex-wrap: wrap; gap: 4px;
+  align-items: center;
+}
+.name-inline .name-wrap {
+  min-height: var(--line-h);
+  align-items: center;
+}
+.name-inline .avatar {
+  margin-top: calc((var(--line-h) - var(--avatar-size)) / 2 + var(--glyph-offset));
+}
+.text {
+  font-size: 1em;
+  font-family: var(--text-font-family, inherit);
+  color: var(--text-color, rgba(255,255,255,0.88));
+  line-height: var(--line-height, 1.5);
+}
+.text img { height: 1.4em; vertical-align: middle; margin: 0 1px; }
+.text a { color: var(--text-color, rgba(255,255,255,0.88)); text-decoration: underline; }
+
+.amount { font-size: 0.8em; color: var(--name-color, rgba(255,255,255,0.5)); margin-left: 4px; font-weight: 600; }
+.membership-header { font-size: 0.8em; color: #a5d6a7; }
+.sticker { height: 2em; }
+
+.comment.is-superchat .name { font-weight: 700; }
+.comment.tier-blue .name { color: #90caf9; }
+.comment.tier-teal .name { color: #80cbc4; }
+.comment.tier-green .name { color: #a5d6a7; }
+.comment.tier-yellow .name { color: #fff176; }
+.comment.tier-orange .name { color: #ffb74d; }
+.comment.tier-magenta .name { color: #f48fb1; }
+.comment.tier-red .name { color: #ef9a9a; }
+.comment.tier-blue .amount, .comment.tier-teal .amount, .comment.tier-green .amount,
+.comment.tier-yellow .amount, .comment.tier-orange .amount,
+.comment.tier-magenta .amount, .comment.tier-red .amount { color: #ffb74d; }
+
+#comments.member-color .comment.is-member .name { color: var(--member-color, #2ba640); }
+.comment.is-moderator .name { color: #5e84f1; }
+.comment.is-owner .name { color: #ffd600; }
+.comment.is-membership .name { color: #a5d6a7; }

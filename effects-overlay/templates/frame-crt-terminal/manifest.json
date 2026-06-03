@@ -1,0 +1,62 @@
+{
+  "id": "com.comment-hub.template.frame-crt-terminal",
+  "name": "frame-crt-terminal",
+  "displayName": "CRTターミナル",
+  "version": "1.0.0",
+  "obsHint": "OBS幅 460px 前後 / 高さは任意。CRT 風緑文字スキャンラインのフレーム",
+  "fonts": ["VT323", "DotGothic16", "Noto Sans JP"],
+  "exportPolicy": {
+    "allowTemplateExport": true,
+    "note": "framed-list-renderless 派生。CRT 緑文字スキャンライン演出。"
+  },
+  "uiSchema": [
+    { "key": "maxComments", "type": "slider", "label": "最大表示数", "min": 3, "max": 30, "step": 1, "default": 10 },
+    { "key": "width", "type": "slider", "label": "フレーム幅", "min": 320, "max": 720, "step": 10, "default": 460, "suffix": "px" },
+    { "key": "frameHeight", "type": "slider", "label": "フレーム高さ", "min": 220, "max": 1200, "step": 10, "default": 600, "suffix": "px" },
+    { "key": "fontSize", "type": "slider", "label": "文字サイズ", "min": 14, "max": 36, "step": 1, "default": 22, "suffix": "px" },
+    { "key": "colorPreset", "type": "buttons", "label": "色プリセット (選ぶと下の個別色を上書きします)", "default": "green", "options": [
+      { "value": "green", "label": "緑 (CRT)", "applyValues": {
+        "accentColor": "#5fff5f", "textColor": "#afffaf", "bgColor": "#080d08",
+        "highlightColor": "#ffec40", "borderColor": "#1f3a1f"
+      }},
+      { "value": "amber", "label": "アンバー (DOS)", "applyValues": {
+        "accentColor": "#ffb000", "textColor": "#ffd680", "bgColor": "#150a00",
+        "highlightColor": "#ffff66", "borderColor": "#5a3a00"
+      }},
+      { "value": "cyan", "label": "シアン", "applyValues": {
+        "accentColor": "#5fffff", "textColor": "#afffff", "bgColor": "#001515",
+        "highlightColor": "#ffec40", "borderColor": "#1f4a4a"
+      }},
+      { "value": "mono", "label": "モノクロ", "applyValues": {
+        "accentColor": "#e0e0e0", "textColor": "#c0c0c0", "bgColor": "#0a0a0a",
+        "highlightColor": "#ffffff", "borderColor": "#404040"
+      }},
+      { "value": "magenta", "label": "マゼンタ", "applyValues": {
+        "accentColor": "#ff5fff", "textColor": "#ffafff", "bgColor": "#150015",
+        "highlightColor": "#ffec40", "borderColor": "#4a1f4a"
+      }}
+    ]},
+    { "key": "accentColor", "type": "color", "label": "アクセント色 (枠・名前)", "default": "#5fff5f" },
+    { "key": "textColor", "type": "color", "label": "本文の色", "default": "#afffaf" },
+    { "key": "bgColor", "type": "color", "label": "背景色", "default": "#080d08" },
+    { "key": "highlightColor", "type": "color", "label": "強調色 (金額・スパチャ)", "default": "#ffec40" },
+    { "key": "borderColor", "type": "color", "label": "枠線・区切り色", "default": "#1f3a1f" },
+    { "key": "frameOpacity", "type": "slider", "label": "背景濃度", "min": 0.2, "max": 1, "step": 0.05, "default": 0.92 },
+    { "key": "showAvatar", "type": "toggle", "label": "アバター表示", "default": false, "onLabel": "表示", "offLabel": "非表示" },
+    { "key": "showBadge", "type": "toggle", "label": "メンバーバッジ表示", "default": false, "onLabel": "表示", "offLabel": "非表示" },
+    { "key": "memberColor", "type": "toggle", "label": "メンバー名を色分け", "default": true, "onLabel": "ON", "offLabel": "OFF" },
+    { "key": "memberColorValue", "type": "color", "label": "メンバー名の色", "default": "#ffaa00", "showIf": { "key": "memberColor", "value": true } },
+    { "key": "showScanlines", "type": "toggle", "label": "スキャンライン", "default": true, "onLabel": "ON", "offLabel": "OFF" },
+    { "key": "showHeader", "type": "toggle", "label": "ヘッダー表示", "default": true, "onLabel": "表示", "offLabel": "非表示" },
+    { "key": "kickerText", "type": "text", "label": "ヘッダー上の小ラベル", "default": "SYSTEM v2.1", "showIf": { "key": "showHeader", "value": true } },
+    { "key": "headerText", "type": "text", "label": "ヘッダータイトル", "default": "$ chat --live", "showIf": { "key": "showHeader", "value": true } },
+    { "key": "showFooter", "type": "toggle", "label": "フッター表示 (最終コメント時刻)", "default": true, "onLabel": "表示", "offLabel": "非表示" },
+    { "key": "dense", "type": "toggle", "label": "コンパクト表示", "default": false, "onLabel": "ON", "offLabel": "OFF" },
+    { "key": "animationStyle", "type": "buttons", "label": "アニメーション", "default": "slide-up", "options": [
+      { "value": "slide-up", "label": "下から" },
+      { "value": "fade-in", "label": "フェード" },
+      { "value": "none", "label": "なし" }
+    ]},
+    { "key": "customCss", "type": "textarea", "label": "カスタムCSS", "placeholder": ".frame-shell { border-color: #0f5f0f; }" }
+  ]
+}

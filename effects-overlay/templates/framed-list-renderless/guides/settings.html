@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>設定 UI を増やす - framed-list-renderless</title>
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow"><a href="../structure.html">structure</a> / settings</p>
+    <h1>設定 UI を増やす</h1>
+    <p class="lead">
+      ユーザーがアプリ上で触る設定は <code>manifest.json</code> の <code>uiSchema</code> に定義します。
+      追加した key は、CSS 変数、toggle class、または JS callback のどれかへつなぎます。
+    </p>
+  </header>
+
+  <section>
+    <h2>3つのつなぎ方</h2>
+    <div class="grid">
+      <div class="box">
+        <h3>CSS 変数へ流す</h3>
+        <p>サイズ、色、透明度のように CSS だけで完結する設定向けです。</p>
+      </div>
+      <div class="box">
+        <h3>class を付け外しする</h3>
+        <p>表示/非表示、密度変更、レイアウト切替のような ON/OFF 向けです。</p>
+      </div>
+      <div class="box">
+        <h3>JS callback で処理する</h3>
+        <p>DOM の文字を変える、複数 class を切り替えるなど、少し処理が必要な設定向けです。</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>例: フレーム幅 (width) が CSS 変数へ流れる仕組み</h2>
+    <p>表示位置 (左/右) と横幅 (<code>width</code>) は全テンプレ共通の設定として自動で付きます。このテンプレートは共通の <code>width</code> をフレーム幅として <code>--panel-width</code> に流しています。同じ要領で独自の slider を追加することもできます。</p>
+    <div class="steps">
+      <div class="step">
+        <h3><code>manifest.json</code> で範囲を上書きする (任意)</h3>
+        <pre><code>{
+  "key": "width",
+  "type": "slider",
+  "label": "フレーム幅",
+  "min": 320,
+  "max": 720,
+  "step": 10,
+  "default": 460,
+  "suffix": "px"
+}</code></pre>
+      </div>
+      <div class="step">
+        <h3><code>index.html</code> の JSON config で CSS 変数へ流す</h3>
+        <pre><code>"cssVars": {
+  "width": ["--panel-width", "px"]
+}</code></pre>
+      </div>
+      <div class="step">
+        <h3><code>style.css</code> で使う</h3>
+        <pre><code>.frame-shell {
+  width: min(var(--panel-width), calc(100vw - 48px));
+}</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>例: ヘッダー表示 toggle を追加する</h2>
+    <pre><code>{
+  "key": "showHeader",
+  "type": "toggle",
+  "label": "ヘッダー表示",
+  "default": true
+}</code></pre>
+    <pre><code>"toggleClasses": {
+  "showHeader": ["hide-header", "body", true]
+}</code></pre>
+    <pre><code>body.hide-header .frame-header {
+  display: none;
+}</code></pre>
+    <div class="box note">
+      <p>
+        配列の最後の <code>true</code> は反転指定です。
+        <code>showHeader</code> が false のときに <code>hide-header</code> を付けます。
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>例: タイトル text を追加する</h2>
+    <pre><code>{
+  "key": "headerText",
+  "type": "text",
+  "label": "ヘッダータイトル",
+  "default": "Comment Board"
+}</code></pre>
+    <pre><code>config: {
+  callbacks: {
+    headerText: function (value) {
+      setText('.frame-title', value, 'Comment Board');
+    }
+  }
+}</code></pre>
+  </section>
+
+  <section>
+    <h2>確認ポイント</h2>
+    <div class="box ok">
+      <ul>
+        <li><code>manifest.json</code> の key と <code>index.html</code> / <code>script.js</code> の key が一致しているか。</li>
+        <li>既定値が <code>manifest.json</code> と preview の <code>applyConfig</code> で矛盾していないか。</li>
+        <li>JSON config 内にはコメントを書かない。説明は HTML コメント側に書く。</li>
+      </ul>
+    </div>
+  </section>
+  <aside class="dev-guide-footer">
+    <p>
+      <strong>共通の仕組みやリファレンスを読むには:</strong>
+      こめはぶ本体の「テンプレート管理 → テンプレート開発ガイドを開く」から
+      アプリ内ヘルプを開いてください。テンプレート作成ガイド・API リファレンス・
+      わんコメ移植ガイド・チュートリアル例が読めます。
+    </p>
+  </aside>
+</div>
+</body>
+</html>

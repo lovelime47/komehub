@@ -1,0 +1,92 @@
+[package]
+name = "komehub-core"
+version = "0.5.0"
+edition = "2021"
+description = "Live Comment Hub (こめはぶ) - Rust core engine"
+
+[lib]
+crate-type = ["cdylib"]
+
+[[bin]]
+name = "komehub-core-exe"
+path = "src/main.rs"
+
+[dependencies]
+# napi-rs (Node.js native addon)
+napi = { version = "3", features = ["async"] }
+napi-derive = "3"
+# HTTP framework
+axum = { version = "0.8", features = ["ws"] }
+tokio = { version = "1", features = ["full"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "fs"] }
+reqwest = { version = "0.12", features = ["json"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+base64 = "0.22"
+qrcode = { version = "0.14", default-features = false, features = ["svg"] }
+sha1 = "0.10"
+
+# Hashing (Step 3 わんコメ schema 観測ハッシュ)
+sha2 = "0.10"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+time = { version = "0.3", features = ["formatting", "local-offset", "macros", "parsing"] }
+
+# Regex (keyword trigger matching)
+regex = "1"
+ttf-parser = "0.25"
+wuff = "0.2"
+
+# ZIP (export/import)
+zip = "2"
+encoding_rs = "0.8"
+
+# Zstd 圧縮 (フルバックアップ DB 用)
+zstd = "0.13"
+
+# Rayon (= CPU multi-core 並列処理)
+# backup の raw_zst BLOB → raw TEXT 逆向き展開で chunk 内 zstd decode を並列化する用。
+# 432K 件のシリアル decode が 1 コア固定で 5 分かかっていたのを N コア活用で 1 分前後に縮める。
+rayon = "1"
+
+# 物理コア数の取得 (= rayon の並列度を物理コアの 3/4 に絞って PC 全体の体感重量を抑える用)
+# std::thread::available_parallelism() は論理コア (= SMT 込み) しか返さないので別 crate が必要
+num_cpus = "1"
+
+# Tar アーカイブ (フルバックアップを 1 ファイルに固める)
+tar = "0.4"
+
+# 通知音再生 (Phase D)。 wav/mp3/ogg/flac 対応、 出力デバイス選択可。
+# rodio = audio playback、 cpal = ホスト audio API 抽象 (rodio が依存)。
+# features は wav/mp3/vorbis 系を symphonia 経由で。 builtin (no decoder) を
+# off にしないと wav しか鳴らない。
+rodio = { version = "0.20", default-features = false, features = ["wav", "mp3", "vorbis", "flac"] }
+
+# Async utilities
+tokio-stream = { version = "0.1", features = ["sync"] }
+# Stream combinator (`buffered(N)`) — comment_aux 経路で順序を保ったまま並列 prepare に使う (= 0003)
+futures = "0.3"
+
+# WebSocket (わんコメ互換)
+tokio-tungstenite = "0.26"
+
+# SQLite (Step 3 リスナー管理)
+# bundled feature で OS の SQLite に依存しない (Windows ビルドの互換性のため)
+rusqlite = { version = "0.31", features = ["bundled"] }
+
+[build-dependencies]
+napi-build = "2"
+
+[dev-dependencies]
+tempfile = "3"
+
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.test]
+debug = "line-tables-only"

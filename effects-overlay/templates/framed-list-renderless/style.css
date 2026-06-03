@@ -1,0 +1,513 @@
+@import url('/templates/__runtime/common.css');
+
+/*
+  この sample の基本調整値です。
+  manifest.json の uiSchema と index.html の cssVars により、アプリ設定から
+  --panel-width / --frame-height / --kh-font-size / --accent-color / --frame-opacity が変わります。
+*/
+:root {
+  /*
+    テンプレート全体で使い回す値です。
+    ここを直接変えると default の見た目が変わります。
+    アプリ設定から変えたい値は index.html の cssVars と manifest.json の uiSchema にも
+    同じ key を用意します。
+
+    - --panel-width / --frame-height: フレームサイズ。コメント追加時に高さを揺らさないため固定値
+    - --accent-color: 主テーマ色 (枠・名前)
+    - --text-color: 本文色
+    - --bg-color: 背景色 (frameOpacity と組み合わせて --surface-color になる)
+    - --highlight-color: 金額・通知の強調色
+    - --border-color: divider のベース色 (CSS 内で透明度を被せて --line-color にする)
+    - --frame-opacity: 背景の透け具合
+    - --avatar-display: showAvatar 設定で block / none を切り替える
+    - --typing-step: タイピング演出で次の文字を出し始めるまでの間隔
+  */
+  --panel-width: 460px;
+  --frame-height: 656px;
+  --frame-opacity: 0.9;
+  --accent-color: #1fb6a6;
+  --text-color: #f7fbff;
+  --bg-color: #080d14;
+  --highlight-color: #f0b429;
+  --border-color: #ffffff;
+  --line-color: color-mix(in srgb, var(--border-color) 16%, transparent);
+  --surface-color: color-mix(in srgb, var(--bg-color) calc(var(--frame-opacity) * 100%), transparent);
+  --muted-color: color-mix(in srgb, var(--text-color) 68%, transparent);
+  --avatar-display: block;
+  --typing-step: 35ms;
+  --typing-cap: 40;
+}
+
+html,
+body {
+  /* Emoji fallback を後段に置くと、👏 などが環境依存で豆腐になりにくくなります。 */
+  font-family: "Noto Sans JP", "Inter", "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+  color: var(--text-color);
+}
+
+body {
+  /*
+    テンプレート全体の配置です。
+    左下ではなく右下に置きたい場合は justify-content: flex-end にします。
+    中央寄せにしたい場合は align-items / justify-content を center に変えます。
+  */
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 24px;
+}
+
+/* 表示位置 (左/右) は共通機構 (applyCommonLayout) が body.kh-pos-left /
+   body.kh-pos-right を付ける。フレームは body flex で左右に寄せる
+   (縦は align-items: flex-end で常に下寄せ)。 */
+body.kh-pos-left {
+  align-items: flex-end;
+  justify-content: flex-start;
+}
+
+body.kh-pos-right {
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+body.komehub-dev-preview-enabled {
+  /*
+    開発 preview UI が表示されるときだけ、上側に余白を足します。
+    実際の配信表示には通常この class は付きません。
+  */
+  padding-top: 96px;
+}
+
+.frame-shell {
+  /*
+    フレームそのものです。
+    height を固定しているため、コメントが増えてもテンプレート全体の高さは変わりません。
+    OBS 上で占有サイズを固定したい template では、この考え方が重要です。
+  */
+  width: min(var(--panel-width), calc(100vw - 48px));
+  height: min(var(--frame-height), calc(100vh - 48px));
+  max-height: calc(100vh - 48px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  border: 1px solid var(--line-color);
+  border-radius: 8px;
+  background: var(--surface-color);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.32);
+}
+
+.frame-header,
+.frame-footer {
+  /* ヘッダー/フッターの余白や背景はここを変更します。 */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-color: var(--line-color);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.frame-header {
+  /*
+    タイトルを含む上部バーです。
+    border-bottom を消すと、フレーム本体と一体化した見た目になります。
+  */
+  border-bottom: 1px solid var(--line-color);
+}
+
+.frame-footer {
+  /*
+    下部バーです。配信名、状態、補足など短い情報向けです。
+    長文を入れる場合は white-space を normal に変えます。
+  */
+  border-top: 1px solid var(--line-color);
+  color: var(--muted-color);
+  font-size: 0.72em;
+  white-space: nowrap;
+}
+
+body.hide-header .frame-header,
+body.hide-footer .frame-footer {
+  /* showHeader / showFooter が OFF のとき、script ではなく class だけで隠します。 */
+  display: none;
+}
+
+body.hide-status .frame-status {
+  /* showStatus が OFF のとき、右上の ON AIR バッジだけを隠します。 */
+  display: none;
+}
+
+.frame-kicker {
+  /*
+    タイトル上の小さな肩書きです。
+    不要なら index.html から要素を削除するか、ここで display: none にします。
+  */
+  margin: 0 0 2px;
+  font-size: 0.58em;
+  line-height: 1;
+  color: var(--accent-color);
+  letter-spacing: 0;
+  font-weight: 700;
+}
+
+.frame-title {
+  /*
+    メインタイトルです。文言は script.js の headerText callback で更新されます。
+    大きくしすぎると frame-status とぶつかるので、1行で収まるサイズにします。
+  */
+  margin: 0;
+  font-size: 1em;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.frame-status {
+  /*
+    右上の小さな状態バッジです。
+    常時表示の装飾として使うなら index.html の文字を変えます。
+    設定で動的に変えたい場合は script.js の config.callbacks に処理を追加します。
+  */
+  flex: 0 0 auto;
+  padding: 4px 7px;
+  border: 1px solid color-mix(in srgb, var(--accent-color) 55%, transparent);
+  border-radius: 6px;
+  color: var(--accent-color);
+  font-size: 0.56em;
+  font-weight: 800;
+}
+
+#comments {
+  /*
+    コメント一覧の領域です。
+    justify-content: flex-end なので、新しいコメントは下側に溜まります。
+    上から溜めたい場合は flex-start に変更します。
+    position: relative は overflow 退場時の position:absolute leaving ノードの
+    containing block を #comments に固定するため必須 (これがないと viewport 基準
+    になり、leaving ノードがフレーム外に飛び出します)。
+  */
+  position: relative;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--kh-comment-gap);
+  padding: 12px;
+  overflow: hidden;
+}
+
+#comments.dense-list {
+  /* dense 設定 ON のときだけ、余白を詰めます。 */
+  --kh-comment-gap: 6px;
+  --kh-comment-padding: 9px;
+}
+
+.comment {
+  /*
+    コメント 1 件のカードです。
+    grid-template-columns は「アバター / 本文」の 2 列。
+    アバター不要のデザインなら minmax(0, 1fr) のみにして template 側の img.avatar を外します。
+  */
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: flex-start;
+  min-width: 0;
+  padding: var(--kh-comment-padding);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text-color);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22);
+  transform-origin: center bottom;
+}
+
+.comment.is-entering {
+  /*
+    runtime lifecycle: 追加直後の状態です。
+    ここが「登場 animation の開始位置」になります。
+    右から入れたい場合は translateX(...) に変えます。
+  */
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.comment.is-active {
+  /*
+    runtime lifecycle: 表示中の状態です。
+    is-entering から is-active に変わると transition が走ります。
+    登場を速く/遅くしたい場合は var(--kh-anim-base) を別の時間にします。
+  */
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity var(--kh-anim-base) var(--kh-ease-out),
+    transform var(--kh-anim-base) var(--kh-ease-out);
+}
+
+.comment.is-leaving {
+  /*
+    runtime lifecycle: 削除/押し出し退場中の状態です。
+    maxComments 超過や寿命切れでこの class になります。
+    script.js の lifecycle.leaveRemoveDelayMs より長い transition にすると、途中で消えることがあります。
+  */
+  opacity: 0;
+  transform: translateY(-10px);
+  transition:
+    opacity var(--kh-anim-fast) var(--kh-ease-in-out),
+    transform var(--kh-anim-fast) var(--kh-ease-in-out);
+}
+
+/*
+  animationStyle 設定の反映先です。
+
+  TemplateKit 共通 CSS には comment-enter-from / comment-enter-to 用の
+  アニメーションプリセットがありますが、このテンプレートは renderless の
+  is-entering / is-active / is-leaving lifecycle を使います。
+  そのため、manifest.json の animationStyle を効かせるには、このテンプレート側で
+  kh-anim-* と is-* の組み合わせを定義します。
+*/
+#comments.kh-anim-slide-up .comment.is-entering { transform: translateY(12px); opacity: 0; }
+#comments.kh-anim-slide-up .comment.is-active { transform: translateY(0); opacity: 1; }
+#comments.kh-anim-slide-up .comment.is-leaving { transform: translateY(-10px); opacity: 0; }
+
+#comments.kh-anim-slide-down .comment.is-entering { transform: translateY(-12px); opacity: 0; }
+#comments.kh-anim-slide-down .comment.is-active { transform: translateY(0); opacity: 1; }
+#comments.kh-anim-slide-down .comment.is-leaving { transform: translateY(10px); opacity: 0; }
+
+#comments.kh-anim-slide-left .comment.is-entering { transform: translateX(18px); opacity: 0; }
+#comments.kh-anim-slide-left .comment.is-active { transform: translateX(0); opacity: 1; }
+#comments.kh-anim-slide-left .comment.is-leaving { transform: translateX(-18px); opacity: 0; }
+
+#comments.kh-anim-slide-right .comment.is-entering { transform: translateX(-18px); opacity: 0; }
+#comments.kh-anim-slide-right .comment.is-active { transform: translateX(0); opacity: 1; }
+#comments.kh-anim-slide-right .comment.is-leaving { transform: translateX(18px); opacity: 0; }
+
+#comments.kh-anim-fade-in .comment.is-entering { transform: none; opacity: 0; }
+#comments.kh-anim-fade-in .comment.is-active { transform: none; opacity: 1; }
+#comments.kh-anim-fade-in .comment.is-leaving { transform: none; opacity: 0; }
+
+#comments.kh-anim-pop .comment.is-entering { transform: scale(0.86); opacity: 0; }
+#comments.kh-anim-pop .comment.is-active { transform: scale(1); opacity: 1; }
+#comments.kh-anim-pop .comment.is-leaving { transform: scale(0.92); opacity: 0; }
+
+#comments.kh-anim-scale-in .comment.is-entering { transform: scale(0.94); opacity: 0; }
+#comments.kh-anim-scale-in .comment.is-active { transform: scale(1); opacity: 1; }
+#comments.kh-anim-scale-in .comment.is-leaving { transform: scale(0.94); opacity: 0; }
+
+#comments.kh-anim-blur .comment.is-entering { transform: none; opacity: 0; filter: blur(10px); }
+#comments.kh-anim-blur .comment.is-active { transform: none; opacity: 1; filter: blur(0); }
+#comments.kh-anim-blur .comment.is-leaving { transform: none; opacity: 0; filter: blur(10px); }
+#comments.kh-anim-blur .comment.is-active,
+#comments.kh-anim-blur .comment.is-leaving {
+  transition:
+    opacity var(--kh-anim-base) var(--kh-ease-out),
+    filter var(--kh-anim-base) var(--kh-ease-out);
+}
+
+#comments.kh-anim-none .comment.is-entering,
+#comments.kh-anim-none .comment.is-active {
+  transform: none;
+  opacity: 1;
+  transition: none;
+}
+
+#comments.kh-anim-none .comment.is-leaving {
+  transform: none;
+  opacity: 0;
+  transition: none;
+}
+
+.comment.is-paid-highlight {
+  /*
+    script.js の afterBindComment() でスパチャに一時的に付く class です。
+    枠色だけでなく box-shadow や background を追加すると、投げ銭コメントを強調できます。
+  */
+  border-color: color-mix(in srgb, var(--accent-color) 72%, white);
+}
+
+.avatar {
+  /* showAvatar OFF のときは --avatar-display: none になります。 */
+  display: var(--avatar-display);
+  width: 2em;
+  height: 2em;
+  border: 2px solid color-mix(in srgb, var(--accent-color) 74%, white);
+  border-radius: 8px;
+  object-fit: cover;
+  /* 1 行コメントで avatar が name+text の縦中央に来るよう微調整。
+     2 行以上でも .comment の align-items: flex-start で同じ位置 (= 上端から固定オフセット) に留まる。
+     計算根拠: name 0.76em*1.45 + gap 4px + text 1em*1.45 ≈ 2.55em + 4px、
+     avatar 2em → 上下マージン (2.55em + 4px - 2em) / 2 ≈ 0.3em + 2px */
+  margin-top: calc(0.3em + 2px);
+}
+
+.comment-main {
+  /* 名前、通知ラベル、本文、スタンプを縦に積む本文エリアです。 */
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.comment-meta {
+  /*
+    バッジ、名前、金額を横並びにする行です。
+    縦積みにしたい場合は flex-direction: column にして align-items を flex-start にします。
+  */
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge {
+  /*
+    YouTube のバッジやメンバー用アイコンが入る場所です。
+    data-kh-empty="hide" で画像なしの場合は HTML 側で非表示。
+    showBadge=OFF で全体的にバッジを隠す場合は --badge-display を none にする。
+  */
+  display: var(--badge-display, inline);
+  width: 1em;
+  height: 1em;
+  object-fit: contain;
+}
+
+.name {
+  /* 名前が長い場合は1行で省略します。折り返したい場合は white-space を normal にします。 */
+  min-width: 0;
+  color: var(--accent-color);
+  font-size: 0.76em;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.amount,
+.notice {
+  /*
+    amount はスパチャ金額、notice は SUPER CHAT / MEMBER などのラベルです。
+    どちらも本文より小さい強調テキストとして扱います。
+  */
+  flex: 0 0 auto;
+  color: var(--text-color);
+  font-size: 0.66em;
+  font-weight: 800;
+}
+
+.amount {
+  /* 金額だけテーマ色にして、通常ラベルより目立たせます。 */
+  color: var(--accent-color);
+}
+
+.notice {
+  /* SUPER CHAT / MEMBER などの小さなラベルです。文言は script.js で作ります。 */
+  align-self: flex-start;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent-color) 32%, transparent);
+}
+
+.membership-header {
+  /*
+    メンバー加入やギフトなどの補足文です。
+    目立たせたい場合は color を var(--accent-color) にします。
+  */
+  color: var(--muted-color);
+  font-size: 0.72em;
+}
+
+.comment-text {
+  /* コメント本文です。長い単語や URL でも枠からはみ出しにくい設定にしています。 */
+  min-width: 0;
+  color: var(--text-color);
+  font-size: 1em;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.comment-text img {
+  /*
+    commentHtml に画像絵文字や小さな画像が含まれる場合のサイズです。
+    height を大きくすると本文行高も大きく見えるため、1.1em〜1.4em 程度が扱いやすいです。
+  */
+  height: 1.25em;
+  vertical-align: -0.18em;
+}
+
+.typing-char {
+  /*
+    通常コメントの本文は script.js の buildTypingHtml() で1文字ずつ
+    <span class="typing-char"> に分けられます。この class は、その1文字ごとの
+    初期状態と登場 animation を決める場所です。
+
+    - opacity: 0 で最初は見えない状態にする
+    - transform で少し下に置いておき、@keyframes typing-in で元の位置へ戻す
+    - animation の 260ms は「1文字が出てくる動き自体の長さ」
+    - --typing-step は「次の文字を出し始めるまでの間隔」。manifest の typingSpeed から変わる
+    - min(var(--char-index), var(--typing-cap)) の --typing-cap は delay を増やし続ける上限
+
+    41文字目以降は同じ delay になるため、長文の後半はまとめて表示されます。
+    長文も最後まで1文字ずつ出したい場合は --typing-cap を 80 や 120 などへ増やします。
+    タイピングを無くしたい場合は opacity / transform / animation / animation-delay を
+    外し、display だけ残すと普通の本文表示になります。
+  */
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.3em);
+  animation: typing-in 260ms var(--kh-ease-out) forwards;
+  animation-delay: calc(min(var(--char-index), var(--typing-cap)) * var(--typing-step));
+}
+
+body.no-typing .typing-char {
+  /* typingEnabled が OFF のときは、1文字分割は維持したまま即時表示します。 */
+  opacity: 1;
+  transform: none;
+  animation: none;
+  animation-delay: 0ms;
+}
+
+.sticker {
+  /*
+    YouTube sticker / Super Sticker 画像です。
+    大きく見せたい場合は max-width を増やします。
+    右寄せにしたい場合は align-self: flex-end にします。
+  */
+  max-width: min(10em, 100%);
+  height: auto;
+  align-self: flex-start;
+  border-radius: 6px;
+}
+
+.comment.is-membership {
+  /*
+    membership / gift / role 系は runtime が自動 class を付けます。
+    ここはメンバー加入系コメント全体の背景です。
+  */
+  background: color-mix(in srgb, var(--kh-role-membership-join) 22%, rgba(255, 255, 255, 0.07));
+}
+
+.comment.is-membership-gift {
+  /* ギフト系 membership の背景です。通常 membership と差を付けたい場合に使います。 */
+  background: rgba(88, 65, 180, 0.34);
+}
+
+/* ロール色: テンプレ独自 (kh-chat-colors を外したので common.css 由来は無効) */
+.comment.is-owner .name { color: var(--highlight-color); }
+.comment.is-moderator .name { color: #5e84f1; }
+.comment.is-member .name { color: var(--accent-color); }
+/* memberColor=ON のときだけメンバー名を専用色に塗り分ける */
+#comments.member-color .comment.is-member .name { color: var(--member-color, var(--accent-color)); }
+
+@keyframes typing-in {
+  /*
+    .typing-char の最終状態です。
+    開始状態は .typing-char 側の opacity / transform で決まります。
+  */
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

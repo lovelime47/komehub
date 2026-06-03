@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>元データを加工する - ticker-renderless</title>
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow"><a href="../structure.html">structure</a> / model</p>
+    <h1>元データを加工する</h1>
+    <p class="lead">このサンプルは最小構成のため <code>beforeCommitComment()</code> を使っていません。標準 model にない表示用値が必要なときだけ追加します。</p>
+  </header>
+
+  <section>
+    <h2>まず直接読める値を確認する</h2>
+    <div class="box ok">
+      <p><code>name</code>、<code>text</code>、<code>amount</code>、<code>membershipHeader</code>、<code>badge</code>、<code>sticker</code> は直接 <code>data-kh</code> で読めます。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>例: 独自の短いラベルを作る</h2>
+    <pre><code>runtime.htmlFirst.start({
+  mode: 'ticker',
+  renderlessModel: true,
+  beforeCommitComment: function (rawComment) {
+    return {
+      display: {
+        shortKind: rawComment.amountDisplay ? 'SC' : ''
+      }
+    };
+  }
+});</code></pre>
+    <pre><code>&lt;span class="kind" data-kh="display.shortKind" data-kh-empty="hide"&gt;&lt;/span&gt;</code></pre>
+  </section>
+
+  <section>
+    <h2>注意点</h2>
+    <div class="box note">
+      <ul>
+        <li>既存 field を別名に詰め直すだけなら <code>beforeCommitComment()</code> は不要です。</li>
+        <li>横幅が変わる派生表示を追加したら、設定変更時に <code>recalcTicker()</code> が必要になることがあります。</li>
+        <li>DOM を触る処理は <code>beforeCommitComment()</code> ではなく <code>afterBindComment()</code> に寄せます。</li>
+      </ul>
+    </div>
+  </section>
+</div>
+</body>
+</html>

@@ -1,0 +1,252 @@
+{
+  "id": "com.comment-hub.template.framed-list-renderless",
+  "name": "framed-list-renderless",
+  "displayName": "フレーム",
+  "version": "1.0.0",
+  "obsHint": "OBS幅 460px 前後 / 高さは任意。左下寄せのフレーム付きコメントリスト",
+  "fonts": ["Noto Sans JP", "Inter"],
+  "exportPolicy": {
+    "allowTemplateExport": true,
+    "note": "このテンプレートの HTML / CSS / JS / SVG assets は Live Comment Hub 用のオリジナル素材です。"
+  },
+  "uiSchema": [
+    {
+      "key": "maxComments",
+      "type": "slider",
+      "label": "最大表示数",
+      "min": 3,
+      "max": 30,
+      "step": 1,
+      "default": 8
+    },
+    {
+      "key": "width",
+      "type": "slider",
+      "label": "フレーム幅",
+      "min": 320,
+      "max": 720,
+      "step": 10,
+      "default": 460,
+      "suffix": "px"
+    },
+    {
+      "key": "frameHeight",
+      "type": "slider",
+      "label": "フレーム高さ",
+      "min": 220,
+      "max": 1200,
+      "step": 10,
+      "default": 656,
+      "suffix": "px"
+    },
+    {
+      "key": "fontSize",
+      "type": "slider",
+      "label": "文字サイズ",
+      "min": 12,
+      "max": 34,
+      "step": 1,
+      "default": 19,
+      "suffix": "px"
+    },
+    { "key": "commentGap", "type": "slider", "label": "コメント間隔", "min": 4, "max": 28, "step": 1, "default": 10, "suffix": "px" },
+    { "key": "colorPreset", "type": "buttons", "label": "色プリセット (選ぶと下の個別色を上書きします)", "default": "teal", "options": [
+      { "value": "teal", "label": "標準", "applyValues": {
+        "accentColor": "#1fb6a6", "textColor": "#f7fbff", "bgColor": "#080d14",
+        "highlightColor": "#f0b429", "borderColor": "#ffffff"
+      }},
+      { "value": "amber", "label": "暖色", "applyValues": {
+        "accentColor": "#f0b429", "textColor": "#fff8e8", "bgColor": "#1a1408",
+        "highlightColor": "#ffec40", "borderColor": "#ffffff"
+      }},
+      { "value": "purple", "label": "ナイト", "applyValues": {
+        "accentColor": "#a78bfa", "textColor": "#f4f0ff", "bgColor": "#0f0a1f",
+        "highlightColor": "#fbbf24", "borderColor": "#ffffff"
+      }},
+      { "value": "blue", "label": "クール", "applyValues": {
+        "accentColor": "#60a5fa", "textColor": "#eff6ff", "bgColor": "#0a0f1f",
+        "highlightColor": "#fbbf24", "borderColor": "#ffffff"
+      }},
+      { "value": "monochrome", "label": "モノクロ", "applyValues": {
+        "accentColor": "#e0e0e0", "textColor": "#f5f5f5", "bgColor": "#0f0f0f",
+        "highlightColor": "#fbbf24", "borderColor": "#ffffff"
+      }}
+    ]},
+    {
+      "key": "accentColor",
+      "type": "color",
+      "label": "アクセント色 (枠・名前)",
+      "default": "#1fb6a6"
+    },
+    {
+      "key": "textColor",
+      "type": "color",
+      "label": "本文の色",
+      "default": "#f7fbff"
+    },
+    {
+      "key": "bgColor",
+      "type": "color",
+      "label": "背景色",
+      "default": "#080d14"
+    },
+    {
+      "key": "highlightColor",
+      "type": "color",
+      "label": "強調色 (金額・通知)",
+      "default": "#f0b429"
+    },
+    {
+      "key": "borderColor",
+      "type": "color",
+      "label": "枠線・区切り色",
+      "default": "#ffffff"
+    },
+    {
+      "key": "frameOpacity",
+      "type": "slider",
+      "label": "背景濃度",
+      "min": 0.2,
+      "max": 1,
+      "step": 0.05,
+      "default": 0.9
+    },
+    {
+      "key": "showAvatar",
+      "type": "toggle",
+      "label": "アバター表示",
+      "default": true,
+      "onLabel": "表示",
+      "offLabel": "非表示"
+    },
+    {
+      "key": "showBadge",
+      "type": "toggle",
+      "label": "メンバーバッジ表示",
+      "default": true,
+      "onLabel": "表示",
+      "offLabel": "非表示"
+    },
+    {
+      "key": "memberColor",
+      "type": "toggle",
+      "label": "メンバー名を色分け",
+      "default": true,
+      "onLabel": "ON",
+      "offLabel": "OFF"
+    },
+    {
+      "key": "memberColorValue",
+      "type": "color",
+      "label": "メンバー名の色",
+      "default": "#2ba640",
+      "showIf": { "key": "memberColor", "value": true }
+    },
+    {
+      "key": "showHeader",
+      "type": "toggle",
+      "label": "ヘッダー表示",
+      "default": true,
+      "onLabel": "表示",
+      "offLabel": "非表示"
+    },
+    {
+      "key": "kickerText",
+      "type": "text",
+      "label": "ヘッダー上の小ラベル",
+      "default": "LIVE COMMENTS",
+      "showIf": { "key": "showHeader", "value": true }
+    },
+    {
+      "key": "headerText",
+      "type": "text",
+      "label": "ヘッダータイトル",
+      "default": "Comment Board",
+      "showIf": { "key": "showHeader", "value": true }
+    },
+    {
+      "key": "showStatus",
+      "type": "toggle",
+      "label": "ステータス表示",
+      "default": true,
+      "onLabel": "表示",
+      "offLabel": "非表示",
+      "showIf": { "key": "showHeader", "value": true }
+    },
+    {
+      "key": "statusText",
+      "type": "text",
+      "label": "ステータス文言",
+      "default": "ON AIR",
+      "showIf": [
+        { "key": "showHeader", "value": true },
+        { "key": "showStatus", "value": true }
+      ]
+    },
+    {
+      "key": "showFooter",
+      "type": "toggle",
+      "label": "フッター表示",
+      "default": true,
+      "onLabel": "表示",
+      "offLabel": "非表示"
+    },
+    {
+      "key": "footerText",
+      "type": "text",
+      "label": "フッターテキスト",
+      "default": "Thank you for watching",
+      "showIf": { "key": "showFooter", "value": true }
+    },
+    {
+      "key": "dense",
+      "type": "toggle",
+      "label": "コンパクト表示",
+      "default": false,
+      "onLabel": "ON",
+      "offLabel": "OFF"
+    },
+    {
+      "key": "typingEnabled",
+      "type": "toggle",
+      "label": "タイピング演出",
+      "default": true,
+      "onLabel": "ON",
+      "offLabel": "OFF"
+    },
+    {
+      "key": "typingSpeed",
+      "type": "slider",
+      "label": "タイピング速度",
+      "min": 8,
+      "max": 70,
+      "step": 1,
+      "default": 35,
+      "suffix": "ms",
+      "showIf": { "key": "typingEnabled", "value": true }
+    },
+    {
+      "key": "animationStyle",
+      "type": "buttons",
+      "label": "アニメーション",
+      "default": "slide-up",
+      "options": [
+        { "value": "slide-up", "label": "下から" },
+        { "value": "slide-down", "label": "上から" },
+        { "value": "slide-left", "label": "右から" },
+        { "value": "slide-right", "label": "左から" },
+        { "value": "fade-in", "label": "フェード" },
+        { "value": "pop", "label": "ポップ" },
+        { "value": "scale-in", "label": "ズーム" },
+        { "value": "blur", "label": "ぼかし" },
+        { "value": "none", "label": "なし" }
+      ]
+    },
+    {
+      "key": "customCss",
+      "type": "textarea",
+      "label": "カスタムCSS",
+      "placeholder": ".frame-shell { box-shadow: none; }"
+    }
+  ]
+}

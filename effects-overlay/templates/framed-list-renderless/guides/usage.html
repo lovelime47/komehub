@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>配信者向け設定 - framed-list-renderless</title>
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow"><a href="../structure.html">structure</a> / usage</p>
+    <h1>配信者向け設定</h1>
+    <p class="lead">
+      このテンプレートを OBS に載せるときに最初に触る設定です。
+      CSS や JS を読まなくても、配信画面に合わせた見た目へ調整できる範囲をまとめています。
+    </p>
+    <div class="nav-row">
+      <a href="appearance.html">見た目</a>
+      <a href="settings.html">設定 UI</a>
+      <a href="fields.html">表示項目</a>
+      <a href="model.html">元データ加工</a>
+      <a href="effects.html">一時効果</a>
+    </div>
+  </header>
+
+  <section>
+    <h2>最初のおすすめ</h2>
+    <div class="grid">
+      <div class="box">
+        <h3>OBS サイズ</h3>
+        <p>幅は 460px 前後、高さは 650px 前後から始めます。コメント欄を大きく見せたい場合は、まず <code>フレーム高さ</code> を上げます。</p>
+      </div>
+      <div class="box">
+        <h3>表示位置</h3>
+        <p><code>表示位置</code> で左下、中央下、右下を選びます。ゲーム画面や字幕とぶつからない位置を選びます。</p>
+      </div>
+      <div class="box">
+        <h3>文字サイズ</h3>
+        <p>1080p なら 19px 前後が基準です。720p やスマホ視聴を重視する場合は 21px 以上にします。</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>背景に合わせる</h2>
+    <div class="steps">
+      <div class="step">
+        <h3>暗い配信画面</h3>
+        <p><code>標準</code> または <code>クール</code> を選び、背景濃度は 0.75 から 0.9 の範囲で調整します。</p>
+      </div>
+      <div class="step">
+        <h3>明るい配信画面</h3>
+        <p><code>モノクロ</code> または <code>暖色</code> を選び、背景濃度を 0.9 以上にします。本文の色は白系のままが読みやすいです。</p>
+      </div>
+      <div class="step">
+        <h3>雑談の雰囲気を強く出す</h3>
+        <p>ヘッダーの <code>ヘッダー上の小ラベル</code> と <code>ヘッダータイトル</code> を配信名に合わせます。</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>コメント量に合わせる</h2>
+    <table>
+      <thead>
+        <tr><th>状況</th><th>触る設定</th><th>目安</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>コメントが少ない</td><td><code>最大表示数</code></td><td>5 から 8</td></tr>
+        <tr><td>コメントが多い</td><td><code>最大表示数</code></td><td>10 から 15</td></tr>
+        <tr><td>詰まって見える</td><td><code>コメント間隔</code></td><td>12px から 18px</td></tr>
+        <tr><td>情報量を増やしたい</td><td><code>コンパクト表示</code></td><td>ON</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>タイピング演出</h2>
+    <p>
+      <code>タイピング演出</code> はコメント本文を 1 文字ずつ出す設定です。
+      雑談では ON のままが自然ですが、コメント量が多い配信では OFF にすると読みやすくなります。
+    </p>
+    <div class="box note">
+      <h3>速度の考え方</h3>
+      <p><code>タイピング速度</code> は次の文字を出し始めるまでの間隔です。数字を小さくすると速く、数字を大きくするとゆっくりになります。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>迷ったら</h2>
+    <pre><code>表示位置: 左下
+フレーム幅: 460px
+フレーム高さ: 656px
+文字サイズ: 19px
+色プリセット: 標準
+最大表示数: 8
+コメント間隔: 10px
+タイピング演出: ON</code></pre>
+  </section>
+  <aside class="dev-guide-footer">
+    <p>
+      <strong>共通の仕組みやリファレンスを読むには:</strong>
+      こめはぶ本体の「テンプレート管理 → テンプレート開発ガイドを開く」から
+      アプリ内ヘルプを開いてください。テンプレート作成ガイド・API リファレンス・
+      わんコメ移植ガイド・チュートリアル例が読めます。
+    </p>
+  </aside>
+</div>
+</body>
+</html>

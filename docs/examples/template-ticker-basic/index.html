@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div
+    id="comments"
+    data-kh-start="ticker"
+    data-kh-track="#track"
+    data-kh-template="#comment-template"
+    data-kh-style-id="sample-ticker-config-style">
+    <div id="track"></div>
+  </div>
+  <template id="comment-template">
+    <div class="comment" data-kh="name" data-kh-attr="title">
+      <img class="badge" data-kh="badge" data-kh-empty="hide" alt="">
+      <span class="name" data-kh="name"></span>
+      <span class="amount" data-kh="amount" data-kh-empty="hide"></span>
+      <span class="text" data-kh="text"></span>
+      <img class="sticker" data-kh="sticker" data-kh-empty="hide" alt="">
+    </div>
+  </template>
+  <script src="script.js"></script>
+</body>
+</html>

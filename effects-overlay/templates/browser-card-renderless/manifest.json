@@ -1,0 +1,129 @@
+{
+  "id": "com.comment-hub.template.browser-card-renderless",
+  "name": "browser-card-renderless",
+  "displayName": "ブラウザカード",
+  "version": "1.0.0",
+  "obsHint": "OBS幅 520px 前後 / 高さは任意。多層カード型のコメントリスト",
+  "fonts": ["Noto Sans JP", "Inter"],
+  "exportPolicy": {
+    "allowTemplateExport": true,
+    "note": "このテンプレートの HTML / CSS / JS / SVG assets は Live Comment Hub 用のオリジナル素材です。"
+  },
+  "uiSchema": [
+    {
+      "key": "maxComments",
+      "type": "slider",
+      "label": "最大表示数",
+      "min": 3,
+      "max": 20,
+      "step": 1,
+      "default": 15
+    },
+    {
+      "key": "width",
+      "type": "slider",
+      "label": "カード幅",
+      "min": 340,
+      "max": 760,
+      "step": 10,
+      "default": 520,
+      "suffix": "px"
+    },
+    {
+      "key": "fontSize",
+      "type": "slider",
+      "label": "本文サイズ",
+      "min": 13,
+      "max": 30,
+      "step": 1,
+      "default": 18,
+      "suffix": "px"
+    },
+    {
+      "key": "nameSize",
+      "type": "slider",
+      "label": "名前サイズ",
+      "min": 12,
+      "max": 26,
+      "step": 1,
+      "default": 15,
+      "suffix": "px"
+    },
+    {
+      "key": "cardGap",
+      "type": "slider",
+      "label": "カード間隔",
+      "min": 4,
+      "max": 28,
+      "step": 1,
+      "default": 12,
+      "suffix": "px"
+    },
+    {
+      "key": "cornerRadius",
+      "type": "slider",
+      "label": "角丸",
+      "min": 0,
+      "max": 18,
+      "step": 1,
+      "default": 8,
+      "suffix": "px"
+    },
+    {
+      "key": "accentColor",
+      "type": "color",
+      "label": "アクセント色",
+      "default": "#2f8f83"
+    },
+    {
+      "key": "showAvatar",
+      "type": "toggle",
+      "label": "アバター表示",
+      "default": true,
+      "onLabel": "表示",
+      "offLabel": "非表示"
+    },
+    {
+      "key": "showMetaRail",
+      "type": "toggle",
+      "label": "左レール表示",
+      "default": true,
+      "onLabel": "表示",
+      "offLabel": "非表示"
+    },
+    {
+      "key": "compactMode",
+      "type": "toggle",
+      "label": "コンパクト",
+      "default": false,
+      "onLabel": "ON",
+      "offLabel": "OFF"
+    },
+    {
+      "key": "typingEnabled",
+      "type": "toggle",
+      "label": "タイピング演出",
+      "default": true,
+      "onLabel": "ON",
+      "offLabel": "OFF"
+    },
+    {
+      "key": "themeMode",
+      "type": "buttons",
+      "label": "テーマ",
+      "default": "rotate",
+      "options": [
+        { "value": "rotate", "label": "ローテーション" },
+        { "value": "teal", "label": "ティール" },
+        { "value": "violet", "label": "バイオレット" },
+        { "value": "sunset", "label": "サンセット" }
+      ]
+    },
+    {
+      "key": "customCss",
+      "type": "textarea",
+      "label": "カスタムCSS",
+      "placeholder": ".browser-card { box-shadow: none; }"
+    }
+  ]
+}

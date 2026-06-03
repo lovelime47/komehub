@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>グロー色を増やす - ticker-renderless</title>
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow"><a href="../structure.html">structure</a> / themes</p>
+    <h1>グロー色を増やす</h1>
+    <p class="lead">このテンプレートの色替えは theme asset ではなく、光彩用の RGB と CSS 変数で行います。</p>
+  </header>
+
+  <section>
+    <h2>色のつながり</h2>
+    <pre><code>manifest glowColor / glowCustomColor
+  -> script.js hexToRgb()
+  -> applyGlow()
+  -> --glow-core / --glow-main
+  -> style.css の text stroke / drop-shadow</code></pre>
+  </section>
+
+  <section>
+    <h2>例: purple を追加する</h2>
+    <div class="steps">
+      <div class="step">
+        <h3>JS に追加する</h3>
+        <pre><code>var GLOW_COLORS = {
+  pink: [255, 100, 180],
+  cyan: [0, 220, 255],
+  purple: [170, 120, 255]
+};</code></pre>
+      </div>
+      <div class="step">
+        <h3>manifest に追加する</h3>
+        <pre><code>{ "value": "purple", "label": "パープル", "hex": "#aa78ff" }</code></pre>
+      </div>
+      <div class="step">
+        <h3>初期値を変える場合</h3>
+        <pre><code>"glowCustomColor": "#aa78ff",
+"glowColor": "purple"</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>光の強さとの関係</h2>
+    <div class="box">
+      <p><code>glowIntensity</code> は色ではなく、縁取り太さ、透明度、ぼかし量を変えます。色を変えたいときは <code>glowCustomColor</code>、強さを変えたいときは <code>glowIntensity</code> です。</p>
+    </div>
+  </section>
+</div>
+</body>
+</html>

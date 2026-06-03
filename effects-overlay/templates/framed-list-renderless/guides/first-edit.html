@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>最初の改造 - framed-list-renderless</title>
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow"><a href="../structure.html">structure</a> / first edit</p>
+    <h1>最初の改造</h1>
+    <p class="lead">
+      こめはぶのテンプレートを初めて触る場合は、まず「どのファイルが何を担当するか」を体で確認します。
+      このページの順に、小さい変更から試してください。
+    </p>
+  </header>
+
+  <section>
+    <h2>4つのファイルの分担</h2>
+    <table>
+      <thead>
+        <tr><th>ファイル</th><th>担当</th><th>初心者が最初に触る例</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>manifest.json</code></td>
+          <td>アプリ設定画面に出る項目と既定値</td>
+          <td><code>headerText.default</code>、<code>typingSpeed.default</code></td>
+        </tr>
+        <tr>
+          <td><code>style.css</code></td>
+          <td>見た目、余白、色、アニメーション</td>
+          <td><code>.comment</code>、<code>.comment-text</code>、<code>.typing-char</code></td>
+        </tr>
+        <tr>
+          <td><code>index.html</code></td>
+          <td>画面構造と、model の値を入れる場所</td>
+          <td><code>&lt;template id="comment-template"&gt;</code> 内の表示順</td>
+        </tr>
+        <tr>
+          <td><code>script.js</code></td>
+          <td>raw comment から表示用 model を作る</td>
+          <td><code>beforeCommitComment()</code> の <code>display.prefix</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>最初にやると分かりやすい変更</h2>
+    <div class="steps">
+      <div class="step">
+        <h3>タイトルを変える</h3>
+        <p><code>manifest.json</code> の <code>headerText.default</code> を変えます。</p>
+        <pre><code>{
+  "key": "headerText",
+  "type": "text",
+  "label": "ヘッダータイトル",
+  "default": "My Chat"
+}</code></pre>
+      </div>
+      <div class="step">
+        <h3>コメントカードの背景を変える</h3>
+        <p><code>style.css</code> の <code>.comment</code> を変えます。</p>
+        <pre><code>.comment {
+  background: rgba(255, 255, 255, 0.12);
+}</code></pre>
+      </div>
+      <div class="step">
+        <h3>スパチャのラベル文言を変える</h3>
+        <p><code>script.js</code> の <code>beforeCommitComment()</code> 内を変えます。</p>
+        <pre><code>if (rawComment.amountDisplay) {
+  prefix = 'THANK YOU ' + rawComment.amountDisplay;
+}</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>renderless とは</h2>
+    <div class="box">
+      <p>
+        このテンプレートでは、JavaScript がコメント DOM を全部手作りするのではなく、
+        <code>index.html</code> の <code>&lt;template&gt;</code> を runtime が複製します。
+        その複製した HTML に、<code>data-kh</code> で指定した model の値を差し込みます。
+        この形を、このサンプルでは renderless 構成と呼んでいます。
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2><code>data-kh</code> と <code>beforeCommitComment()</code> の関係</h2>
+    <pre><code>rawComment.comment
+  -> script.js の beforeCommitComment()
+  -> display.html を作る
+  -> index.html の data-kh="display.html" に入る
+  -> style.css の .typing-char で見た目が付く</code></pre>
+    <div class="box note">
+      <p>
+        <code>data-kh="name"</code> は raw comment 由来の <code>model.name</code> を読みます。
+        <code>data-kh="display.html"</code> は <code>beforeCommitComment()</code> が作った
+        <code>model.display.html</code> を読みます。
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>迷ったときの判断</h2>
+    <table>
+      <thead>
+        <tr><th>迷い</th><th>見る場所</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>見た目だけ変えたい</td><td><code>style.css</code></td></tr>
+        <tr><td>設定画面に項目を出したい</td><td><code>manifest.json</code> と <code>index.html</code> の <code>cssVars</code> / <code>toggleClasses</code></td></tr>
+        <tr><td>表示する値を増やしたい</td><td><code>script.js</code> の <code>beforeCommitComment()</code> と <code>index.html</code> の <code>data-kh</code></td></tr>
+        <tr><td>一瞬だけ光らせたい</td><td><code>script.js</code> の <code>afterBindComment()</code> と <code>style.css</code></td></tr>
+        <tr><td>登場アニメーションを増やしたい</td><td><code>manifest.json</code>、<code>script.js</code> の <code>animationClasses</code>、<code>style.css</code> の <code>kh-anim-*</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <aside class="dev-guide-footer">
+    <p>
+      <strong>共通の仕組みやリファレンスを読むには:</strong>
+      こめはぶ本体の「テンプレート管理 → テンプレート開発ガイドを開く」から
+      アプリ内ヘルプを開いてください。テンプレート作成ガイド・API リファレンス・
+      わんコメ移植ガイド・チュートリアル例が読めます。
+    </p>
+  </aside>
+</div>
+</body>
+</html>

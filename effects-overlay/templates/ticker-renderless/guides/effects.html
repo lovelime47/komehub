@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>横流れの動きを変える - ticker-renderless</title>
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow"><a href="../structure.html">structure</a> / effects</p>
+    <h1>横流れの動きを変える</h1>
+    <p class="lead">ticker の動きは、CSS の <code>#track transition</code> と runtime の track 計算が組み合わさって決まります。</p>
+  </header>
+
+  <section>
+    <h2>このサンプルで既にやっていること</h2>
+    <pre><code>travelSeconds: ANIM_SPEEDS.normal,
+transitionTiming: 'cubic-bezier(0.12, 0, 0, 1)'</code></pre>
+    <pre><code>#track {
+  transition: transform var(--anim-duration, 0.8s) cubic-bezier(0.12, 0, 0, 1);
+}</code></pre>
+  </section>
+
+  <section>
+    <h2>速度を変える</h2>
+    <pre><code>function setTravelSeconds(helpers, seconds) {
+  var ticker = helpers.ticker || helpers;
+  if (ticker && ticker.setTravelSeconds) ticker.setTravelSeconds(seconds);
+}</code></pre>
+    <p>直接 CSS だけを変えるのではなく、runtime の <code>setTravelSeconds()</code> を通すと内部状態と揃います。</p>
+  </section>
+
+  <section>
+    <h2>再計算が必要な変更</h2>
+    <div class="box note">
+      <ul>
+        <li>文字サイズを変える</li>
+        <li>名前を上/下へ切り替える</li>
+        <li>表示項目を増やして横幅が変わる</li>
+        <li>gap や padding を大きく変える</li>
+      </ul>
+      <p>これらは <code>recalcTicker(helpers)</code> を呼ぶ候補です。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>overflow trim の注意</h2>
+    <div class="box ok">
+      <p>コメントが増えすぎたとき、見えている左端のコメントをすぐ消すと「動き始めに消えた」ように見えます。runtime は画面外に出たコメントから整理するため、テンプレート側で無理に DOM を削除しないでください。</p>
+    </div>
+  </section>
+</div>
+</body>
+</html>

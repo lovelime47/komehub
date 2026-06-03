@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>browser-card-renderless 構造解説</title>
+<link rel="stylesheet" href="guides/guide.css">
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow">effects-overlay/templates/browser-card-renderless/structure.html</p>
+    <h1>browser-card-renderless 構造解説</h1>
+    <p class="lead">
+      多層カード型コメントを HTML-first / renderless で作るための案内です。
+      HTML はカードの骨格、CSS は多層表現、JS は typing / theme / 一時効果の model 加工に集中します。
+    </p>
+    <nav class="nav-row" aria-label="ページ内目次">
+      <a href="#files">ファイルの役割</a>
+      <a href="#startup">起動の流れ</a>
+      <a href="#comment-flow">コメント表示の流れ</a>
+      <a href="#edit-map">変更箇所マップ</a>
+      <a href="#rules">分担ルール</a>
+    </nav>
+  </header>
+
+  <section id="files">
+    <h2>ファイルの役割</h2>
+    <div class="grid">
+      <div class="box">
+        <h3><code>index.html</code></h3>
+        <p><code>#comments</code>、コメント1件分の <code>&lt;template&gt;</code>、設定 JSON を持ちます。カードの DOM 階層を変えるときはここを見ます。</p>
+      </div>
+      <div class="box">
+        <h3><code>style.css</code></h3>
+        <p>カード幅、左レール、背景レイヤー、テーマ色、typing、スパチャ pulse を受け持ちます。</p>
+      </div>
+      <div class="box">
+        <h3><code>script.js</code></h3>
+        <p><code>display.html</code>、<code>display.role</code>、<code>display.notice</code>、<code>display.themeKey</code> を作ります。DOM は作りません。</p>
+      </div>
+      <div class="box">
+        <h3><code>assets/</code></h3>
+        <p>テーマごとの SVG icon です。<code>themeAssets</code> から CSS 変数 <code>--theme-icon-image</code> へ流れます。</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="startup">
+    <h2>起動の流れ</h2>
+    <div class="steps">
+      <div class="step">
+        <h3>HTML-first starter を起動する</h3>
+        <p><code>data-kh-start="list"</code> と <code>data-kh-template="#comment-template"</code> により、runtime が list renderless として起動します。</p>
+      </div>
+      <div class="step">
+        <h3>設定 JSON を読み込む</h3>
+        <p><code>cssVars</code>、<code>toggleCssVars</code>、<code>toggleClasses</code> が manifest の UI key と CSS をつなぎます。</p>
+      </div>
+      <div class="step">
+        <h3>JS hook を登録する</h3>
+        <p><code>beforeCommitComment()</code> が表示用 model を作り、<code>afterBindComment()</code> が一時効果を付けます。</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="comment-flow">
+    <h2>コメント1件が表示されるまで</h2>
+    <div class="steps">
+      <div class="step">
+        <h3>raw comment</h3>
+        <p><code>name</code>、<code>comment</code>、<code>amountDisplay</code>、<code>isMember</code> などが入ります。</p>
+      </div>
+      <div class="step">
+        <h3>display model</h3>
+        <p><code>beforeCommitComment()</code> が typing HTML、role、notice、theme key、theme label を追加します。</p>
+      </div>
+      <div class="step">
+        <h3>template bind</h3>
+        <p><code>data-kh="display.html"</code> や <code>data-kh="display.notice"</code> に値が入り、root には <code>data-kh-theme</code> が付きます。</p>
+      </div>
+      <div class="step">
+        <h3>CSS 表示</h3>
+        <p>CSS が <code>data-kh-theme</code>、<code>.is-superchat</code>、<code>.typing-char</code> を使ってカードを描画します。</p>
+      </div>
+    </div>
+    <pre><code>rawComment.comment
+  -> buildTypingHtml()
+  -> display.html
+  -> &lt;div class="comment-text" data-kh="display.html" data-kh-mode="html"&gt;</code></pre>
+  </section>
+
+  <section id="edit-map">
+    <h2>変更箇所マップ</h2>
+    <div class="grid">
+      <a class="guide-card" href="guides/appearance.html"><h3>見た目を変えたい</h3><p>カード幅、余白、角丸、左レール、typing、pulse を調整する。</p></a>
+      <a class="guide-card" href="guides/fields.html"><h3>表示項目を増やしたい</h3><p><code>&lt;template&gt;</code> に <code>data-kh</code> 要素を追加する。</p></a>
+      <a class="guide-card" href="guides/model.html"><h3>元データを加工したい</h3><p><code>beforeCommitComment()</code> で role、notice、typing HTML を作る。</p></a>
+      <a class="guide-card" href="guides/settings.html"><h3>設定 UI を増やしたい</h3><p><code>manifest.json</code> の key を CSS 変数、class、callback へつなぐ。</p></a>
+      <a class="guide-card" href="guides/themes.html"><h3>テーマを増やしたい</h3><p><code>THEME_LABELS</code>、<code>themeAssets</code>、CSS の theme selector を揃える。</p></a>
+      <a class="guide-card" href="guides/effects.html"><h3>一時効果を付けたい</h3><p><code>afterBindComment()</code> と <code>context.effects</code> で lifecycle に乗せる。</p></a>
+    </div>
+  </section>
+
+  <section id="rules">
+    <h2>分担ルール</h2>
+    <div class="grid">
+      <div class="box"><h3>HTML はカード構造</h3><p>DOM 階層、表示順、<code>data-kh</code> の置き場所を決めます。</p></div>
+      <div class="box"><h3>CSS は多層表現</h3><p>背景、左レール、色、animation は CSS に寄せます。</p></div>
+      <div class="box"><h3>JS は派生値</h3><p>DOM を作らず、HTML が読むための <code>display.*</code> を作ります。</p></div>
+      <div class="box"><h3>manifest は作者 UI</h3><p>ユーザーに触らせたい設定だけを定義します。</p></div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

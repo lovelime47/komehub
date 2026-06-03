@@ -1,0 +1,143 @@
+{
+  "id": "com.comment-hub.template.ticker-renderless",
+  "name": "ticker-renderless",
+  "displayName": "横流れ",
+  "version": "1.0.0",
+  "obsHint": "歌枠向け。OBS幅 フルサイズ推奨。グロー付きの横流れコメント表示",
+  "commonLayout": false,
+  "fonts": ["M PLUS Rounded 1c", "Noto Sans JP"],
+  "exportPolicy": {
+    "allowTemplateExport": true,
+    "note": "このテンプレートの HTML / CSS / JS は Live Comment Hub 用のオリジナル素材です。"
+  },
+  "uiSchema": [
+    {
+      "key": "maxComments",
+      "type": "slider",
+      "label": "最大表示数",
+      "min": 3,
+      "max": 20,
+      "step": 1,
+      "default": 8
+    },
+    {
+      "key": "positionY",
+      "type": "slider",
+      "label": "表示位置（縦）",
+      "min": -100,
+      "max": 100,
+      "step": 1,
+      "default": 0,
+      "suffix": "px"
+    },
+    {
+      "key": "fontSize",
+      "type": "slider",
+      "label": "文字サイズ",
+      "min": 14,
+      "max": 60,
+      "default": 20,
+      "suffix": "px"
+    },
+    {
+      "key": "showName",
+      "type": "toggle",
+      "label": "名前表示",
+      "default": true,
+      "onLabel": "表示",
+      "offLabel": "非表示"
+    },
+    {
+      "key": "showBadge",
+      "type": "toggle",
+      "label": "メンバーバッジ表示",
+      "default": false,
+      "onLabel": "表示",
+      "offLabel": "非表示"
+    },
+    {
+      "key": "namePosition",
+      "type": "buttons",
+      "label": "名前の位置",
+      "options": [
+        { "value": "top", "label": "上" },
+        { "value": "bottom", "label": "下" }
+      ],
+      "default": "bottom"
+    },
+    {
+      "key": "nameColor",
+      "type": "color",
+      "label": "名前の色",
+      "default": "#ffffff"
+    },
+    {
+      "key": "textColor",
+      "type": "color",
+      "label": "コメントの色",
+      "default": "#ffffff"
+    },
+    {
+      "key": "memberColor",
+      "type": "toggle",
+      "label": "メンバーシップ色分け",
+      "default": false,
+      "onLabel": "ON",
+      "offLabel": "OFF"
+    },
+    {
+      "key": "memberColorValue",
+      "type": "color",
+      "label": "メンバーの名前色",
+      "default": "#2ba640",
+      "showIf": { "key": "memberColor", "value": true }
+    },
+    {
+      "key": "glowIntensity",
+      "type": "slider",
+      "label": "光の強さ",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "default": 50,
+      "suffix": "%"
+    },
+    {
+      "key": "glowColor",
+      "type": "buttons",
+      "label": "グローカラー",
+      "linkedColor": "glowCustomColor",
+      "options": [
+        { "value": "pink", "label": "ピンク", "hex": "#ff64b4" },
+        { "value": "cyan", "label": "シアン", "hex": "#00dcff" },
+        { "value": "gold", "label": "ゴールド", "hex": "#ffc832" },
+        { "value": "green", "label": "グリーン", "hex": "#64ff64" },
+        { "value": "silver", "label": "シルバー", "hex": "#c8d2dc" }
+      ],
+      "default": "cyan"
+    },
+    {
+      "key": "glowCustomColor",
+      "type": "color",
+      "label": "カスタムカラー",
+      "default": "#00dcff"
+    },
+    {
+      "key": "animSpeed",
+      "type": "buttons",
+      "label": "アニメーション速度",
+      "options": [
+        { "value": "slow", "label": "ゆっくり" },
+        { "value": "normal", "label": "ふつう" },
+        { "value": "fast", "label": "はやい" }
+      ],
+      "default": "normal"
+    },
+    {
+      "key": "customCss",
+      "type": "textarea",
+      "label": "カスタムCSS",
+      "default": "/* 全体の縦位置を調整 */\n/* #comments { bottom: 0px; } */\n\n/* コメント同士の横間隔を調整 */\n/* #track { gap: 24px; } */\n\n/* 名前とコメント本文の間隔を調整（名前が上にあるとき） */\n/* .meta-row { margin-bottom: 8px; } */\n\n/* 名前とコメント本文の間隔を調整（名前が下にあるとき） */\n/* .name-bottom .meta-row { margin-top: 10px; margin-bottom: 0; } */\n\n/* 名前文字のサイズや見た目を調整 */\n/* .name { font-size: 0.8em; } */\n\n/* メンバーバッジの大きさを調整 */\n/* .badge { height: 1.1em; } */\n\n/* コメント本文の行間や字間を調整 */\n/* .text { line-height: 1.5; letter-spacing: 0.02em; } */\n\n/* スパチャだけ少し大きく表示 */\n/* .comment.is-superchat { font-size: 1.2em; } */"
+    }
+  ]
+}

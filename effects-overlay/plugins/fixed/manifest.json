@@ -1,0 +1,176 @@
+{
+  "id": "com.comment-hub.fixed",
+  "version": "1.0.0",
+  "name": "固定表示",
+  "emoji": "📌",
+  "entry": "fixed.js",
+  "globalName": "Fixed",
+  "interface": {
+    "methods": [
+      "show"
+    ],
+    "hasPause": true
+  },
+  "defaultParams": {
+    "templateStyle": "stamp",
+    "brandColor": "#5eead4",
+    "stampShape": "circle",
+    "stampImage": "",
+    "stampFlicker": true,
+    "stampBackboard": true,
+    "stampScrews": true,
+    "stampReflection": true
+  },
+  "dependencies": [],
+  "migrations": {},
+  "uiSchema": [
+    {
+      "key": "templateStyle",
+      "type": "buttons",
+      "label": "見た目テンプレート",
+      "default": "stamp",
+      "options": [
+        { "value": "stamp", "label": "ネオンスタンプ" },
+        { "value": "treasure", "label": "宝箱" }
+      ]
+    },
+    {
+      "key": "displayMessage",
+      "type": "textarea",
+      "label": "歓迎メッセージ (ネオンスタンプ系)",
+      "default": "",
+      "placeholder": "初見さんいらっしゃい！",
+      "hint": "ネオン管で大きく光る歓迎文。空欄の場合は「初見さんいらっしゃい！」が表示されます。",
+      "showIf": { "key": "templateStyle", "value": "stamp" }
+    },
+    {
+      "key": "brandColor",
+      "type": "buttons",
+      "label": "ブランドカラー (ネオンスタンプ系)",
+      "default": "#5eead4",
+      "options": [
+        { "value": "#5eead4", "label": "Teal" },
+        { "value": "#5ed5ff", "label": "Cyan" },
+        { "value": "#5dffc8", "label": "Mint" },
+        { "value": "#ff6b9d", "label": "Hot Pink" },
+        { "value": "#f9a8d4", "label": "Pink" },
+        { "value": "#fbbf24", "label": "Gold" },
+        { "value": "#b788ff", "label": "Lavender" },
+        { "value": "#a78bfa", "label": "Purple" },
+        { "value": "#ffffff", "label": "White" }
+      ],
+      "showIf": { "key": "templateStyle", "value": "stamp" }
+    },
+    {
+      "key": "stampShape",
+      "type": "buttons",
+      "label": "エンブレム形状 (ネオンスタンプ系)",
+      "default": "circle",
+      "options": [
+        { "value": "circle",    "label": "円" },
+        { "value": "heart",     "label": "ハート" },
+        { "value": "star",      "label": "星" },
+        { "value": "sakura",    "label": "桜" },
+        { "value": "crescent",  "label": "三日月" },
+        { "value": "crown",     "label": "王冠" },
+        { "value": "paw",       "label": "肉球" },
+        { "value": "snowflake", "label": "雪結晶" }
+      ],
+      "showIf": { "key": "templateStyle", "value": "stamp" }
+    },
+    {
+      "key": "stampImage",
+      "type": "image",
+      "label": "エンブレム画像 (ネオンスタンプ系・形状より優先)",
+      "hint": "透過 PNG / SVG のモチーフを白の線画で描くと、形状と同じようにブランドカラーで発光します。色や背景は塗らないでください（白＝管の光、透過＝消灯部分）。",
+      "showIf": { "key": "templateStyle", "value": "stamp" }
+    },
+    {
+      "key": "stampFlicker",
+      "type": "toggle",
+      "label": "持続フリッカー (ネオンスタンプ系)",
+      "default": true,
+      "onLabel": "ON — 蛍光管チラつき",
+      "offLabel": "OFF — 安定発光",
+      "showIf": { "key": "templateStyle", "value": "stamp" }
+    },
+    {
+      "key": "stampBackboard",
+      "type": "toggle",
+      "label": "アクリルパネル (ネオンスタンプ系)",
+      "default": true,
+      "onLabel": "ON — 看板パネル",
+      "offLabel": "OFF — 管のみ（背景透過）",
+      "showIf": { "key": "templateStyle", "value": "stamp" }
+    },
+    {
+      "key": "stampScrews",
+      "type": "toggle",
+      "label": "取り付けネジ (ネオンスタンプ系)",
+      "default": true,
+      "onLabel": "ON — 四隅にネジ",
+      "offLabel": "OFF",
+      "showIf": { "key": "templateStyle", "value": "stamp" }
+    },
+    {
+      "key": "stampReflection",
+      "type": "toggle",
+      "label": "下方向の反射 (ネオンスタンプ系)",
+      "default": true,
+      "onLabel": "ON",
+      "offLabel": "OFF",
+      "showIf": { "key": "templateStyle", "value": "stamp" }
+    },
+    {
+      "key": "scale",
+      "type": "slider",
+      "label": "サイズ",
+      "min": 10,
+      "max": 300,
+      "default": 100,
+      "suffix": "%"
+    },
+    {
+      "key": "posX",
+      "type": "slider",
+      "label": "表示位置 横（X）",
+      "min": 0,
+      "max": 100,
+      "default": 12,
+      "suffix": "%"
+    },
+    {
+      "key": "posY",
+      "type": "slider",
+      "label": "表示位置 縦（Y）",
+      "min": 0,
+      "max": 100,
+      "default": 25,
+      "suffix": "%"
+    },
+    {
+      "key": "stayDuration",
+      "type": "slider",
+      "label": "表示時間 (ネオンスタンプ系)",
+      "min": 1000,
+      "max": 60000,
+      "step": 500,
+      "default": 5500,
+      "suffix": "ms",
+      "hint": "宝箱は演出の尺が固定のため、この設定は適用されません。",
+      "showIf": { "key": "templateStyle", "value": "stamp" }
+    },
+    {
+      "key": "noOverlap",
+      "type": "toggle",
+      "label": "重複防止",
+      "default": true,
+      "onLabel": "ON — 空きがなければキュー",
+      "offLabel": "OFF — 重複を許可"
+    }
+  ],
+  "badgeColor": {
+    "bg": "#312e81",
+    "fg": "#a78bfa"
+  }
+}

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>表示項目を増やす - browser-card-renderless</title>
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow"><a href="../structure.html">structure</a> / fields</p>
+    <h1>表示項目を増やす</h1>
+    <p class="lead">表示項目は <code>index.html</code> の <code>&lt;template id="comment-template"&gt;</code> に追加します。</p>
+  </header>
+
+  <section>
+    <h2><code>data-kh</code> の考え方</h2>
+    <div class="box">
+      <p><code>data-kh="name"</code> は <code>model.name</code>、<code>data-kh="display.notice"</code> は <code>model.display.notice</code> を読みます。</p>
+      <pre><code>&lt;span class="name" data-kh="name"&gt;&lt;/span&gt;
+&lt;div class="notice" data-kh="display.notice" data-kh-empty="hide"&gt;&lt;/div&gt;
+&lt;div class="comment-text" data-kh="display.html" data-kh-mode="html"&gt;&lt;/div&gt;</code></pre>
+    </div>
+  </section>
+
+  <section>
+    <h2><code>data-kh-empty="hide"</code> の意味</h2>
+    <div class="box">
+      <p>値が空のときに要素ごと非表示にします。role、notice、amount、avatar、badge、sticker のようにコメントごとに有無が変わる項目へ付けます。</p>
+      <pre><code>&lt;span class="role-pill" data-kh="display.role" data-kh-empty="hide"&gt;&lt;/span&gt;</code></pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>例: コメント時刻を追加する</h2>
+    <div class="steps">
+      <div class="step">
+        <h3>HTML に表示場所を追加する</h3>
+        <pre><code>&lt;div class="sub-line"&gt;
+  &lt;span class="theme-label" data-kh="display.themeLabel"&gt;&lt;/span&gt;
+  &lt;span class="time" data-kh="display.timeText" data-kh-empty="hide"&gt;&lt;/span&gt;
+  &lt;span class="amount" data-kh="amount" data-kh-empty="hide"&gt;&lt;/span&gt;
+&lt;/div&gt;</code></pre>
+      </div>
+      <div class="step">
+        <h3>JS で値を作る</h3>
+        <pre><code>display: {
+  timeText: rawComment.timestamp || '',
+  html: buildTypingHtml(rawComment, prevModel),
+  role: roleLabel(rawComment),
+  notice: noticeLabel(rawComment),
+  themeKey: themeKey,
+  themeLabel: THEME_LABELS[themeKey] || 'LIVE'
+}</code></pre>
+      </div>
+      <div class="step">
+        <h3>CSS を追加する</h3>
+        <pre><code>.time {
+  color: color-mix(in srgb, var(--theme-a) 70%, #344);
+  font-size: 0.72em;
+}</code></pre>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

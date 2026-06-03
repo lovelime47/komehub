@@ -1,0 +1,3 @@
+.comment-move {
+  transition: all var(--lcv-move-duration) var(--lcv-move-easing) !important;
+}

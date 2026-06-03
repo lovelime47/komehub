@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>game-compact 構造解説</title>
+  <style>
+    body { margin: 0; padding: 32px; font-family: system-ui, sans-serif; line-height: 1.7; color: #dbeafe; background: #0f172a; }
+    main { max-width: 900px; margin: 0 auto; }
+    h1, h2 { color: #f8fafc; }
+    code { background: #1e293b; color: #bfdbfe; padding: 2px 5px; border-radius: 4px; }
+    pre { background: #020617; color: #dbeafe; padding: 16px; overflow: auto; border-radius: 8px; border: 1px solid #334155; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    th, td { border: 1px solid #334155; padding: 8px 10px; vertical-align: top; }
+    th { background: #1e293b; color: #f8fafc; }
+    .note { border-left: 4px solid #38bdf8; padding: 10px 14px; background: rgba(56,189,248,0.08); }
+  </style>
+</head>
+<body>
+  <main>
+    <p>effects-overlay/templates/game-compact/structure.html</p>
+    <h1>game-compact 構造解説</h1>
+    <p>
+      <code>game-compact</code> はゲーム配信のデフォルトテンプレートであり、
+      Render 実装の最小サンプルです。複雑な独自処理を持たず、
+      <code>runtime.starters.list()</code> に描画先、コメント行テンプレート、設定の接続だけを渡します。
+    </p>
+
+    <h2>ファイルの役割</h2>
+    <table>
+      <tr><th>ファイル</th><th>役割</th></tr>
+      <tr><td><code>index.html</code></td><td><code>#comments</code> だけを置く最小の入口です。</td></tr>
+      <tr><td><code>script.js</code></td><td>コメント行の <code>&lt;template&gt;</code> を作り、runtime に登録します。</td></tr>
+      <tr><td><code>style.css</code></td><td>ゲーム画面を隠しにくい、背景なしの軽い見た目を定義します。</td></tr>
+      <tr><td><code>manifest.json</code></td><td>設定 UI に出す項目とデフォルト値を定義します。</td></tr>
+    </table>
+
+    <h2>最小構造</h2>
+    <pre><code>&lt;div id="comments"&gt;&lt;/div&gt;
+&lt;script src="script.js"&gt;&lt;/script&gt;</code></pre>
+    <p>
+      HTML にコメント行を直接書かないのがポイントです。
+      1 コメント分の DOM は <code>script.js</code> の <code>&lt;template&gt;</code> で作ります。
+    </p>
+
+    <h2>data-kh の意味</h2>
+    <table>
+      <tr><th>属性</th><th>入る内容</th></tr>
+      <tr><td><code>data-kh="avatar"</code></td><td>投稿者アイコン画像。</td></tr>
+      <tr><td><code>data-kh="badge"</code></td><td>メンバーバッジなど。</td></tr>
+      <tr><td><code>data-kh="name"</code></td><td>表示名。</td></tr>
+      <tr><td><code>data-kh="amount"</code></td><td>スパチャ金額。</td></tr>
+      <tr><td><code>data-kh="membershipHeader"</code></td><td>メンバー加入などの見出し。</td></tr>
+      <tr><td><code>data-kh="text"</code></td><td>コメント本文。YouTube カスタム絵文字もここに入ります。</td></tr>
+      <tr><td><code>data-kh="sticker"</code></td><td>ステッカー画像。</td></tr>
+    </table>
+
+    <h2>設定の流れ</h2>
+    <p>
+      <code>manifest.json</code> の <code>uiSchema</code> にある key を、
+      <code>script.js</code> の <code>config.cssVars</code> / <code>toggleCssVars</code> /
+      <code>toggleClasses</code> へ接続します。
+      CSS はその変数や class を読むだけにしておくと、Render のサンプルとして理解しやすくなります。
+    </p>
+
+    <div class="note">
+      新しい最小テンプレートを作る場合は、このテンプレートを複製し、
+      <code>manifest.json</code> の ID / 表示名と、<code>style.css</code> の見た目から変更してください。
+    </div>
+  </main>
+</body>
+</html>

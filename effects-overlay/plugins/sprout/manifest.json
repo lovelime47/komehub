@@ -1,0 +1,166 @@
+{
+  "id": "com.comment-hub.sprout",
+  "version": "1.5.0",
+  "name": "芽吹き",
+  "emoji": "🌱",
+  "entry": "sprout.js",
+  "globalName": "Sprout",
+  "interface": {
+    "methods": [
+      "show"
+    ],
+    "hasPause": true
+  },
+  "defaultAssets": [],
+  "defaultParams": {
+    "origin": "bottom",
+    "height": 30,
+    "stayDuration": 3000,
+    "duration": 400
+  },
+  "dependencies": [],
+  "migrations": {
+    "1.1.0": [],
+    "1.2.0": [],
+    "1.3.0": [],
+    "1.4.0": [],
+    "1.5.0": []
+  },
+  "uiSchema": [
+    {
+      "key": "design",
+      "type": "buttons",
+      "label": "デザイン",
+      "default": "bud",
+      "options": [
+        { "value": "bud", "label": "新芽 (緑系・植物)" },
+        { "value": "holo", "label": "ホログラム (虹色・SF)" },
+        { "value": "gacha", "label": "ガチャカプセル (かわいい)" },
+        { "value": "ticker", "label": "テロップバー (放送風)" },
+        { "value": "wand", "label": "魔法ステッキ" }
+      ]
+    },
+    {
+      "key": "centerExclusion",
+      "type": "slider",
+      "label": "中央の表示禁止幅",
+      "min": 0,
+      "max": 80,
+      "default": 0,
+      "suffix": "%"
+    },
+    {
+      "key": "bgOpacity",
+      "type": "slider",
+      "label": "背景の濃さ",
+      "min": 0,
+      "max": 100,
+      "default": 0,
+      "suffix": "%",
+      "showIf": { "key": "design", "value": "wand" }
+    },
+    { "key": "sym1Enabled", "type": "toggle", "label": "使う", "default": true, "onLabel": "ON", "offLabel": "OFF", "group": "🌙 シンボル1", "showIf": { "key": "design", "value": "wand" } },
+    { "key": "sym1Emoji", "type": "text", "label": "絵文字", "default": "🌙", "group": "🌙 シンボル1", "showIf": { "key": "design", "value": "wand" } },
+    { "key": "sym1Image", "type": "image", "label": "画像 (絵文字より優先)", "group": "🌙 シンボル1", "showIf": { "key": "design", "value": "wand" } },
+    { "key": "sym1Color", "type": "color", "label": "色", "default": "#ffd700", "group": "🌙 シンボル1", "showIf": { "key": "design", "value": "wand" } },
+    { "key": "sym2Enabled", "type": "toggle", "label": "使う", "default": true, "onLabel": "ON", "offLabel": "OFF", "group": "⭐ シンボル2", "showIf": { "key": "design", "value": "wand" } },
+    { "key": "sym2Emoji", "type": "text", "label": "絵文字", "default": "⭐", "group": "⭐ シンボル2", "showIf": { "key": "design", "value": "wand" } },
+    { "key": "sym2Image", "type": "image", "label": "画像 (絵文字より優先)", "group": "⭐ シンボル2", "showIf": { "key": "design", "value": "wand" } },
+    { "key": "sym2Color", "type": "color", "label": "色", "default": "#ffe54c", "group": "⭐ シンボル2", "showIf": { "key": "design", "value": "wand" } },
+    { "key": "sym3Enabled", "type": "toggle", "label": "使う", "default": true, "onLabel": "ON", "offLabel": "OFF", "group": "💖 シンボル3", "showIf": { "key": "design", "value": "wand" } },
+    { "key": "sym3Emoji", "type": "text", "label": "絵文字", "default": "💖", "group": "💖 シンボル3", "showIf": { "key": "design", "value": "wand" } },
+    { "key": "sym3Image", "type": "image", "label": "画像 (絵文字より優先)", "group": "💖 シンボル3", "showIf": { "key": "design", "value": "wand" } },
+    { "key": "sym3Color", "type": "color", "label": "色", "default": "#ff4d8d", "group": "💖 シンボル3", "showIf": { "key": "design", "value": "wand" } },
+    { "key": "sym4Enabled", "type": "toggle", "label": "使う", "default": true, "onLabel": "ON", "offLabel": "OFF", "group": "🎵 シンボル4", "showIf": { "key": "design", "value": "wand" } },
+    { "key": "sym4Emoji", "type": "text", "label": "絵文字", "default": "🎵", "group": "🎵 シンボル4", "showIf": { "key": "design", "value": "wand" } },
+    { "key": "sym4Image", "type": "image", "label": "画像 (絵文字より優先)", "group": "🎵 シンボル4", "showIf": { "key": "design", "value": "wand" } },
+    { "key": "sym4Color", "type": "color", "label": "色", "default": "#c77dff", "group": "🎵 シンボル4", "showIf": { "key": "design", "value": "wand" } },
+    { "key": "sym5Enabled", "type": "toggle", "label": "使う", "default": true, "onLabel": "ON", "offLabel": "OFF", "group": "✨ シンボル5", "showIf": { "key": "design", "value": "wand" } },
+    { "key": "sym5Emoji", "type": "text", "label": "絵文字", "default": "✨", "group": "✨ シンボル5", "showIf": { "key": "design", "value": "wand" } },
+    { "key": "sym5Image", "type": "image", "label": "画像 (絵文字より優先)", "group": "✨ シンボル5", "showIf": { "key": "design", "value": "wand" } },
+    { "key": "sym5Color", "type": "color", "label": "色", "default": "#a5f3fc", "group": "✨ シンボル5", "showIf": { "key": "design", "value": "wand" } },
+    {
+      "key": "normalColor",
+      "type": "buttons",
+      "label": "通常コメントの色",
+      "default": "cyan",
+      "showIf": { "key": "design", "value": "ticker" },
+      "options": [
+        { "value": "cyan", "label": "シアン" },
+        { "value": "silver", "label": "シルバー" },
+        { "value": "gold", "label": "ゴールド" },
+        { "value": "magenta", "label": "マゼンタ" },
+        { "value": "green", "label": "グリーン" }
+      ]
+    },
+    {
+      "key": "tickerWidth",
+      "type": "slider",
+      "label": "テロップ幅",
+      "min": 30,
+      "max": 100,
+      "default": 55,
+      "suffix": "%",
+      "showIf": { "key": "design", "value": "ticker" }
+    },
+    {
+      "key": "scale",
+      "type": "slider",
+      "label": "サイズ",
+      "min": 10,
+      "max": 300,
+      "default": 100,
+      "suffix": "%"
+    },
+    {
+      "key": "stayDuration",
+      "type": "slider",
+      "label": "表示時間",
+      "min": 500,
+      "max": 10000,
+      "step": 100,
+      "default": 3000,
+      "suffix": "ms"
+    },
+    {
+      "key": "animSpeed",
+      "type": "slider",
+      "label": "表示スピード",
+      "min": 50,
+      "max": 1500,
+      "step": 50,
+      "default": 400,
+      "suffix": "ms"
+    },
+    {
+      "key": "originX",
+      "type": "slider",
+      "label": "表示位置 横（X）",
+      "min": 0,
+      "max": 100,
+      "default": 50,
+      "suffix": "%"
+    },
+    {
+      "key": "displayWidth",
+      "type": "slider",
+      "label": "表示領域",
+      "min": 10,
+      "max": 100,
+      "default": 80,
+      "suffix": "%"
+    },
+    {
+      "key": "noOverlap",
+      "type": "toggle",
+      "label": "重複防止",
+      "default": true,
+      "onLabel": "ON — 空きがなければキュー",
+      "offLabel": "OFF — 重複を許可"
+    }
+  ],
+  "badgeColor": {
+    "bg": "#052e16",
+    "fg": "#4ade80"
+  }
+}

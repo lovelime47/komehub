@@ -1,0 +1,12 @@
+.lcv-fade-out {
+  animation: lcv-ext-fade-out var(--lcv-enter-duration) var(--lcv-enter-easing) forwards;
+}
+
+@keyframes lcv-ext-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}

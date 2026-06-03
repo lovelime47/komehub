@@ -1,0 +1,178 @@
+{
+  "id": "com.comment-hub.firework",
+  "version": "2.0.0",
+  "name": "花火",
+  "emoji": "🎆",
+  "entry": "firework.js",
+  "globalName": "Firework",
+  "interface": {
+    "methods": [
+      "fire"
+    ],
+    "hasPause": false
+  },
+  "defaultAssets": [],
+  "defaultParams": {
+    "duration": 6000,
+    "tier_blue": ["small"],
+    "tier_teal": ["small"],
+    "tier_green": ["small", "medium"],
+    "tier_yellow": ["medium"],
+    "tier_orange": ["medium", "large"],
+    "tier_magenta": ["large"],
+    "tier_red": ["large", "grand"],
+    "nonScShows": ["small", "medium"],
+    "fwOpacity": 80,
+    "fwNoZone": true,
+    "fwNoZoneWidth": 36
+  },
+  "dependencies": [],
+  "migrations": {},
+  "uiSchema": [
+    {
+      "key": "tier_blue",
+      "type": "checks",
+      "label": "🔵 ¥100–199",
+      "hint": "スパチャ金額帯ごとに発射する花火ショーを選びます。複数選ぶと発火時にランダムで1つ。空にするとその帯は花火なし。",
+      "default": ["small"],
+      "options": [
+        { "value": "small", "label": "小" },
+        { "value": "medium", "label": "中" },
+        { "value": "large", "label": "大" },
+        { "value": "grand", "label": "特大" }
+      ],
+      "group": "スパチャ金額帯ごとの花火"
+    },
+    {
+      "key": "tier_teal",
+      "type": "checks",
+      "label": "🩵 ¥200–499",
+      "default": ["small"],
+      "options": [
+        { "value": "small", "label": "小" },
+        { "value": "medium", "label": "中" },
+        { "value": "large", "label": "大" },
+        { "value": "grand", "label": "特大" }
+      ],
+      "group": "スパチャ金額帯ごとの花火"
+    },
+    {
+      "key": "tier_green",
+      "type": "checks",
+      "label": "🟢 ¥500–999",
+      "default": ["small", "medium"],
+      "options": [
+        { "value": "small", "label": "小" },
+        { "value": "medium", "label": "中" },
+        { "value": "large", "label": "大" },
+        { "value": "grand", "label": "特大" }
+      ],
+      "group": "スパチャ金額帯ごとの花火"
+    },
+    {
+      "key": "tier_yellow",
+      "type": "checks",
+      "label": "🟡 ¥1,000–1,999",
+      "default": ["medium"],
+      "options": [
+        { "value": "small", "label": "小" },
+        { "value": "medium", "label": "中" },
+        { "value": "large", "label": "大" },
+        { "value": "grand", "label": "特大" }
+      ],
+      "group": "スパチャ金額帯ごとの花火"
+    },
+    {
+      "key": "tier_orange",
+      "type": "checks",
+      "label": "🟠 ¥2,000–4,999",
+      "default": ["medium", "large"],
+      "options": [
+        { "value": "small", "label": "小" },
+        { "value": "medium", "label": "中" },
+        { "value": "large", "label": "大" },
+        { "value": "grand", "label": "特大" }
+      ],
+      "group": "スパチャ金額帯ごとの花火"
+    },
+    {
+      "key": "tier_magenta",
+      "type": "checks",
+      "label": "🟣 ¥5,000–9,999",
+      "default": ["large"],
+      "options": [
+        { "value": "small", "label": "小" },
+        { "value": "medium", "label": "中" },
+        { "value": "large", "label": "大" },
+        { "value": "grand", "label": "特大" }
+      ],
+      "group": "スパチャ金額帯ごとの花火"
+    },
+    {
+      "key": "tier_red",
+      "type": "checks",
+      "label": "🔴 ¥10,000+",
+      "default": ["large", "grand"],
+      "options": [
+        { "value": "small", "label": "小" },
+        { "value": "medium", "label": "中" },
+        { "value": "large", "label": "大" },
+        { "value": "grand", "label": "特大" }
+      ],
+      "group": "スパチャ金額帯ごとの花火"
+    },
+    {
+      "key": "nonScShows",
+      "type": "checks",
+      "label": "非課金トリガー（キーワード/リアクション等）",
+      "hint": "金額が無い発火で使うショー。複数選ぶとランダム。",
+      "default": ["small", "medium"],
+      "options": [
+        { "value": "small", "label": "小" },
+        { "value": "medium", "label": "中" },
+        { "value": "large", "label": "大" },
+        { "value": "grand", "label": "特大" }
+      ],
+      "group": "その他"
+    },
+    {
+      "key": "fwOpacity",
+      "type": "slider",
+      "label": "花火の透明度",
+      "hint": "花火全体の不透明度。下げるほど配信画面が透けます。",
+      "min": 20,
+      "max": 100,
+      "step": 1,
+      "default": 80,
+      "suffix": "%",
+      "group": "表示"
+    },
+    {
+      "key": "fwNoZone",
+      "type": "toggle",
+      "label": "中心の発射禁止帯",
+      "hint": "画面中央を縦に避けて花火を左右へ出します（配信者やメイン映像を覆わない）。",
+      "default": true,
+      "onLabel": "ON",
+      "offLabel": "OFF",
+      "group": "表示"
+    },
+    {
+      "key": "fwNoZoneWidth",
+      "type": "slider",
+      "label": "禁止帯の幅",
+      "hint": "中央を空ける帯の幅（画面幅に対する割合）。",
+      "min": 0,
+      "max": 85,
+      "step": 1,
+      "default": 36,
+      "suffix": "%",
+      "showIf": { "key": "fwNoZone", "value": true },
+      "group": "表示"
+    }
+  ],
+  "badgeColor": {
+    "bg": "#4a1d00",
+    "fg": "#fbbf24"
+  }
+}

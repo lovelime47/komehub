@@ -1,0 +1,6939 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #0a1628;
+  color: #d8e8e8;
+  font-size: 14px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+
+}
+
+/* === header / #settings-btn / #setup-btn / #manual-btn / header h1 / #header-sub
+       / #connection / .input-group : commit 3 で削除 (新 .brand-* / .head-btn / .frame
+       / .conn-url を commit 4 で導入) === */
+/* .conn-url.is-hidden / #status-row.is-hidden は新 .conn-url 系で維持 */
+.conn-url.is-hidden,
+#status-row.is-hidden {
+  display: none !important;
+}
+
+/* ============================================================
+   UI 整理 Phase 1 (commit 4): 新 frame / panel-toggle / scene-col / cl-* / 互換ラッパー
+   設計: test/probe/ui-mock-base-005a-merge.html
+   ============================================================ */
+
+body { display: flex; flex-direction: column; min-height: 100vh; }
+button { font: inherit; cursor: pointer; border: 0; background: none; color: inherit; }
+
+/* --- header --- */
+header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 16px;
+  background: #0d1b2a;
+  border-bottom: 1px solid #1a3a4a;
+}
+.brand-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #00bcd4;
+  letter-spacing: -0.005em;
+}
+.brand-sub { font-size: 11px; color: #4a6a7a; }
+.brand-version {
+  font-size: 10px;
+  color: #4a6a7a;
+  font-family: ui-monospace, Consolas, monospace;
+  margin-left: 2px;
+}
+.head-spacer { flex: 1; }
+
+.panel-toggle-group {
+  display: inline-flex;
+  gap: 4px;
+  padding: 2px;
+  background: #06101e;
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+  align-self: center;
+}
+.panel-toggle {
+  height: 26px; padding: 0 12px;
+  border-radius: 4px;
+  background: transparent;
+  color: #6a8a9a;
+  font-size: 11.5px;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: inherit;
+  transition: all 0.12s;
+}
+.panel-toggle:hover { color: #d8e8e8; background: #0a1f33; }
+.panel-toggle.on {
+  background: rgba(0, 229, 255, 0.14);
+  color: #00e5ff;
+  border: 1px solid rgba(0, 188, 212, 0.5);
+  padding: 0 11px;
+}
+.panel-toggle .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #1a3a4a;
+}
+.panel-toggle.on .dot { background: #00e676; box-shadow: 0 0 6px rgba(0,230,118,0.5); }
+
+.conn-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 10.5px; padding: 4px 10px;
+  border-radius: 10px;
+  background: rgba(0, 230, 118, 0.14);
+  color: #00e676;
+  border: 1px solid rgba(0, 230, 118, 0.4);
+  font-weight: 600;
+  align-self: center;
+}
+.conn-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: #00e676; }
+
+.head-btn {
+  background: #1a2742;
+  border: 1px solid #1a3a4a;
+  color: #94a3b8;
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 5px;
+  align-self: center;
+  font-family: inherit;
+}
+.head-btn:hover { color: #00e5ff; border-color: #00bcd4; }
+.head-btn.icon-only { padding: 5px 8px; }
+
+/* --- main = 縦 stack --- */
+main {
+  flex: 1;
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+/* --- frame (= 接続/演出/cl の共通枠) --- */
+.frame {
+  background: #0d1b2a;
+  border: 1px solid #1a3a4a;
+  border-radius: 8px;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+.frame.hidden { display: none; }
+/* UI 整理 Phase 2-5: app-frame に editing class が付く時は viewport を占有 */
+.frame#app-frame.editing {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.frame#app-frame.editing .frame-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+/* editing 中は app-grid を hide してサブ画面を表示 (= renderer.js が個別 display 切替) */
+.frame#app-frame.editing .app-grid { display: none; }
+/* editing 中は cl-frame を強制 hide (= サブ画面が viewport を占有)。
+   ユーザーが panel-toggle で個別に hide 済の場合の `.hidden` は別経路で hide するため、
+   退出時に CSS 側だけ解除されてもユーザー状態は維持される。 */
+#app-frame.editing ~ #cl-frame { display: none; }
+/* editing 中は app-frame / cl-frame の panel-toggle を disable
+   (= サブ画面が viewport を占有しているので表示制御不要 + 押せると操作不能になるため)。
+   conn-frame の toggle は通常通り使える。 */
+body:has(#app-frame.editing) .panel-toggle[data-panel="app-frame"],
+body:has(#app-frame.editing) .panel-toggle[data-panel="cl-frame"] {
+  opacity: 0.4;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+.frame-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #112236;
+}
+.frame-eyebrow {
+  font-size: 10px; color: #5a6a78;
+  letter-spacing: 0.16em; text-transform: uppercase;
+}
+.frame-title { font-size: 13px; font-weight: 600; color: #d8e8e8; }
+.frame-meta {
+  margin-left: auto;
+  font-size: 10.5px;
+  color: #5a6a78;
+  font-family: ui-monospace, Consolas, monospace;
+}
+.frame-body { padding: 12px 14px; }
+
+/* --- conn-url (URL 入力 + 接続ボタン、A 確定色) --- */
+.conn-url {
+  display: flex; gap: 6px; margin-bottom: 8px;
+}
+.conn-url input {
+  flex: 1;
+  background: #081421;
+  border: 1px solid #1a3a4a;
+  color: #94a3b8;
+  padding: 7px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: ui-monospace, Consolas, monospace;
+  outline: none;
+}
+.conn-url input:focus { border-color: #00bcd4; color: #d8e8e8; }
+.conn-url input:disabled { opacity: 0.6; }
+.conn-url-action {
+  background: #1a2742;
+  border: 1px solid #1a3a4a;
+  color: #94a3b8;
+  padding: 7px 14px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  font-family: inherit;
+  display: inline-flex; align-items: center; gap: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.conn-url-action:hover { color: #00e5ff; border-color: #00bcd4; }
+.conn-url-action.connected {
+  background: rgba(0,230,118,0.10);
+  color: #00e676;
+  border-color: rgba(0,230,118,0.4);
+}
+.conn-url-action:disabled { opacity: 0.6; cursor: not-allowed; }
+
+#status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #6a8a9a;
+}
+#status { display: flex; align-items: center; gap: 6px; }
+
+/* --- app-frame レイアウト --- */
+.app-grid {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 12px;
+  min-height: 0;
+}
+.scene-col { display: flex; flex-direction: column; gap: 6px; }
+.scene-col-label {
+  font-size: 10px; color: #5a6a78;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.scene-col-divider {
+  border: 0;
+  border-top: 1px solid #112236;
+  margin: 6px 0 4px;
+}
+.scene-action {
+  display: flex; align-items: center; gap: 6px;
+  background: transparent;
+  border: 1px solid #1a3a4a;
+  border-radius: 5px;
+  padding: 6px 10px;
+  color: #d8e8e8;
+  font-size: 11.5px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.scene-action:hover { background: #0a1f33; border-color: rgba(0,188,212,0.4); }
+.scene-action.add { border-style: dashed; color: #94a3b8; justify-content: center; }
+.scene-action.add:hover { color: #00bcd4; border-color: #00bcd4; }
+.scene-action.danger { color: #fca5a5; border-color: rgba(239,68,68,0.4); }
+.scene-action.danger:hover { background: #2a1010; }
+.scene-action.danger.active {
+  background: rgba(239, 68, 68, 0.45);
+  color: #fff;
+  border-color: rgba(239, 68, 68, 1);
+  font-weight: 600;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.5), 0 0 12px rgba(239, 68, 68, 0.5);
+  animation: scene-action-danger-pulse 1.8s ease-in-out infinite;
+}
+@keyframes scene-action-danger-pulse {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.5), 0 0 8px rgba(239, 68, 68, 0.4); }
+  50%      { box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.65), 0 0 18px rgba(239, 68, 68, 0.7); }
+}
+.scene-action:disabled { opacity: 0.5; cursor: default; }
+
+.scene-content { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+/* --- content-section (= SCENE / GLOBAL の見出し付き枠) --- */
+.content-section { display: flex; flex-direction: column; gap: 8px; }
+.content-section-head {
+  display: flex; align-items: baseline; gap: 8px;
+  padding: 0 0 6px;
+  border-bottom: 1px solid #112236;
+}
+.content-section-eyebrow {
+  font-size: 10px; color: #5a6a78;
+  letter-spacing: 0.16em; text-transform: uppercase;
+}
+.content-section-title {
+  font-size: 14px; font-weight: 700; color: #d8e8e8;
+}
+.content-section-hint {
+  font-size: 10.5px; color: #5a6a78;
+  font-family: ui-monospace, Consolas, monospace;
+  margin-left: auto;
+}
+.content-section.global { margin-top: 12px; }
+.content-section.global .content-section-eyebrow { color: #fbbf24; }
+.content-section.global .content-section-hint { color: #fbbf24; opacity: 0.7; }
+
+/* SCENE 右パネルヘッダを左リストの選択中シーンと「同じ識別色」で結ぶ
+   (= 右に表示中のシーンが左リストのどれかを色で対応付け、操作対象の取り違えを防ぐ)。
+   --scene-color は renderApps が選択中シーンの色を head に inline 付与する。
+   GLOBAL セクション (= amber) には適用しない。 */
+#apps-section .content-section:not(.global) .content-section-head {
+  border-left: 3px solid var(--scene-color, #00e5ff);
+  padding-left: 12px;
+}
+#apps-section .content-section:not(.global) .content-section-eyebrow { color: var(--scene-color, #00e5ff); }
+#apps-scene-name { color: var(--scene-color, #d8e8e8); }
+/* SCENE セクションのカードタイトル (.unit-name) もシーン識別色にして右パネル全体を
+   シーン色でテーマ付けする (= 右に表示中のシーンが左のどれか一目で分かる、本採用)。
+   GLOBAL カード (amber) は別 section なので非対象。 */
+#apps-section .content-section:not(.global) .unit-name { color: var(--scene-color, #00bcd4); }
+
+/* --- unit-card (= 演出/テンプレ/TTS の共通カード) --- */
+.unit-card {
+  background: #06101e;
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+.unit-card.unit-card-global,
+.content-section.global .unit-card {
+  border-color: rgba(251, 191, 36, 0.25);
+  background: linear-gradient(180deg, rgba(251, 191, 36, 0.04), #06101e 70%);
+}
+.unit-card-row {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 6px;
+}
+.unit-card-row:last-child { margin-bottom: 0; }
+.unit-icon {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  background: #1a2742;
+  color: #00e5ff;
+  display: grid; place-items: center;
+  flex-shrink: 0;
+  border: 1px solid #1a3a4a;
+}
+.unit-card.unit-card-global .unit-icon,
+.content-section.global .unit-icon {
+  background: rgba(251, 191, 36, 0.10);
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.35);
+}
+.unit-icon svg { width: 14px; height: 14px; }
+.unit-name {
+  font-size: 13px; font-weight: 600; color: #00bcd4;
+  flex: 1; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.unit-card.unit-card-global .unit-name,
+.content-section.global .unit-name { color: #fbbf24; }
+.unit-badge {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: rgba(0, 188, 212, 0.15);
+  color: #00e5ff;
+  border: 1px solid rgba(0, 188, 212, 0.4);
+  white-space: nowrap;
+  font-family: ui-monospace, Consolas, monospace;
+}
+.unit-card.unit-card-global .unit-badge,
+.content-section.global .unit-badge {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.45);
+}
+.unit-actions { display: flex; gap: 6px; margin-left: auto; flex-shrink: 0; }
+.u-btn {
+  background: #1a2742;
+  border: 1px solid #1a3a4a;
+  color: #94a3b8;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-family: inherit;
+  display: inline-flex; align-items: center; gap: 4px;
+  cursor: pointer;
+  /* min-width / justify-content を base に置くことで .on / .off でボタン幅が変わらない。
+     ON テキスト 2 文字でも OFF 3 文字でも同一幅 (= 56px) で安定。 */
+  min-width: 56px;
+  justify-content: center;
+}
+.u-btn:hover { color: #d8e8e8; border-color: #2a4a5a; }
+.u-btn.on {
+  background: rgba(0, 229, 255, 0.18);
+  color: #00e5ff;
+  border-color: #00bcd4;
+}
+.u-btn.amber { color: #fbbf24; border-color: rgba(245, 158, 11, 0.5); }
+/* amber + active (= 一時停止中) は脈動して「今止まっている」 を強調する。
+   既定の .u-btn.on は cyan background なので amber と色が混じる問題があり、 専用 style で上書き。 */
+.u-btn.amber.on {
+  background: rgba(245, 158, 11, 0.28);
+  color: #fde047;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.5), 0 0 14px rgba(245, 158, 11, 0.55);
+  animation: u-btn-amber-pulse 1.4s ease-in-out infinite;
+  min-width: 76px;
+  justify-content: center;
+  font-weight: 600;
+}
+@keyframes u-btn-amber-pulse {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.5), 0 0 14px rgba(245, 158, 11, 0.55); }
+  50%      { box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.7), 0 0 22px rgba(245, 158, 11, 0.85); }
+}
+.u-btn.danger { color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); }
+.u-btn.ponout {
+  background: rgba(0, 188, 212, 0.10);
+  color: #00e5ff;
+  border-color: rgba(0, 188, 212, 0.5);
+}
+.u-btn.ponout:hover { background: rgba(0, 188, 212, 0.20); }
+
+.unit-url {
+  display: flex; align-items: center; gap: 6px;
+  background: #081421;
+  border: 1px solid #1a3a4a;
+  color: #5a6a78;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 10.5px;
+  font-family: ui-monospace, Consolas, monospace;
+  cursor: grab;
+  overflow: hidden;
+}
+.unit-url:hover { color: #00e5ff; border-color: #2a4a5a; }
+.unit-url svg { width: 11px; height: 11px; flex-shrink: 0; }
+.unit-url-text {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  flex: 1;
+}
+.unit-url .hint { color: #94a3b8; }
+
+/* --- cl-frame (コメント・リスナー panel) --- */
+/* UI 整理 Phase 2-6: cl-frame を main の flex 残高で広げ、内部 panel が overflow:auto
+   になるようにする (= cs-panel virtual scroll が main 親ではなく panel 内で完結) */
+.cl-frame { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.cl-tabs {
+  display: flex; gap: 4px; align-items: center;
+  border-bottom: 1px solid #1a3a4a;
+  padding: 0 14px;
+}
+.cl-tab {
+  background: transparent; border: 0;
+  color: #94a3b8;
+  padding: 9px 14px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.cl-tab:hover { color: #d8e8e8; }
+.cl-tab.active { color: #00e5ff; border-bottom-color: #00bcd4; }
+.cl-tab .ct {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 10px; opacity: 0.7;
+}
+.cl-tab .new-pin {
+  background: #00bcd4; color: #0a1628;
+  font-size: 9px; font-weight: 700;
+  padding: 1px 5px; border-radius: 3px;
+  letter-spacing: 0.04em;
+}
+.cl-tools { margin-left: auto; padding: 6px 0; display: flex; gap: 4px; }
+
+/* タブグループ (= 「現在配信」「過去」2 グループに分けて視覚分離する、2026-05-13) */
+.cl-tabs-group { display: inline-flex; align-items: center; gap: 2px; }
+.cl-tabs-group-label {
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #5a6a78;
+  padding: 0 6px 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  user-select: none;
+}
+/* グループ間の縦区切り (= cs-panel と現在配信の境目を明示) */
+.cl-tabs-divider {
+  display: inline-block;
+  width: 1px;
+  height: 18px;
+  background: #1a3a4a;
+  margin: 0 4px;
+}
+/* 「現在配信」グループのラベル色を cyan 系、 「過去」グループを 控えめなグレー系。
+   active タブ自身の cyan 化は元の .cl-tab.active を継続。 */
+.cl-tabs-live .cl-tabs-group-label { color: #4fb8c4; }
+.cl-tabs-past .cl-tabs-group-label { color: #6e7d8a; }
+.cl-tabs-past .cl-tab { color: #7a8898; }
+.cl-tabs-past .cl-tab:hover { color: #c8d8d8; }
+
+/* 接続中の pulse インジケーター (= cl-tabs-live.connected の時のみ animate) */
+.cl-tabs-group-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #475569;
+  flex-shrink: 0;
+  transition: background 0.18s;
+}
+.cl-tabs-live.connected .cl-tabs-group-pulse {
+  background: #22c55e;
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  animation: cl-tabs-live-pulse 1.4s ease-out infinite;
+}
+@keyframes cl-tabs-live-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); }
+  70% { box-shadow: 0 0 0 7px rgba(34, 197, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+/* 切断中 = 灰色〇 + 「未接続」テキスト。タブ自体は使えるが、グループ全体を
+   トーンダウンして「今は最新ではない」を示す。 */
+.cl-tabs-live.disconnected .cl-tabs-group-label {
+  color: #6e7d8a;
+}
+.cl-tabs-live.disconnected .cl-tabs-group-pulse {
+  background: #475569;
+  /* 接続中の pulse animation は class 競合で打ち消されるが念のため明示 */
+  animation: none;
+  box-shadow: none;
+}
+.cl-tabs-live.disconnected .cl-tab:not(.active) { color: #7a8898; opacity: 0.85; }
+
+/* リスナー検索 タブ (Phase 2a 基本機能) */
+.listener-search-panel {
+  display: flex;
+  flex-direction: column;
+}
+.listener-search-toolbar {
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #1a3a4a;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.listener-search-input {
+  flex: 1;
+  min-width: 200px;
+  background: #081421;
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: #d8e8e8;
+  font-size: 12px;
+  outline: none;
+}
+.listener-search-input:focus { border-color: #00bcd4; }
+.listener-search-sort {
+  background: #081421;
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+  padding: 6px 8px;
+  color: #d8e8e8;
+  font-size: 12px;
+  outline: none;
+}
+.listener-search-go {
+  background: #00bcd4;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 16px;
+  color: #0a1628;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.listener-search-go:hover { background: #00e5ff; }
+.listener-search-count {
+  margin-left: auto;
+  font-size: 10px;
+  color: #5a6a78;
+}
+/* フィルタ chip 行 (Phase 2b: ランク + タグ) */
+.listener-search-chips-row {
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 4px 0;
+  font-size: 11px;
+}
+.listener-search-chips-label {
+  flex-shrink: 0;
+  width: 44px;
+  padding-top: 4px;
+  color: #6e7d8a;
+  font-size: 10px;
+}
+.listener-search-chips {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.listener-search-chips:empty::after {
+  content: '(タグ無し)';
+  font-size: 10px;
+  color: #5a6a78;
+  padding: 4px 0;
+}
+.listener-search-chip {
+  background: transparent;
+  border: 1px solid #1a3a4a;
+  border-radius: 12px;
+  padding: 2px 10px;
+  color: #94a3b8;
+  font-size: 11px;
+  cursor: pointer;
+  user-select: none;
+}
+.listener-search-chip:hover {
+  border-color: #00bcd4;
+  color: #d8e8e8;
+}
+.listener-search-chip.active {
+  background: rgba(0, 188, 212, 0.18);
+  border-color: #00bcd4;
+  color: #00e5ff;
+}
+
+.listener-search-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+.listener-search-pagination {
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 0;
+  border-top: 1px solid #1a3a4a;
+  font-size: 11px;
+  color: #94a3b8;
+}
+.listener-search-pagination button {
+  background: transparent;
+  border: 1px solid #1a3a4a;
+  border-radius: 4px;
+  padding: 4px 12px;
+  color: #d8e8e8;
+  font-size: 11px;
+  cursor: pointer;
+}
+.listener-search-pagination button:hover:not(:disabled) {
+  background: rgba(0, 188, 212, 0.08);
+  border-color: #00bcd4;
+}
+.listener-search-pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cl-body {
+  background: #061018;
+  flex: 1;
+  min-height: 0;
+  /* display:flex を明示しないと内側 #comment-list / #gift-list の flex:1 が
+     効かず overflow-y:auto が空振り (= scroll listener が発火しないバグ)。
+     スクロール本体は内側リストに置く (= モバイル rh-list-wrap と同じ責務分離)。 */
+  display: flex;
+  flex-direction: column;
+  padding: 4px 8px;
+}
+/* UI 整理 Phase 2-6: cl-frame 内のすべての panel (= 各 cl-tab) が flex 残高を占有 */
+.cl-tab-panel.active { flex: 1; min-height: 0; }
+.cl-tab-panel.cs-panel.active,
+.cl-tab-panel.listener-mgr-tab-panel.active { overflow-y: auto; }
+/* リスナー / 配信ログ / I/O tab の中身が壁にひっつくのを防ぐ。
+   cs-panel は自身で padding:12px を持っているので影響なし。 */
+.cl-tab-panel.listener-mgr-tab-panel:not(.cs-panel) { padding: 12px; }
+/* リスナー tab だけ「toolbar / pagination は固定、#listener-mgr-list だけ
+   スクロール」の構造にする (= スクロールバーをセル領域だけに収める)。
+   他 tab (streams / io) は元の panel-wide overflow-y:auto のまま。 */
+.cl-tab-panel.listener-mgr-tab-panel[data-cl-tab="listeners"].active {
+  display: flex;
+  flex-direction: column;
+  overflow-y: visible;
+}
+.cl-tab-panel.listener-mgr-tab-panel[data-cl-tab="listeners"].active #listener-mgr-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.cl-placeholder {
+  color: #5a6a78;
+  text-align: center;
+  padding: 40px 16px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+/* (Phase 3-3 で kh-display-contents 互換ラッパーは廃止済) */
+
+/* --- footer --- */
+footer {
+  padding: 6px 16px;
+  background: #06101e;
+  border-top: 1px solid #1a3a4a;
+  display: flex; justify-content: space-between;
+  font-size: 10px; color: #5a6a78;
+  font-family: ui-monospace, Consolas, monospace;
+  letter-spacing: 0.04em;
+}
+
+/* ============================================================
+   既存セレクタの色 token 更新 (= モック寄り)
+   ============================================================ */
+
+#stream-info {
+  margin-top: 0;
+  padding: 10px 12px;
+  background: #06101e;
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #d8e8e8;
+}
+.stream-info-header {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+#stream-info-disconnect-btn {
+  margin-left: auto;
+  background: transparent;
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+#stream-info-disconnect-btn:hover { background: rgba(239, 68, 68, 0.10); }
+#stream-info-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.stream-info-titles {
+  flex: 1;
+  min-width: 0;
+}
+#stream-info-title {
+  font-size: 13px;
+  font-weight: bold;
+  color: #d8e8e8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#stream-info-channel {
+  font-size: 11px;
+  color: #6a8a9a;
+  margin-top: 2px;
+}
+#stream-info-channel-name { margin-right: 8px; }
+#stream-info-subscribers { color: #6a8a9a; }
+.stream-info-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  font-size: 11px;
+  color: #6a8a9a;
+  vertical-align: middle;
+}
+.stream-info-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #1a4a5a;
+}
+.stream-stat {
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  min-width: 60px;
+}
+.stream-stat .key {
+  color: #6a8a9a;
+  font-size: 10px;
+  margin-bottom: 2px;
+}
+.stream-stat span:not(.key) {
+  color: #d8e8e8;
+  font-weight: bold;
+  font-size: 13px;
+}
+/* 数値色分けは配信ログ (V3 密度小) のテーブル列色と統一: コメ=cyan / SC=amber /
+   peak=green / like=pink / 時間=dim。同時接続 / 開始は対応列が無いので
+   stream-info 内で固定 (cyan / 無色)。 */
+.stream-stat .val.cyan { color: #00e5ff; }
+.stream-stat .val.amber { color: #fbbf24; }
+.stream-stat .val.green { color: #00e676; }
+.stream-stat .val.pink { color: #f06292; }
+.stream-stat .val.dim { color: #5a6a78; }
+/* 概要欄サマリ: <details> をやめて inline span (= モック合意)。
+   stats line の末尾に並び、cyan で「クリックできるリンク」感を出す。 */
+#stream-info-summary {
+  align-self: center;
+  margin-left: auto;
+  font-size: 11px;
+  color: #00bcd4;
+  cursor: pointer;
+  user-select: none;
+}
+#stream-info-summary:hover { color: #00e5ff; }
+#stream-info-description {
+  display: none; /* JS が ▶/▼ クリックで表示/非表示を切替 */
+  margin-top: 6px;
+  padding: 8px;
+  background: #051022;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #94a3b8;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+#status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #6a8a9a;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot.disconnected {
+  background: #4a6a7a;
+}
+
+.dot.connected {
+  background: #00e676;
+}
+
+.dot.connecting {
+  background: #ffab40;
+}
+
+#update-bar {
+  padding: 8px 16px;
+  background: #0d2a3a;
+  border-bottom: 1px solid #1a4a5a;
+  font-size: 12px;
+  color: #00bcd4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#update-bar button {
+  padding: 4px 12px;
+  border: 1px solid #00bcd4;
+  border-radius: 4px;
+  background: #00bcd4;
+  color: #0a1628;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+#update-bar button:hover {
+  background: #26c6da;
+}
+
+#login-warning {
+  padding: 8px 16px;
+  background: #3a2a10;
+  border-bottom: 1px solid #5a4a20;
+  font-size: 12px;
+  color: #ffab40;
+}
+
+/* #apps-section は SCENE / GLOBAL の両 content-section をラップする ID hook
+   として残置 (= renderer.js が enter/leaveAppFrameSubsection 等で取得するため
+   selector としては必要)。padding / border-bottom は旧 sidebar レイアウト
+   時代の残骸で、Phase 1 再編後はカード下に変な線として見えるので撤去。
+   旧 h2 もカード形式になり不要なので撤去 (= DOM 自体既に無し)。 */
+#apps-section {
+  /* 視覚スタイル無し: 子の content-section が間隔を持つ */
+}
+
+.app-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.app-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.app-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.app-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #d8e8e8;
+}
+
+.app-desc {
+  font-size: 11px;
+  color: #4a6a7a;
+}
+
+.app-url {
+  margin-left: auto;
+  font-size: 11px;
+  color: #00bcd4;
+  font-family: monospace;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.app-url:hover {
+  background: #1a3a4a;
+}
+
+.app-btn-group {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.app-open-btn {
+  padding: 4px 10px;
+  border: 1px solid #1a3a4a;
+  border-radius: 4px;
+  background: transparent;
+  color: #6a8a9a;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.app-open-btn:hover {
+  color: #d8e8e8;
+  border-color: #00bcd4;
+}
+
+.app-open-btn.active {
+  color: #0a1628;
+  background: #00bcd4;
+  border-color: #00bcd4;
+}
+
+/* === #comments-section / #comments-header / #open-remote-btn : commit 3 で削除
+       (#comments-section は cl-frame コメントタブ内の互換ラッパー (display:contents) に変更、
+       #open-remote-btn は .head-btn class を付与し cl-tools 内で表示) === */
+
+#comment-list,
+#gift-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 16px;
+}
+
+/* 「↓ 最新へ戻る」浮遊ボタン (= モバイル .rh-jump-latest と同等)。
+   cl-frame に対して position:absolute で右下に置き、active なリスト
+   (= comment-list / gift-list) が末尾以外にスクロールされている時だけ
+   表示。クリックで末尾へジャンプして追従モード復帰。 */
+.cl-frame { position: relative; }
+.cl-jump-latest {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 6;
+  padding: 8px 12px;
+  border: 1px solid #00bcd4;
+  border-radius: 999px;
+  background: #0d1b2a;
+  color: #00bcd4;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+.cl-jump-latest:hover { background: rgba(0, 188, 212, 0.16); }
+
+.comment-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #0d1b2a;
+  cursor: pointer;
+  border-radius: 4px;
+  outline: 1px solid transparent;
+  transition: background 0.12s, outline-color 0.12s, box-shadow 0.12s;
+}
+.comment-item:hover {
+  background: rgba(0, 188, 212, 0.05);
+  outline-color: rgba(128, 203, 196, 0.35);
+  box-shadow: 0 0 0 1px rgba(128, 203, 196, 0.12);
+}
+
+.comment-item-superchat {
+  --comment-superchat-bg: #ffb74d;
+  --comment-superchat-fg: #06111a;
+  --comment-superchat-muted-fg: rgba(6, 17, 26, 0.82);
+  background: var(--comment-superchat-bg);
+  border-bottom-color: rgba(0, 0, 0, 0.18);
+  border-radius: 4px;
+  margin: 4px 0;
+  padding: 7px 8px;
+  color: #09131a;
+}
+
+.comment-item.comment-item-superchat:hover,
+.comment-item.comment-item-superchat:active {
+  /* :active も同居させる: タッチデバイスやペン入力で :active が長く出る端末で、
+     親の .comment-item:hover で background: rgba(0,188,212,0.05) が上書きされ、
+     amber bg が消えてダーク文字が読めなくなる現象を防ぐ */
+  background: var(--comment-superchat-bg);
+  outline-color: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18), 0 4px 12px rgba(0, 0, 0, 0.18);
+  filter: brightness(1.03);
+}
+
+.comment-item-member {
+}
+.comment-item-member .comment-name {
+  color: #86efac;
+}
+
+.comment-item-superchat .comment-name,
+.comment-item-superchat.comment-item-member .comment-name {
+  color: var(--comment-superchat-fg);
+}
+
+.comment-item-superchat .comment-text,
+.comment-item-superchat .comment-listener-meta {
+  color: var(--comment-superchat-muted-fg);
+}
+
+.comment-superchat-amount {
+  display: inline-flex;
+  align-items: center;
+  height: 17px;
+  padding: 0 7px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--comment-superchat-fg);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.comment-item img,
+.comment-item .kh-comment-avatar-placeholder {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.comment-item .kh-comment-avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a2742;
+  color: #00bcd4;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.comment-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.comment-name {
+  font-size: 12px;
+  color: #26c6da;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.comment-text {
+  font-size: 13px;
+  word-break: break-word;
+}
+
+.comment-listener-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 16px;
+  padding: 0 6px;
+  border-radius: 3px;
+  border: 1px solid #31505d;
+  color: #d7f9ff;
+  background: #102b36;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.comment-listener-tag-first-time {
+  border-color: #22c55e;
+  color: #bbf7d0;
+  background: #0f2f1b;
+}
+
+.comment-listener-tag-returning {
+  border-color: #38bdf8;
+  color: #bae6fd;
+  background: #0b2838;
+}
+
+.comment-listener-tag-regular-arrival {
+  border-color: #f59e0b;
+  color: #fde68a;
+  background: #3a2608;
+}
+
+/* 「帰還」(= 離脱判定状態から返り咲き)。 復帰ランク色 (桃) で「久々の登場」を強調 */
+.comment-listener-tag-long-absence {
+  border-color: #fda4af;
+  color: #fda4af;
+  background: #3a141a;
+}
+
+.comment-listener-meta {
+  display: inline-flex;
+  /* 旧 flex-wrap: wrap だと、 長い chip が複数並んだ時に 2 行目に折り返し、
+     コメ本文と被って見づらくなる + border が積み重なって影風ノイズになる。
+     1 行に押し込めて、 末尾の chip は ellipsis で省略する */
+  flex-wrap: nowrap;
+  overflow: hidden;
+  gap: 4px 6px;
+  font-size: 10px;
+  color: #7aa0ad;
+  font-weight: 500;
+  min-width: 0;
+  max-height: 17px;
+}
+
+.comment-listener-meta span {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comment-listener-count {
+  flex-shrink: 0;
+  min-width: 24px;
+  text-align: right;
+  font-size: 14px;
+  font-weight: 700;
+  color: #80cbc4;
+  line-height: 1;
+}
+
+.comment-item-member .comment-listener-count {
+  color: #86efac;
+}
+
+.comment-item-superchat .comment-listener-count,
+.comment-item-superchat.comment-item-member .comment-listener-count {
+  color: var(--comment-superchat-fg);
+}
+
+.comment-emoji {
+  width: 24px;
+  height: 24px;
+  vertical-align: middle;
+  margin: 0 1px;
+}
+
+/* === マニュアル === */
+#manual-section {
+  padding: 8px 16px;
+  border-bottom: 1px solid #1a3a4a;
+  flex: 1;
+  overflow-y: auto;
+}
+
+#manual-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+#manual-header h2 {
+  font-size: 13px;
+  color: #4a6a7a;
+}
+
+#manual-close-btn {
+  padding: 2px 8px;
+  border: 1px solid #1a3a4a;
+  border-radius: 4px;
+  background: transparent;
+  color: #6a8a9a;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+#manual-close-btn:hover {
+  color: #d8e8e8;
+  border-color: #00bcd4;
+}
+
+#manual-body {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #d8e8e8;
+}
+
+#manual-body h3 {
+  font-size: 13px;
+  color: #00bcd4;
+  margin: 12px 0 4px;
+}
+
+#manual-body h3:first-child {
+  margin-top: 0;
+}
+
+#manual-body p {
+  margin: 4px 0;
+  color: #b0c8c8;
+}
+
+#manual-body ol, #manual-body ul {
+  margin: 4px 0 4px 20px;
+  color: #b0c8c8;
+}
+
+#manual-body li {
+  margin: 2px 0;
+}
+
+#manual-body code {
+  background: #1a3a4a;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 11px;
+  color: #00bcd4;
+}
+
+#manual-body .manual-key {
+  display: inline-block;
+  background: #1a3a4a;
+  border: 1px solid #2a4a5a;
+  border-radius: 3px;
+  padding: 0 4px;
+  font-size: 11px;
+  color: #d8e8e8;
+}
+
+/* === アプリ設定パネル === */
+#app-config-section {
+  padding: 8px 16px;
+  border-bottom: 1px solid #1a3a4a;
+  flex: 1;
+  overflow-y: auto;
+}
+
+#config-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid #1a3a4a;
+}
+
+#config-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #d8e8e8;
+}
+
+#config-close-btn {
+  background: none;
+  border: 1px solid #1a3a4a;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+#config-close-btn:hover { border-color: #00bcd4; color: #00bcd4; }
+
+.config-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+.config-row label {
+  font-size: 12px;
+  color: #d8e8e8;
+}
+
+.config-input {
+  width: 80px;
+  padding: 4px 6px;
+  border: 1px solid #1a3a4a;
+  border-radius: 4px;
+  background: #0d1b2a;
+  color: #d8e8e8;
+  font-size: 12px;
+  text-align: right;
+  outline: none;
+}
+
+.config-input:focus {
+  border-color: #00bcd4;
+}
+
+.config-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.config-note {
+  font-size: 11px;
+  color: #4a6a7a;
+  margin: 2px 0 8px;
+  line-height: 1.5;
+}
+
+.config-sub-header {
+  font-size: 12px;
+  color: #4a6a7a;
+  margin: 8px 0 4px;
+}
+
+.config-particle-group {
+  padding: 4px 0;
+  border-bottom: 1px solid #0d1b2a;
+}
+
+.config-particle-label {
+  font-size: 12px;
+  color: #d8e8e8;
+  margin-bottom: 4px;
+}
+
+.config-particle-images {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.config-particle-item {
+  position: relative;
+  display: inline-block;
+}
+
+.config-particle-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  border: 1px solid #1a3a4a;
+  object-fit: contain;
+  background: #0d1b2a;
+}
+
+.config-remove-btn {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: #e53935;
+  color: white;
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.config-remove-btn:hover {
+  background: #ff5252;
+}
+
+.config-add-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px dashed #1a3a4a;
+  border-radius: 4px;
+  background: transparent;
+  color: #4a6a7a;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.config-add-btn:hover {
+  border-color: #00bcd4;
+  color: #00bcd4;
+}
+
+.config-icon-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.config-icon-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  border: 1px solid #1a3a4a;
+  object-fit: contain;
+  background: #0d1b2a;
+}
+
+.config-preset-list {
+  margin: 4px 0 8px;
+}
+
+.config-preset-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border: 1px solid #1a3a4a;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  cursor: pointer;
+}
+
+.config-preset-item:hover {
+  border-color: #2a5a6a;
+}
+
+.config-preset-item.active {
+  border-color: #00bcd4;
+  background: #0d2a3a;
+}
+
+.config-preset-name {
+  font-size: 12px;
+  color: #d8e8e8;
+}
+
+.config-preset-active-badge {
+  color: #00bcd4;
+  font-size: 10px;
+  margin-left: 6px;
+}
+
+.config-preset-delete {
+  position: static;
+  flex-shrink: 0;
+}
+
+.config-io-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.config-io-btn {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #1a3a4a;
+  border-radius: 4px;
+  background: transparent;
+  color: #d8e8e8;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.config-io-btn:hover {
+  border-color: #00bcd4;
+  color: #00bcd4;
+}
+
+/* === プロンプトダイアログ === */
+.prompt-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100000;
+}
+
+.prompt-dialog {
+  background: #0d1b2a;
+  border: 1px solid #1a3a4a;
+  border-radius: 8px;
+  padding: 20px;
+  min-width: 300px;
+}
+
+.prompt-label {
+  font-size: 13px;
+  color: #d8e8e8;
+  margin-bottom: 8px;
+}
+
+.prompt-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #1a3a4a;
+  border-radius: 4px;
+  background: #0a1628;
+  color: #d8e8e8;
+  font-size: 13px;
+  outline: none;
+  margin-bottom: 12px;
+}
+
+.prompt-input:focus {
+  border-color: #00bcd4;
+}
+
+.prompt-btn-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.prompt-ok-btn, .prompt-cancel-btn {
+  padding: 6px 16px;
+  border: 1px solid #1a3a4a;
+  border-radius: 4px;
+  background: transparent;
+  color: #d8e8e8;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.prompt-ok-btn {
+  background: #00bcd4;
+  color: #0a1628;
+  border-color: #00bcd4;
+  font-weight: 600;
+}
+
+.prompt-ok-btn:hover {
+  background: #26c6da;
+}
+
+.prompt-cancel-btn:hover {
+  border-color: #00bcd4;
+  color: #00bcd4;
+}
+
+footer {
+  padding: 8px 16px;
+  background: #0d1b2a;
+  border-top: 1px solid #1a3a4a;
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #4a6a7a;
+}
+
+/* === サイドバー + メインレイアウト : commit 3 で削除
+       (新 .scene-col / .scene-col-label / .scene-col-divider を commit 4 で導入)
+       #scene-list は維持 (= renderer.js が ID 参照で scene-item を生成する) === */
+
+#scene-list { display: flex; flex-direction: column; gap: 3px; }
+
+/* --- scene-item (Phase 2-1: mock 仕様 grid) --- */
+.scene-item {
+  background: #06101e;
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  gap: 9px;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+  transition: background 120ms, border-color 120ms, box-shadow 120ms;
+}
+/* hover は無彩色の淡い塗りだけにする (= 選択中のシアンと別種にして「ホバー≈選択」の
+   取り違えを解消する。旧 hover はシアン枠で選択と酷似していた)。 */
+.scene-item:hover { background: rgba(255, 255, 255, 0.035); border-color: #274456; }
+.scene-item[draggable] { cursor: grab; }
+.scene-item[draggable]:active { cursor: grabbing; }
+.internal-reorder-drag-active .scene-item > * { pointer-events: none; }
+.scene-drag-over { border-top: 2px solid #00bcd4 !important; }
+/* 選択 (= 右パネルに表示中) は hover と明確に別種にする: シーン識別色 (--scene-color、
+   renderSceneList が index ベースのプリセット色を inline 付与) の枠 + 左端バー + 「▶ 表示中」
+   バッジ + 無彩色の塗り。塗りを無彩色にするのは識別色が何色でも成立させるため。selected は
+   hover と同 specificity だが後勝ちで常に勝つため、選択行はホバー有無に関わらず選択表示を維持。 */
+.scene-item.selected {
+  border-color: var(--scene-color, #00bcd4);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: inset 3px 0 0 var(--scene-color, #00bcd4);
+}
+/* バッジと重なるため選択行では演出数メタを隠す (= 演出は右パネルに表示中なので情報の損失は小) */
+.scene-item.selected .scene-meta { display: none; }
+.scene-item.selected::after {
+  content: "▶ 表示中";
+  position: absolute;
+  right: 8px;
+  top: -8px;
+  z-index: 2;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #04141a;
+  background: var(--scene-color, #00e5ff);
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+.scene-item.off { opacity: 0.55; }
+
+.scene-power {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #1a3a4a, #07101a 70%);
+  border: 1px solid #112236;
+  position: relative;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.scene-power::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: #1a3a4a;
+  transition: all 0.15s;
+}
+.scene-item:not(.off) .scene-power::after {
+  background: #00e676;
+  box-shadow: 0 0 6px rgba(0, 230, 118, 0.6);
+}
+
+.scene-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  /* シーン識別色 (= renderSceneList が index ベースのプリセット色を --scene-color に付与)。
+     左リストと右パネルのシーン名を同色にして「右に表示中のシーンが左のどれか」を色で直結する。 */
+  color: var(--scene-color, #d8e8e8);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scene-meta {
+  display: flex; align-items: center;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 9.5px;
+  color: #5a6a78;
+}
+.scene-meta .perf {
+  color: #00e5ff;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+/* === #sidebar* / .sidebar-* / .pause-btn / .clear-performances-btn / .add-btn
+       / #main-area / #apps-header / #apps-toggle / .apps-label / #apps-scene-name
+       / #apps-section.collapsed * : commit 3 で削除
+       (新 .scene-action / .scene-col-* / frame-body の暫定 styling は commit 4 で導入) === */
+
+/* === ポン出しバー === */
+
+#ponout-bar {
+  padding: 6px 16px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+  border-bottom: 1px solid #1a3a4a;
+}
+/* ポン出しバーをコメント連動演出カード内に置いた場合の上書き (= モック合意) */
+.unit-card #ponout-bar {
+  padding: 8px 0 0;
+  border-bottom: none;
+  margin-top: 6px;
+  border-top: 1px dashed rgba(26, 58, 74, 0.6);
+}
+
+.ponout-label {
+  font-size: 10px;
+  color: #4a6a7a;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-right: 4px;
+}
+
+#ponout-buttons {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ponout-empty {
+  color: #4a6a7a;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.ponout-btn {
+  background: #1a2742;
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: #d8e8e8;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.ponout-btn:hover { border-color: #00bcd4; color: #00bcd4; }
+.ponout-btn:active { transform: scale(0.95); background: #00838f; color: white; }
+
+/* === 演出リスト画面 ===
+   header / close / title の旧 ID selector は Phase 7b の dual 対応撤去で
+   .subsection-* class に統合済 (= 残る整理漏れだった、 ついでに撤去)。 */
+
+/* perf-list 描画優先 hint (= 上下順 = z-order の説明)。 list の真上に置く */
+#perf-list-hint {
+  font-size: 11px;
+  color: #64748b;
+  padding: 12px 16px 0;
+}
+
+/* perf-list 外枠 (= 通知イベント eventsCard と同 style)。 list の周囲に枠と
+   背景を付けて、 「+ 演出を追加」 ボタンは枠外に配置 (= section 直下) */
+#perf-list {
+  background: #0d1b2a;
+  border: 1px solid #1a3a4a;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 12px 16px;
+}
+
+/* perf-item: 通知イベント row (= showNotificationSettings の eventsCard 内 row) と
+   同じ構図に統一。 effect icon + name/summary + .u-btn toggle + ⚙ 設定 ボタン。
+   row click は廃止 (= ⚙ 設定 ボタンのみで詳細編集に遷移)、 drag&drop は維持 */
+.perf-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #1a3a4a;
+  transition: background 0.15s;
+}
+
+.perf-item:hover { background: #142536; }
+.perf-item:last-child { border-bottom: none; }
+.perf-item[draggable] { cursor: grab; }
+.perf-item[draggable]:active { cursor: grabbing; }
+.internal-reorder-drag-active .perf-item > * { pointer-events: none; }
+.perf-drag-over { border-top: 2px solid #00bcd4 !important; }
+
+.perf-effect-icon {
+  width: 24px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.perf-info { flex: 1; min-width: 0; }
+.perf-name { font-size: 13px; color: #d8e8e8; }
+.perf-summary { font-size: 11px; color: #64748b; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.perf-settings-btn {
+  background: #1a2742;
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: #94a3b8;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.perf-settings-btn:hover { border-color: #00bcd4; color: #00bcd4; }
+
+.perf-add-btn {
+  width: calc(100% - 32px);
+  margin: 8px 16px;
+  background: #1a2742;
+  border: 1px dashed #1a3a4a;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 11px;
+  color: #4a6a7a;
+  cursor: pointer;
+  text-align: center;
+}
+
+.perf-add-btn:hover { border-color: #00bcd4; color: #00bcd4; }
+
+/* === 演出設定画面 === */
+
+/* --- subsection-nav framework 共通 class (docs/architecture/subsection-navigation.md) ---
+   Phase 7b で ID 別 selector を完全撤去 + .subsection-* class に統合。
+   全 subsection は <section class="subsection-section"> > .subsection-header > .subsection-back-btn + .subsection-title
+   と .subsection-body の標準構造を持つ。 */
+.subsection-section { padding: 0; }
+
+.subsection-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #1a3a4a;
+}
+
+.subsection-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #00bcd4;
+  min-width: 0;
+}
+
+.subsection-back-btn {
+  background: none;
+  border: 1px solid #1a3a4a;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+.subsection-back-btn:hover { border-color: #00bcd4; color: #00bcd4; }
+
+.subsection-body { padding: 16px; }
+
+.perf-field { margin-bottom: 14px; }
+
+.perf-field-label {
+  font-size: 10px;
+  color: #4a6a7a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.perf-field-input {
+  width: 100%;
+  background: #1a2742;
+  border: 1px solid #1a3a4a;
+  border-radius: 4px;
+  padding: 8px 10px;
+  color: #d8e8e8;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+}
+
+.perf-field-input:focus { border-color: #00bcd4; }
+
+.perf-field-select {
+  width: 100%;
+  background: #1a2742;
+  border: 1px solid #1a3a4a;
+  border-radius: 4px;
+  padding: 8px 10px;
+  color: #d8e8e8;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.perf-field-select:focus { border-color: #00bcd4; }
+
+.perf-field-row { display: flex; gap: 10px; }
+.perf-field-row .perf-field { flex: 1; }
+
+.listener-condition-editor {
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+  background: rgba(26, 39, 66, 0.55);
+}
+
+.listener-condition-editor summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  color: #d8e8e8;
+  font-size: 12px;
+}
+
+.listener-condition-summary {
+  color: #94a3b8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.listener-condition-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0 10px 8px;
+}
+
+.listener-condition-grid label {
+  color: #4a6a7a;
+  font-size: 10px;
+}
+
+.listener-condition-grid .perf-field-select {
+  margin-top: 4px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+
+.listener-condition-editor .perf-field-hint {
+  padding: 0 10px 8px;
+}
+
+.perf-keywords {
+  width: 100%;
+  background: #1a2742;
+  border: 1px solid #1a3a4a;
+  border-radius: 4px;
+  padding: 8px 10px;
+  color: #d8e8e8;
+  font-size: 12px;
+  font-family: monospace;
+  min-height: 60px;
+  resize: vertical;
+  line-height: 1.6;
+  outline: none;
+}
+
+.perf-keywords:focus { border-color: #00bcd4; }
+
+.perf-field-hint {
+  font-size: 10px;
+  color: #475569;
+  margin-top: 3px;
+}
+
+.perf-edit-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #1a3a4a;
+}
+
+.perf-btn-delete {
+  background: none;
+  border: 1px solid #ef4444;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 11px;
+  color: #ef4444;
+  cursor: pointer;
+}
+
+.perf-btn-delete:hover { background: #ef4444; color: white; }
+
+.perf-btn-save {
+  background: #00838f;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 16px;
+  font-size: 12px;
+  color: white;
+  cursor: pointer;
+}
+
+.perf-btn-save:hover { background: #00bcd4; }
+
+/* === コメントアクション（ホバー） === */
+
+.comment-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+}
+
+.comment-item:hover .comment-actions { opacity: 1; }
+
+.comment-action-btn {
+  background: none;
+  border: 1px solid #1a3a4a;
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-size: 10px;
+  color: #94a3b8;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.comment-action-btn:hover { border-color: #00bcd4; color: #00bcd4; }
+.comment-action-btn.ban { color: #ef4444; border-color: #ef4444; }
+.comment-action-btn.ban:hover { background: #ef4444; color: white; }
+
+/* === テンプレート一覧 === */
+#tmpl-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px 4px;
+  cursor: pointer;
+  user-select: none;
+}
+
+#tmpl-header:hover { background: #0d1b2a; }
+
+#tmpl-toggle {
+  font-size: 10px;
+  color: #4a6a7a;
+  transition: color 0.15s;
+}
+
+#tmpl-header:hover #tmpl-toggle { color: #00bcd4; }
+#tmpl-header:hover .apps-label { color: #94a3b8; }
+
+#tmpl-scene-name {
+  font-size: 11px;
+  color: #00bcd4;
+  margin-left: 8px;
+}
+
+/* === #ponout-ui-entry / #ponout-ui-open-btn / #listener-mgr-entry /
+       #listener-mgr-open-btn / #listener-manager-section / #listener-mgr-header /
+       #listener-mgr-title / #listener-mgr-status : commit 3 で削除
+       (cl-frame に統合、独立画面廃止。owner-warn 等は cl-frame 内で維持) === */
+
+#listener-mgr-owner-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+#listener-mgr-owner-label {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+#listener-mgr-owner-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+/* (旧 .owner-chip* は settings-owner-card 系に置き換え済 — 2026-05-13) */
+#listener-mgr-owner-status {
+  font-size: 11px;
+  color: #80cbc4;
+  margin-left: 4px;
+}
+#listener-mgr-owner-status.error { color: #ffabab; }
+
+#listener-mgr-owner-edit-row {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+#listener-mgr-owner-input {
+  flex: 1;
+  min-width: 240px;
+  background: #0a1628;
+  color: #d8e8e8;
+  border: 1px solid #1a4a5a;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-family: monospace;
+}
+
+#listener-mgr-owner-edit-row button {
+  background: #0d2042;
+  color: #d8e8e8;
+  border: 1px solid #1a4a5a;
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+#listener-mgr-owner-help {
+  flex-basis: 100%;
+  font-size: 11px;
+  color: #4a6a7a;
+}
+
+#listener-mgr-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+#listener-mgr-search {
+  flex: 1;
+  min-width: 180px;
+  background: #0a1628;
+  color: #d8e8e8;
+  border: 1px solid #1a4a5a;
+  border-radius: 4px;
+  padding: 6px 8px;
+}
+
+#listener-mgr-sort {
+  background: #0a1628;
+  color: #d8e8e8;
+  border: 1px solid #1a4a5a;
+  border-radius: 4px;
+  padding: 5px 8px;
+}
+
+#listener-mgr-toolbar button {
+  background: #0d2042;
+  color: #d8e8e8;
+  border: 1px solid #1a4a5a;
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+/* 更新は基本自動なので控えめサイズ (= ヘッダ密度の節約) */
+#listener-mgr-toolbar #listener-mgr-refresh {
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+#listener-mgr-count {
+  font-size: 11px;
+  color: #4a6a7a;
+}
+
+/* リスナータブのミニタブフィルター (= mock pattern 10 ベース) */
+#listener-mgr-mini-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #1a3a4a;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.lm-mtab {
+  background: transparent;
+  color: #6a8a9a;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 5px 12px;
+  font-size: 11.5px;
+  cursor: pointer;
+  user-select: none;
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-bottom: -1px; /* border-bottom と親 border を重ねて active 時の line を出す */
+  transition: color 80ms, border-color 80ms;
+}
+.lm-mtab:hover { color: #d8e8e8; }
+.lm-mtab.disabled,
+.lm-mtab:disabled {
+  color: #405463;
+  cursor: default;
+  opacity: 0.62;
+}
+.lm-mtab.disabled:hover,
+.lm-mtab:disabled:hover { color: #405463; }
+.lm-mtab.active {
+  color: #00e5ff;
+  border-bottom-color: #00bcd4;
+  font-weight: 600;
+}
+.lm-mtab .ct {
+  background: #112236;
+  color: #94a3b8;
+  border-radius: 999px;
+  padding: 0 6px;
+  font-size: 9.5px;
+  font-weight: 700;
+  font-family: ui-monospace, Consolas, monospace;
+  min-width: 18px;
+  text-align: center;
+}
+.lm-mtab .ct:empty { display: none; }
+.lm-mtab.active .ct {
+  background: #00bcd4;
+  color: #06080d;
+}
+/* +N に合算される 4 タブ (新規 / 再訪 / 復帰 / 新メンバー) で count > 0 の時、
+   count badge を「新着っぽく」少し強調する。active 時はその色を優先 (= 選択中の
+   cyan が消えないように)。.has-attention は updateListenerAttentionPin と同じ
+   タイミング (= refreshListenerMiniTabs) で toggle される。 */
+.lm-mtab.has-attention .ct {
+  background: #1d3a4f;
+  color: #b8e6f5;
+}
+.lm-mtab.has-attention:not(.active) .ct {
+  box-shadow: 0 0 0 1px rgba(0, 188, 212, 0.5),
+              0 0 8px rgba(0, 188, 212, 0.25);
+  animation: lmtab-attention-pulse 2.4s ease-in-out infinite;
+}
+@keyframes lmtab-attention-pulse {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(0, 188, 212, 0.40),
+                         0 0 6px rgba(0, 188, 212, 0.18); }
+  50%      { box-shadow: 0 0 0 1px rgba(0, 188, 212, 0.65),
+                         0 0 10px rgba(0, 188, 212, 0.40); }
+}
+
+#listener-mgr-bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background: #4a1a1a;
+  border: 1px solid #7f1d1d;
+  border-radius: 6px;
+}
+
+#listener-mgr-bulk-label {
+  flex: 1;
+  font-size: 13px;
+  color: #fee2e2;
+}
+
+#listener-mgr-bulk-bar button {
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  background: #1a4a5a;
+  color: #d8e8e8;
+  border: 1px solid #2a6a7a;
+}
+
+#listener-mgr-bulk-bar button.danger {
+  background: #7f1d1d;
+  color: #fee2e2;
+  border-color: #dc2626;
+}
+
+#listener-mgr-bulk-bar button.danger:hover {
+  background: #991b1b;
+}
+
+/* ============================================================
+   リスナー一覧 (V2 refined)
+     - 密度切替 (大 / 中 / 小) を `.listener-item.d-l|d-m|d-s` で切替
+     - heatmap / stat-end / when は固定幅で行間揃え
+     - 配信接続中に枠 SC した listener は .current-sc で amber tint (額判定なし)
+     - SC 表示: 枠 (.sc-cur amber primary) + 累計 (.sc-tot dim small "累計" prefix)
+     - heatmap (.lst-heat) は将来追加用に列を予約 (現状は backend データなしで非表示)
+   ============================================================ */
+
+.listener-item-check {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+#listener-mgr-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* 密度切替セグメント */
+#listener-mgr-density-seg {
+  display: inline-flex;
+  border: 1px solid #1a3a4a;
+  border-radius: 5px;
+  padding: 2px;
+  background: #07101a;
+  flex-shrink: 0;
+}
+#listener-mgr-density-seg .seg-btn {
+  padding: 3px 10px;
+  font-size: 11px;
+  color: #94a3b8;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 3px;
+  font-family: inherit;
+}
+#listener-mgr-density-seg .seg-btn.active {
+  background: #00838f;
+  color: #fff;
+}
+
+/* === item 共通 (現枠 SC ありで amber tint, 額判定なし) === */
+.listener-item {
+  background: #0a1628;
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 100ms;
+}
+.listener-item:hover { border-color: rgba(0, 188, 212, 0.4); }
+.listener-item.listener-responded {
+  border-color: rgba(52, 211, 153, 0.38);
+}
+.listener-item.current-sc {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.10), #0a1628 55%);
+  border-color: rgba(245, 158, 11, 0.45);
+}
+/* 旧 .listener-response-slot / .listener-response-checkbox は 2026-05-14 削除。
+   対応済みボタンは shared.css の .kh-toggle-responded (= コメ側と統一) を流用する。
+   .listener-item.listener-responded (上記) のミュート効果は維持。 */
+
+/* === avatar (icon_url が無いときは initial 文字を fallback) === */
+.lst-av {
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  /* gradient は initial 文字時のプレースホルダ背景。
+     background ショートハンドは background-size を auto にリセットするため、
+     background-size/position はこの後ろに置く (= 巨大アイコンも cover される)。 */
+  background: linear-gradient(135deg, #00838f, #00bcd4);
+  background-size: cover;
+  background-position: center;
+}
+.listener-item.d-l .lst-av { width: 44px; height: 44px; font-size: 17px; }
+.listener-item.d-m .lst-av { width: 36px; height: 36px; font-size: 14px; }
+.listener-item.d-s .lst-av { width: 26px; height: 26px; font-size: 11px; }
+.lst-av.is-member { box-shadow: 0 0 0 2px #00e676; }
+.lst-av.is-mod { box-shadow: 0 0 0 2px #00bcd4; }
+
+/* === badges === */
+.lst-bg {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 9px;
+  background: rgba(0, 188, 212, 0.15);
+  color: #00e5ff;
+  border: 1px solid rgba(0, 188, 212, 0.4);
+  white-space: nowrap;
+}
+.lst-bg.is-member {
+  /* avatar の amber ring + 行 tint + SC amber と amber が重なっていたので、
+     継続月数バッジは neutral grey に落として識別の補助情報に位置付ける。 */
+  background: rgba(255, 255, 255, 0.04);
+  color: #94a3b8;
+  border-color: rgba(255, 255, 255, 0.10);
+}
+.lst-bg.is-mod    { background: rgba(0, 229, 255, 0.18); color: #67e8f9; border-color: rgba(0, 229, 255, 0.5); }
+.lst-bg.is-label  { background: rgba(168, 85, 247, 0.15); color: #d8b4fe; border-color: rgba(168, 85, 247, 0.45); }
+
+/* === stat-end (右端の統計列、固定幅で行間揃え) === */
+.lst-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  flex-shrink: 0;
+}
+.lst-stat .count { color: #00e5ff; font-weight: 700; }
+.lst-stat .sc-cur { color: #fbbf24; font-weight: 600; }   /* 枠 SC: primary amber */
+.lst-stat .sc-tot { color: #5a6a78; }                      /* 累計 SC: dim secondary */
+
+.listener-item.d-l .lst-stat { width: 100px; }
+.listener-item.d-m .lst-stat { width: 90px; }
+.listener-item.d-l .lst-stat .count  { font-size: 14px; }
+.listener-item.d-l .lst-stat .sc-cur { font-size: 12px; margin-top: 2px; }
+.listener-item.d-l .lst-stat .sc-tot { font-size: 10px; margin-top: 1px; }
+.listener-item.d-m .lst-stat .count  { font-size: 13px; }
+.listener-item.d-m .lst-stat .sc-cur { font-size: 11px; margin-top: 1px; }
+.listener-item.d-m .lst-stat .sc-tot { font-size: 9px;  margin-top: 1px; }
+
+/* === heatmap (mini, 14 日, 正方セル, 列幅固定) ===
+   data はマウント後に api.listeners.activity から非同期で hydrate する。
+   未 hydrate 時は背景色そのままの空セルが見える (placeholder) → 違和感を最小化。 */
+.lst-heatmap {
+  display: flex;
+  gap: 1px;
+  flex-shrink: 0;
+  align-items: center;
+}
+.lst-heatmap .cell { background: #112236; border-radius: 1px; }
+.lst-heatmap .cell.l1 { background: rgba(0, 188, 212, 0.2); }
+.lst-heatmap .cell.l2 { background: rgba(0, 188, 212, 0.5); }
+.lst-heatmap .cell.l3 { background: rgba(0, 188, 212, 0.85); }
+
+/* リスナー詳細モーダル Tab B 用の活動チャート (.ld-heat).
+   セル = 1 配信枠。modal 横幅いっぱいに flex で広がる棒グラフ。
+   ・.bar-slot は flex:1 で全カラム高 (= hover hit area)、tooltip はここに付く
+   ・.bar-fill は中の見える棒 (高さ可変、bottom 寄せ)
+   これにより 0 コメ枠でも全カラム範囲で hover 可能になる。 */
+.ld-heat {
+  display: flex; gap: 2px; align-items: stretch;
+  height: 60px;
+  width: 100%;        /* modal 横幅追従 */
+  margin: 6px 0 4px;
+}
+.ld-heat .bar-slot {
+  flex: 1 1 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: stretch;
+  cursor: default;
+  min-width: 0;
+  /* hover 時に背景うっすらハイライト → カラム範囲を視覚化 */
+  border-radius: 2px;
+  transition: background 100ms;
+}
+.ld-heat .bar-slot:hover {
+  background: rgba(0, 188, 212, 0.06);
+}
+.ld-heat .bar-fill {
+  width: 100%;
+  background: rgba(0, 188, 212, 0.7);
+  border-radius: 2px 2px 0 0;
+  transition: background 100ms;
+}
+.ld-heat .bar-fill.zero {
+  /* count = 0 の枠は 3px の細い基準線。視覚は控えめ、hit area は親 .bar-slot で広い。 */
+  background: #1a2742;
+  height: 3px;
+}
+.ld-heat .bar-fill.sc {
+  /* 上 40% を amber → SC 含む枠を即識別 */
+  background: linear-gradient(180deg,
+    #fbbf24 0%, #f59e0b 40%,
+    rgba(0, 188, 212, 0.7) 40%, rgba(0, 188, 212, 0.7) 100%);
+}
+.ld-heat .bar-slot:hover .bar-fill { background: #00e5ff; }
+.ld-heat .bar-slot:hover .bar-fill.zero { background: #2a3a48; }
+.ld-heat .bar-slot:hover .bar-fill.sc {
+  background: linear-gradient(180deg,
+    #fde68a 0%, #fbbf24 40%,
+    #00e5ff 40%, #00e5ff 100%);
+}
+.ld-heat-meta {
+  display: flex; justify-content: space-between;
+  font-size: 10px; color: #4a6a7a;
+  width: 100%;
+  margin-bottom: 8px;
+}
+.listener-item.d-l .lst-heatmap { width: 125px; }
+.listener-item.d-l .lst-heatmap .cell { width: 8px; height: 8px; }
+.listener-item.d-m .lst-heatmap { width: 97px; }
+.listener-item.d-m .lst-heatmap .cell { width: 6px; height: 6px; }
+.listener-item.d-s .lst-heatmap { width: 69px; }
+.listener-item.d-s .lst-heatmap .cell { width: 4px; height: 4px; }
+
+/* === density 大: avatar | main 1fr | heatmap fixed | stat fixed [| 対応ボタン 28px] === */
+/* has-response-check は接続中 + 自枠 (= 対応済みボタンを末尾に出す) で付く class */
+.listener-item.d-l {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 125px 100px;
+  gap: 12px;
+  padding: 10px 12px;
+  align-items: center;
+}
+.listener-item.d-l.has-response-check {
+  grid-template-columns: auto minmax(0, 1fr) 125px 100px 28px;
+}
+.listener-item.d-l .lst-main { min-width: 0; }
+.listener-item.d-l .lst-name-row {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.listener-item.d-l .lst-name-row .primary { font-size: 14px; font-weight: 700; color: #d8e8e8; }
+.listener-item.d-l .lst-name-row .secondary { font-size: 11px; color: #94a3b8; }
+.listener-item.d-l .lst-meta-row {
+  display: flex; align-items: center; gap: 10px; margin-top: 4px;
+  font-size: 10px; color: #5a6a78;
+}
+.listener-item.d-l .lst-meta-row .when {
+  font-family: ui-monospace, Consolas, monospace; flex-shrink: 0; width: 56px;
+}
+.listener-item.d-l .lst-meta-row .last-cmt {
+  color: #9ab0b8; flex: 1; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.listener-item.d-l .lst-notes {
+  margin-top: 4px;
+  font-size: 10px; color: #b39ddb; font-style: italic;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.listener-item.d-l .lst-notes::before { content: '📝 '; opacity: 0.7; font-style: normal; }
+
+/* === density 中: 名前行末尾に notes inline === */
+.listener-item.d-m {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 97px 90px;
+  gap: 10px;
+  padding: 7px 11px;
+  align-items: center;
+}
+.listener-item.d-m.has-response-check {
+  grid-template-columns: auto minmax(0, 1fr) 97px 90px 28px;
+}
+.listener-item.d-m .lst-main { min-width: 0; }
+.listener-item.d-m .lst-name-row {
+  display: flex; align-items: center; gap: 6px;
+  flex-wrap: nowrap; min-width: 0;
+}
+.listener-item.d-m .lst-name-row > .primary,
+.listener-item.d-m .lst-name-row > .secondary,
+.listener-item.d-m .lst-name-row > .lst-bg { flex-shrink: 0; }
+.listener-item.d-m .lst-name-row .primary { font-size: 13px; font-weight: 700; color: #d8e8e8; }
+.listener-item.d-m .lst-name-row .secondary { font-size: 10px; color: #94a3b8; }
+.listener-item.d-m .lst-name-row .notes-inline {
+  flex: 1 1 auto; min-width: 0;
+  font-size: 10px; color: #b39ddb; font-style: italic;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-left: 4px;
+}
+.listener-item.d-m .lst-name-row .notes-inline::before {
+  content: '📝 '; opacity: 0.7; font-style: normal;
+}
+.listener-item.d-m .lst-meta-row {
+  display: flex; align-items: center; gap: 8px; margin-top: 3px;
+  font-size: 10px; color: #5a6a78;
+}
+.listener-item.d-m .lst-meta-row .when {
+  font-family: ui-monospace, Consolas, monospace; flex-shrink: 0; width: 56px;
+}
+.listener-item.d-m .lst-meta-row .last-cmt {
+  color: #9ab0b8; flex: 1; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* === density 小: 単一行, 固定列幅 === */
+.listener-item.d-s {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 69px 38px 130px;
+  gap: 8px;
+  padding: 4px 10px;
+  min-height: 32px;
+  align-items: center;
+}
+.listener-item.d-s.has-response-check {
+  grid-template-columns: auto minmax(0, 1fr) 69px 38px 130px 28px;
+}
+.listener-item.d-s .lst-name-row {
+  display: flex; align-items: center; gap: 6px;
+  min-width: 0; overflow: hidden;
+}
+.listener-item.d-s .lst-name-row .primary {
+  font-size: 12px; font-weight: 600; color: #d8e8e8;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.listener-item.d-s .when {
+  font-size: 10px; color: #5a6a78; font-family: ui-monospace, Consolas, monospace;
+  text-align: right;
+}
+.listener-item.d-s .lst-stat {
+  width: 130px;
+  flex-direction: row; align-items: baseline; justify-content: flex-end;
+  gap: 6px; font-size: 11px;
+}
+.listener-item.d-s .lst-stat .count { font-size: 12px; }
+.listener-item.d-s .lst-stat .sc-cur { font-size: 11px; }
+.listener-item.d-s .lst-stat .sc-tot { font-size: 10px; }
+
+/* === 既存 emoji 画像サイズ (.listener-item-body から旧 selector 引継ぎ) === */
+/* 配信詳細モーダル (.sd-listener-row-mgr) もカスタム絵文字 <img class="emoji"> を含むので同サイズで縛る */
+.listener-item .last-cmt img.emoji,
+.listener-detail-comment img.emoji,
+.sd-listener-row-mgr .last-cmt img.emoji {
+  width: 14px; height: 14px; vertical-align: -2px;
+}
+
+/* .listener-detail-edit 系の旧スタイルは新 modal (Tab B) で .ld-form-* / .ld-btn / .ld-actions に
+   置き換わったため撤去。stream-detail-modal は .listener-detail-row のみ参照。 */
+
+#listener-mgr-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+#listener-mgr-pagination button {
+  background: #0d2042;
+  color: #d8e8e8;
+  border: 1px solid #1a4a5a;
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+#listener-mgr-pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   リスナー詳細モーダル (サマリ + 2 タブ構成)
+   ベース配色は main UI と同じ #0d1b2a + cyan + amber アクセント。
+   構造:
+     サマリ (V2 hero) — 常時表示
+     タブ (V1 underline) — 直近のコメント / ユーザー詳細
+     Tab A (V6) — フィルタチップ + 配信単位グルーピング
+     Tab B (V8) — ラベル付き section + 編集フォーム
+   ============================================================ */
+
+#listener-detail-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  /* stream-detail-modal (z-index:9999) からコメ選択でドリルダウンして開くため、
+     一段上に積む。同 z-index だと DOM 後置の stream-detail が勝って隠れる。 */
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#listener-detail-modal-content {
+  position: relative;
+  background: #0d1b2a;
+  border: 1px solid #1a3a4a;
+  border-radius: 12px;
+  padding: 16px 20px;
+  width: 560px;
+  max-width: 92vw;
+  max-height: 85vh;
+  color: #d8e8e8;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* サマリ + タブストリップは固定領域 (タブ内のスクロールでは追従しない) */
+#listener-detail-summary,
+#listener-detail-tabs {
+  flex-shrink: 0;
+}
+
+/* タブエリアは Tab B (ユーザー詳細) を常に layout に残し、Tab A (直近コメント) を
+   absolute overlay にする。これにより:
+     - modal の高さ ≒ Tab B の自然高 → タブ切替で揺れない
+     - Tab B は通常スクロール無し
+     - Tab A はこのエリア内だけでスクロール
+   メモ多量改行で Tab B 自体が tab-area の枠を超えた場合は、tab-area が
+   overflow-y:auto で modal 内スクロールを許容する (= summary/tabs は固定のまま)。 */
+#listener-detail-tab-area {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Tab B: 通常フロー、自然高で tab-area サイズを決める */
+#listener-detail-tab-profile {
+  /* スクロールはここでは出さない。memo が長くなると親 (tab-area) で出る */
+  overflow: visible;
+}
+
+/* Tab C: 全コメタブ。Tab A と同じ absolute overlay 設計 (= modal 高さに影響しない)。
+   toolbar (chip + 検索) / status は固定、list (= 仮想スクロール) だけが独自スクロール。
+   tab-full 自体は overflow:hidden で、スクロールバーがリスト範囲のみに表示される。 */
+#listener-detail-tab-full {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #0d1b2a;
+  display: flex;
+  flex-direction: column;
+}
+#listener-detail-tab-full.inactive {
+  display: none;
+}
+#listener-detail-full-toolbar {
+  flex-shrink: 0;
+  padding: 4px 0 8px;
+  border-bottom: 1px solid #1a3a4a;
+  margin-bottom: 8px;
+}
+#listener-detail-full-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+#listener-detail-full-search-row {
+  display: flex;
+}
+#listener-detail-full-search {
+  flex: 1;
+  background: #081421;
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: #d8e8e8;
+  font-size: 12px;
+  outline: none;
+}
+#listener-detail-full-search:focus { border-color: #00bcd4; }
+#listener-detail-full-status {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: #5a6a78;
+  padding: 4px 0 6px;
+}
+#listener-detail-full-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  /* スクロールバー幅を常時予約 + 行の左右に余白 + 上下にも outline 1px 分の余白。
+     .comment-item は outline 1px (hover / SC 強調) を持つため、list の境界で
+     1 行目上辺 / 最終行下辺の outline が clip されないようゆとりを持たせる。 */
+  scrollbar-gutter: stable;
+  padding: 2px 6px;
+}
+/* list の inner wrapper (= 仮想スクロールの bodyEl)。scroll しないが、内部に
+   spacer + 行を保持。getBoundingClientRect が scroll に追従するため、list と
+   inner の 2 階層に分ける必要がある (= 2026-05-13 修正)。 */
+#listener-detail-full-list-inner {
+  /* 高さは spacer + 行の合計で決まる。overflow を visible に保つ。 */
+}
+/* 全コメタブ の行末に並べる stream_id バッジ (= マウスオーバーで title 属性のツール
+   チップに配信枠タイトルが出る、本体は monospace の短いラベル) */
+.ld-full-stream-badge {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: 10px;
+  font-size: 10px;
+  color: #5a6a78;
+  font-family: ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
+  cursor: help; /* 配信枠情報ツールチップが title 属性で出るヒント */
+}
+
+/* Tab A: Tab B のスロットに重ねる absolute overlay。本体だけ独立スクロール */
+#listener-detail-tab-comments {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  background: #0d1b2a;
+}
+
+/* 非アクティブ状態:
+     Tab B (.inactive): visibility:hidden で layout には残し、modal の高さを保つ
+     Tab A (.inactive): display:none で完全に消す (overlay なので外しても OK) */
+#listener-detail-tab-profile.inactive {
+  visibility: hidden;
+}
+#listener-detail-tab-comments.inactive {
+  display: none;
+}
+
+#listener-detail-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: transparent;
+  color: #94a3b8;
+  border: none;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+#listener-detail-close:hover {
+  color: #d8e8e8;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* --- サマリ (hero) --- */
+/* margin-right は ✕ ボタン (= absolute, right: 12px) の領域を避ける予約。
+ * hero 右端の対応ボタンが ✕ と接触しないよう十分な余白を取る。 */
+#listener-detail-summary {
+  margin: 0 56px 14px 0;
+}
+
+.ld-hero {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.ld-hero-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.ld-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00838f, #00bcd4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 26px;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px #0d1b2a, 0 0 0 3px rgba(0, 188, 212, 0.4);
+  background-size: cover;
+  background-position: center;
+}
+.ld-avatar.member {
+  /* メンバーは外周を緑リングに (SC amber と区別) */
+  box-shadow: 0 0 0 2px #0d1b2a, 0 0 0 3px #00e676;
+}
+
+.ld-name {
+  font-size: 17px;
+  font-weight: 700;
+  word-break: break-word;
+}
+.ld-nick {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+  word-break: break-word;
+}
+.ld-badges {
+  margin-top: 6px;
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.ld-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: rgba(0, 188, 212, 0.15);
+  color: #00e5ff;
+  border: 1px solid rgba(0, 188, 212, 0.4);
+}
+.ld-badge.member {
+  /* avatar の amber ring + SC amber と重なっていたので neutral grey に落とす */
+  background: rgba(255, 255, 255, 0.04);
+  color: #94a3b8;
+  border-color: rgba(255, 255, 255, 0.10);
+}
+.ld-badge.mod {
+  background: rgba(0, 229, 255, 0.18);
+  color: #67e8f9;
+  border-color: rgba(0, 229, 255, 0.5);
+}
+.ld-badge.label {
+  background: rgba(168, 85, 247, 0.15);
+  color: #d8b4fe;
+  border-color: rgba(168, 85, 247, 0.45);
+}
+.ld-badge.sc {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+.ld-stat-line {
+  margin-top: 6px;
+  display: inline-flex;
+  gap: 12px;
+  font-size: 11px;
+  color: #94a3b8;
+  flex-wrap: wrap;
+}
+.ld-stat-line .v {
+  color: #d8e8e8;
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+}
+.ld-stat-line .v.cyan { color: #00e5ff; }
+.ld-stat-line .v.amber { color: #fbbf24; }
+.ld-stat-line .v.live { color: #00e676; }
+
+/* --- タブ (V1 underline) --- */
+#listener-detail-tabs {
+  display: flex;
+  gap: 1px;
+  border-bottom: 1px solid #1a3a4a;
+  margin-bottom: 12px;
+}
+
+.ld-tab {
+  padding: 7px 14px;
+  font-size: 12px;
+  color: #5a6a78;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: -1px;
+}
+.ld-tab:hover { color: #94a3b8; }
+.ld-tab.active {
+  color: #d8e8e8;
+  border-bottom-color: #00bcd4;
+}
+.ld-tab .count {
+  margin-left: 5px;
+  font-size: 10px;
+  color: #5a6a78;
+  font-family: ui-monospace, Consolas, monospace;
+}
+.ld-tab.active .count { color: #00bcd4; }
+
+/* --- Tab A: chips + stream grouping --- */
+#listener-detail-chips {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+#listener-detail-chips:empty { display: none; }
+
+.ld-chip {
+  font-size: 10px;
+  padding: 3px 9px;
+  border-radius: 10px;
+  background: #1a2742;
+  color: #94a3b8;
+  border: 1px solid #1a3a4a;
+  cursor: pointer;
+  user-select: none;
+}
+.ld-chip:hover { color: #d8e8e8; border-color: rgba(0, 188, 212, 0.3); }
+.ld-chip.active {
+  background: #004d54;
+  color: #00bcd4;
+  border-color: #00bcd4;
+}
+.ld-chip .count {
+  font-size: 9px;
+  opacity: 0.7;
+  margin-left: 3px;
+  font-family: ui-monospace, Consolas, monospace;
+}
+
+.ld-stream-group { margin-bottom: 10px; }
+.ld-stream-group:last-child { margin-bottom: 0; }
+
+.ld-stream-h {
+  font-size: 10px;
+  color: #5a6a78;
+  padding: 2px 7px;
+  background: #07101a;
+  border-radius: 3px;
+  margin-bottom: 4px;
+  display: inline-block;
+  letter-spacing: 0.04em;
+}
+.ld-stream-h .when {
+  color: #4a6a7a;
+  margin-left: 4px;
+}
+
+.ld-empty {
+  color: #4a6a7a;
+  padding: 12px 8px;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.ld-truncated-hint {
+  color: #5a6a78;
+  padding: 10px 8px 6px;
+  font-size: 11px;
+  text-align: center;
+  border-top: 1px dashed #1a3a4a;
+  margin-top: 4px;
+}
+.ld-truncated-hint b {
+  color: #94a3b8;
+}
+
+/* 2026-05-14: リスナー詳細「最近のコメント」は shared/comment-item.js (= 全コメ列と同じ)
+   に統一。 旧 .listener-detail-comment* 系 CSS は将来削除候補。
+   focus 強調用に .comment-item.selected の outline を #listener-detail-comments 配下のみで提供。 */
+#listener-detail-comments .comment-item.selected {
+  outline: 2px solid var(--kh-accent);
+  outline-offset: -2px;
+}
+.listener-detail-comment {
+  background: #0a1628;
+  border-radius: 4px;
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+.listener-detail-comment.selected {
+  border: 1px solid #2a6a7a;
+  background: #10243a;
+}
+.listener-detail-comment.sc {
+  background: #2a1810;
+  border-left: 3px solid #f59e0b;
+}
+.listener-detail-comment.sc.high {
+  background: #2a0d0d;
+  border-left-color: #ef4444;
+}
+.listener-detail-comment .meta {
+  font-size: 10px;
+  color: #4a6a7a;
+  margin-bottom: 2px;
+}
+.listener-detail-comment-body {
+  user-select: text;
+  cursor: text;
+}
+
+/* --- Tab B: labeled sections + edit form --- */
+.ld-section-h {
+  font-size: 10px;
+  color: #5a6a78;
+  letter-spacing: 0.16em;
+  margin: 14px 0 6px;
+  border-bottom: 1px solid #1a3a4a;
+  padding-bottom: 3px;
+}
+#listener-detail-tab-profile .ld-section-h:first-child { margin-top: 0; }
+
+/* listener-detail-row も既存 selector を維持 (リスナー一覧 / 配信詳細でも使用) */
+.listener-detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+}
+.listener-detail-row .key {
+  color: #4a6a7a;
+}
+.listener-detail-row .v {
+  color: #d8e8e8;
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+}
+.listener-detail-row .v.cyan { color: #00e5ff; }
+.listener-detail-row .v.amber { color: #fbbf24; }
+
+.ld-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.ld-form-input {
+  width: 100%;
+  background: #081421;
+  border: 1px solid #1a3a4a;
+  border-radius: 4px;
+  color: #d8e8e8;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-family: inherit;
+}
+.ld-form-input:focus {
+  outline: none;
+  border-color: #00bcd4;
+}
+textarea.ld-form-input {
+  /* メモ欄: 内部スクロールは出さない (改行が多いと textarea の中に scroll bar が
+     現れて混乱するため)。代わりに JS の autoResizeListenerDetailTextarea で
+     contents 高さに合わせて伸ばし、Tab B 全体が tab-area を超えたら親側で modal
+     スクロールが発生する。 */
+  resize: none;
+  overflow-y: hidden;
+  min-height: 60px;
+}
+.ld-form-label {
+  display: block;
+  font-size: 11px;
+  color: #94a3b8;
+  margin: 6px 0 3px;
+}
+
+.ld-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.ld-actions-danger {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+}
+
+/* メモ編集の保存行: メモ直下の primary action のみ。
+   status を左に固定 + 残り空間で保存ボタンを右端に押し出す (アプリ全体の
+   "設定保存ボタンは右下" 慣例に合わせる)。 */
+.ld-save-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+}
+.ld-save-row .ld-edit-status {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* 危険操作 section header: 通常 section より subtle に + 上に余白を取って分離感を出す */
+.ld-section-h.ld-danger-h {
+  color: #5a6a78;
+  border-bottom-color: rgba(239, 68, 68, 0.18);
+  margin-top: 22px;
+}
+
+/* BAN / 削除 を並べる行。保存とは別 section に置くことで誤クリックを物理的に防ぐ */
+.ld-danger-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* 2026-05-09 仕様変更: 「コメント非表示 / リスナー非表示」2 軸トグルの行 + 状態。
+ * 演出フィルタは廃止 (= UI 表示抑制のみ)、active 時は cyan で active を明示。 */
+.ld-hide-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.ld-hide-toggle.active {
+  background: rgba(0, 188, 212, 0.16);
+  border-color: #00bcd4;
+  color: #00bcd4;
+}
+.ld-hide-toggle.active:hover {
+  background: rgba(0, 188, 212, 0.24);
+  border-color: #00bcd4;
+  color: #00bcd4;
+}
+.ld-edit-status-row {
+  margin-top: 6px;
+}
+
+.ld-btn {
+  background: #1a2742;
+  border: 1px solid #1a3a4a;
+  color: #94a3b8;
+  border-radius: 4px;
+  padding: 5px 12px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.ld-btn:hover { color: #d8e8e8; border-color: rgba(0, 188, 212, 0.4); }
+.ld-btn.cyan {
+  background: #004d54;
+  border-color: #00bcd4;
+  color: #00bcd4;
+}
+.ld-btn.cyan:hover { background: #006272; }
+.ld-btn.danger {
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+.ld-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.6);
+}
+/* BAN 中の状態を強調 (= remote-viewing redesign §5.5)。クリックで解除を促す表示。 */
+.ld-btn.danger.banned {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+.ld-btn.danger.banned:hover {
+  background: rgba(239, 68, 68, 0.24);
+}
+.ld-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.ld-edit-status {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-left: 6px;
+}
+
+/* === #listener-mgr-tabs / .listener-mgr-tab* : commit 3 で削除
+       (cl-tabs / .cl-tab に置換、commit 4 で導入) === */
+
+/* 自チャンネル未設定の警告バナー (= cl-frame で常時表示) */
+#listener-mgr-owner-warn {
+  background: #4a3a1a;
+  color: #ffb74d;
+  border: 1px solid #6a5a2a;
+  border-radius: 4px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+#listener-mgr-owner-warn .inline-link {
+  background: transparent;
+  border: none;
+  color: #ffd54d;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: inherit;
+  padding: 0 2px;
+}
+
+.cl-recording-status {
+  border: 1px solid rgba(80, 110, 130, 0.45);
+  border-radius: 4px;
+  padding: 6px 10px;
+  margin: 0 0 6px 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #b9c7d4;
+  background: rgba(30, 42, 52, 0.72);
+}
+.cl-recording-status.own {
+  color: #b7f5d8;
+  border-color: rgba(60, 190, 130, 0.45);
+  background: rgba(15, 58, 42, 0.72);
+}
+.cl-recording-status.other {
+  color: #ffd38a;
+  border-color: rgba(230, 170, 70, 0.52);
+  background: rgba(68, 48, 18, 0.78);
+}
+.cl-recording-status.neutral {
+  color: #b9c7d4;
+}
+
+#streams-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+#streams-sort,
+#streams-scope {
+  background: #0a1628;
+  color: #d8e8e8;
+  border: 1px solid #1a4a5a;
+  border-radius: 4px;
+  padding: 5px 8px;
+}
+
+#streams-toolbar button {
+  background: #0d2042;
+  color: #d8e8e8;
+  border: 1px solid #1a4a5a;
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background 90ms ease, border-color 90ms ease, color 90ms ease;
+}
+#streams-toolbar button:hover {
+  background: #123056;
+  border-color: #00bcd4;
+  color: #ffffff;
+}
+#streams-toolbar button.active {
+  background: #00838f;
+  border-color: #00bcd4;
+  color: #fff;
+}
+#streams-delete-selected {
+  background: rgba(110, 28, 28, 0.62) !important;
+  border-color: rgba(220, 80, 80, 0.52) !important;
+  color: #ffc7c7 !important;
+}
+#streams-delete-selected:hover {
+  background: rgba(150, 36, 36, 0.82) !important;
+  border-color: rgba(255, 120, 120, 0.78) !important;
+  color: #ffffff !important;
+}
+#streams-delete-selected:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+#streams-delete-selected:disabled:hover {
+  background: rgba(110, 28, 28, 0.62) !important;
+  border-color: rgba(220, 80, 80, 0.52) !important;
+  color: #ffc7c7 !important;
+}
+#streams-selection-count {
+  font-size: 11px;
+  color: #ffd38a;
+}
+
+#streams-edit-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#streams-count {
+  font-size: 11px;
+  color: #4a6a7a;
+}
+
+#streams-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ============================================================
+   配信ログ一覧 (3 密度切替)
+     大 = thumbnail + KPI 4 tile (cards)
+     中 = rank + KPI 4 列 (ranking 表示)
+     小 = テーブル (CRM 密度)
+   thumbnail click → デフォルトブラウザで配信 URL を open
+   既存 .stream-item クラスは click handler の selector 維持のため残す
+   ============================================================ */
+
+#streams-density-seg {
+  display: inline-flex;
+  border: 1px solid #1a3a4a; border-radius: 5px; padding: 2px;
+  background: #07101a;
+  flex-shrink: 0;
+}
+#streams-density-seg .seg-btn {
+  padding: 3px 10px; font-size: 11px; color: #94a3b8;
+  border: none; background: transparent; cursor: pointer;
+  border-radius: 3px; font-family: inherit;
+}
+#streams-density-seg .seg-btn.active { background: #00838f; color: #fff; }
+
+/* === thumbnail (配信サムネ。tap → openExternal)
+   <img> を中に持ち、img が src=ローカル URL → onerror で CDN にフォールバック。
+   親 .stm-thumb は固定アスペクトを保ちつつ click hit-area + ホバー overlay を担当。 */
+.stm-thumb {
+  border-radius: 4px;
+  background-color: #1a3a4a;
+  flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  transition: transform 80ms;
+}
+.stm-thumb .stm-thumb-img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+.stm-thumb .stm-thumb-live-mark {
+  position: absolute; bottom: 2px; left: 4px;
+  font-size: 11px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+}
+.stm-thumb::after {
+  content: '↗';
+  position: absolute; top: 2px; right: 4px;
+  color: #fff; font-size: 12px; opacity: 0;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  transition: opacity 100ms;
+}
+.stm-thumb:hover { transform: scale(1.02); }
+.stm-thumb:hover::after { opacity: 1; }
+
+/* === badge (LIVE 等) === */
+.stm-bg {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 9px; font-weight: 700; letter-spacing: 0.04em;
+  padding: 1px 7px; border-radius: 9px;
+  background: rgba(0,188,212,0.15); color: #00e5ff;
+  border: 1px solid rgba(0,188,212,0.4);
+  white-space: nowrap;
+}
+.stm-bg.live {
+  background: rgba(239,68,68,0.18); color: #fca5a5;
+  border-color: rgba(239,68,68,0.5);
+}
+
+/* === item 共通 === */
+.stream-item {
+  background: #0a1628;
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 100ms;
+}
+.stream-item:hover { border-color: rgba(0, 188, 212, 0.4); }
+.stream-item.selected {
+  border-color: rgba(255, 183, 77, 0.72);
+  background: rgba(42, 34, 20, 0.88);
+}
+
+/* === 大 (V2): thumbnail + KPI 4 tile.
+   KPI 列は 260px 固定で全行揃え。 === */
+.stream-item.d-l {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr) 260px;
+  gap: 12px;
+  padding: 10px 12px;
+  align-items: center;
+}
+.stream-item.d-l.editing {
+  grid-template-columns: 80px minmax(0, 1fr) auto 260px;
+}
+.stream-item.d-l .stm-thumb { width: 80px; height: 45px; font-size: 22px; }
+.stream-item.d-l .stm-meta { min-width: 0; }
+.stream-item.d-l .stm-title {
+  font-size: 13px; font-weight: 700; color: #d8e8e8;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.stm-channel {
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: #8fa4b6;
+  font-size: 11px;
+  line-height: 1.25;
+}
+.stm-channel-name {
+  min-width: 0;
+  max-width: 42%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stm-channel-id {
+  min-width: 0;
+  color: #5f7486;
+  font-family: ui-monospace, Consolas, monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stream-item.d-l .stm-sub {
+  font-size: 10px; color: #5a6a78; margin-top: 3px;
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+}
+.stream-item.d-l .stm-badges { margin-top: 5px; display: flex; gap: 4px; }
+.stm-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+.stream-select-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(90, 120, 140, 0.55);
+  border-radius: 4px;
+  background: rgba(255,255,255,0.04);
+  cursor: pointer;
+}
+.stream-select-wrap:has(input:disabled) {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+.stream-select-box {
+  width: 14px;
+  height: 14px;
+  accent-color: #ffb74d;
+}
+.stream-item.d-l .stm-kpi-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; width: 100%;
+}
+.stream-item.d-l .stm-kpi {
+  padding: 4px 6px; background: rgba(255,255,255,0.04);
+  border-radius: 4px; text-align: center;
+  min-width: 0; overflow: hidden;
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+}
+.stream-item.d-l .stm-kpi .v {
+  font-size: 13px; font-weight: 700; color: #d8e8e8;
+  white-space: nowrap;
+}
+.stream-item.d-l .stm-kpi .v.cyan { color: #00e5ff; }
+.stream-item.d-l .stm-kpi .v.amber { color: #fbbf24; }
+.stream-item.d-l .stm-kpi .v.green { color: #00e676; }
+.stream-item.d-l .stm-kpi .v.pink { color: #f06292; }
+.stream-item.d-l .stm-kpi .v.dim { color: #5a6a78; font-weight: 400; }
+.stream-item.d-l .stm-kpi .l {
+  font-size: 9px; color: #5a6a78; letter-spacing: 0.08em; margin-top: 1px;
+}
+
+/* === 中: thumb (56x32) + KPI 4 列 (コメ/SC/peak/like) === */
+.stream-item.d-m {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) 240px;
+  gap: 10px;
+  padding: 7px 11px;
+  align-items: center;
+}
+.stream-item.d-m.editing {
+  grid-template-columns: 56px minmax(0, 1fr) auto 240px;
+}
+.stream-item.d-m .stm-thumb { width: 56px; height: 32px; font-size: 14px; }
+.stream-item.d-m .stm-meta { min-width: 0; }
+.stream-item.d-m .stm-title {
+  font-size: 12px; font-weight: 700; color: #d8e8e8;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.stream-item.d-m .stm-sub {
+  font-size: 10px; color: #94a3b8; margin-top: 2px;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+}
+.stream-item.d-m .stm-perf {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  font-family: ui-monospace, Consolas, monospace; font-size: 11px;
+  width: 100%;
+}
+.stream-item.d-m .stm-perf .col {
+  text-align: center; min-width: 0; overflow: hidden;
+}
+.stream-item.d-m .stm-perf .col .v {
+  font-size: 13px; font-weight: 700; white-space: nowrap;
+}
+.stream-item.d-m .stm-perf .col .v.cyan { color: #00e5ff; }
+.stream-item.d-m .stm-perf .col .v.amber { color: #fbbf24; }
+.stream-item.d-m .stm-perf .col .v.green { color: #00e676; }
+.stream-item.d-m .stm-perf .col .v.pink { color: #f06292; }
+.stream-item.d-m .stm-perf .col .v.dim { color: #5a6a78; font-weight: 400; }
+.stream-item.d-m .stm-perf .col .l {
+  font-size: 9px; color: #5a6a78; letter-spacing: 0.08em;
+}
+
+/* === 小 (V3 Table): CRM 密度。.stream-item は <tr>、 #streams-list の direct
+   children として扱われる cards 配列ではなく <table> で wrap する === */
+#streams-list.density-s {
+  display: block;       /* table モード時は flex column を解除 */
+}
+.stream-table {
+  width: 100%; border-collapse: collapse; font-size: 11px;
+}
+.stream-table thead th {
+  text-align: left; font-weight: 600; color: #5a6a78;
+  border-bottom: 1px solid #1a3a4a; padding: 6px 8px;
+  font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.stream-table tbody td { padding: 6px 8px; border-bottom: 1px solid #112236; }
+.stream-table tbody tr.stream-item {
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+.stream-table tbody tr.stream-item:hover td { background: #112236; }
+.stream-table .num {
+  text-align: right; font-family: ui-monospace, Consolas, monospace;
+}
+.stream-table .num.cyan { color: #00e5ff; }
+.stream-table .num.amber { color: #fbbf24; }
+.stream-table .num.green { color: #00e676; }
+.stream-table .num.pink { color: #f06292; }
+.stream-table .num.dim { color: #5a6a78; }
+.stream-table .title-cell {
+  color: #d8e8e8; max-width: 260px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.stream-table .channel-cell {
+  max-width: 260px;
+  color: #8fa4b6;
+  font-size: 11px;
+  line-height: 1.25;
+}
+.stream-table-channel-name,
+.stream-table-channel-id {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stream-table-channel-id {
+  margin-top: 2px;
+  color: #5f7486;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 10px;
+}
+.stream-table .date-cell { color: #94a3b8; white-space: nowrap; }
+.stream-table .select-col,
+.stream-table .stream-select-cell {
+  width: 34px;
+  text-align: center;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+/* 配信ログ各行のタグ chip (大/中/小 共通スタイル、紫系 = stream_tags の慣習色) */
+.stm-tags {
+  display: inline-flex; flex-wrap: wrap; gap: 3px;
+  margin-top: 0;
+}
+.stm-tags .stm-tag {
+  display: inline-flex; align-items: center;
+  font-size: 10px; line-height: 1;
+  padding: 2px 7px;
+  border-radius: 9px;
+  background: rgba(168, 85, 247, 0.15);
+  color: #d8b4fe;
+  border: 1px solid rgba(168, 85, 247, 0.45);
+}
+/* 小 (table) 行: タイトルセル内ではタグを inline、margin はコンパクトに */
+.stream-table .title-cell .stm-tags {
+  margin-top: 0;
+  margin-left: 6px;
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+/* small density 用ミニ thumb (40x23, 16:9) */
+.stream-table .thumb-col { width: 44px; padding: 0; }
+.stream-table .thumb-cell { padding: 3px 4px 3px 0; vertical-align: middle; }
+.stream-table .thumb-cell .stm-thumb { width: 40px; height: 23px; font-size: 10px; }
+.stream-table .thumb-cell .stm-thumb .stm-thumb-live-mark { font-size: 8px; bottom: 0; left: 1px; }
+.stream-table .thumb-cell .stm-thumb::after { font-size: 9px; top: 0; right: 1px; }
+
+#streams-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+#streams-pagination button {
+  background: #0d2042;
+  color: #d8e8e8;
+  border: 1px solid #1a4a5a;
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+#streams-pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* === 配信詳細モーダル (Hero + 6 KPI + Tags + 3 Tabs 構造) === */
+/* mock: test/probe/stream-detail-final.html、`.sd-` プレフィックスで scoped */
+#stream-detail-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#stream-detail-modal-content {
+  background: #0d1b2a;
+  border: 1px solid #1a3a4a;
+  border-radius: 8px;
+  padding: 14px 16px;
+  width: 1080px;
+  max-width: 96vw;
+  /* タブ切替で lazy load 中になっても縦幅が縮まないよう min-height を 92vh に揃える
+     (max と同値、つまりサイズ固定)。コンテンツが短いタブは内側で空白が出るが、
+     ダイアログの輪郭がジャンプしないことを優先 */
+  min-height: 92vh;
+  max-height: 92vh;
+  overflow-y: auto;
+  /* scrollbar-gutter: stable で「scrollbar が出る/出ない」差による横幅ブレを防ぐ。
+     データが少ないタブでも scrollbar 領域を常に確保する */
+  scrollbar-gutter: stable;
+  color: #d8e8e8;
+  font-size: 12px;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.5);
+}
+
+/* Hero */
+.sd-hero {
+  display: grid;
+  grid-template-columns: 220px 1fr auto;
+  gap: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #112236;
+  margin-bottom: 12px;
+  align-items: start;
+}
+.sd-thumb {
+  width: 220px;
+  aspect-ratio: 16 / 9;
+  background: linear-gradient(135deg, #1a3a4a, #0a1628);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid #1a3a4a;
+}
+.sd-thumb::after {
+  content: '▶';
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  color: #00e5ff;
+  font-size: 11px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 1px 6px;
+  border-radius: 3px;
+  pointer-events: none;
+}
+.sd-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.sd-thumb-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #00bcd4;
+  font-size: 28px;
+  opacity: 0.5;
+}
+.sd-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.sd-meta-row1 {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.sd-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1px solid #1a3a4a;
+  color: #94a3b8;
+  background: #1a2742;
+}
+.sd-status-badge.live {
+  background: #c53030;
+  color: #fff;
+  border-color: #c53030;
+  font-weight: 600;
+}
+.sd-status-badge.ended {
+  background: rgba(0, 188, 212, 0.18);
+  color: #00e5ff;
+  border-color: #00bcd4;
+}
+.sd-status-badge .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.sd-meta-row1 .sep {
+  color: #5a6a78;
+  font-size: 10px;
+}
+.sd-meta-date {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  color: #94a3b8;
+}
+.sd-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #d8e8e8;
+  line-height: 1.3;
+  word-break: break-word;
+}
+.sd-channel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #94a3b8;
+}
+.sd-channel .ch-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #1a2742;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: #5a6a78;
+  overflow: hidden;
+}
+.sd-channel .ch-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sd-channel .ch-name {
+  color: #d8e8e8;
+}
+.sd-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.sd-action-btn {
+  background: #1a2742;
+  border: 1px solid #1a3a4a;
+  color: #94a3b8;
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.sd-action-btn:hover {
+  color: #00e5ff;
+  border-color: #00bcd4;
+}
+.sd-action-btn.danger {
+  color: #ffc7c7;
+  border-color: rgba(220, 80, 80, 0.52);
+  background: rgba(110, 28, 28, 0.62);
+}
+.sd-action-btn.danger:hover {
+  color: #fff;
+  border-color: rgba(255, 120, 120, 0.72);
+  background: rgba(150, 36, 36, 0.78);
+}
+.sd-action-btn:disabled,
+.sd-action-btn:disabled:hover {
+  color: #7f8b96;
+  border-color: rgba(90, 106, 120, 0.45);
+  background: rgba(50, 58, 68, 0.62);
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+.sd-close-btn {
+  background: transparent;
+  border: 0;
+  color: #5a6a78;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.sd-close-btn:hover {
+  color: #ef9a9a;
+}
+
+/* --- 配信ログ削除確認モーダル --- */
+.stream-delete-confirm-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10020;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.sdc-dialog {
+  width: min(680px, 94vw);
+  max-height: min(760px, 88vh);
+  display: flex;
+  flex-direction: column;
+  background: #0d1b2a;
+  border: 1px solid rgba(220, 80, 80, 0.45);
+  border-radius: 8px;
+  box-shadow: 0 22px 80px rgba(0,0,0,0.55);
+  color: #d8e8e8;
+  overflow: hidden;
+}
+.sdc-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #1a3a4a;
+}
+.sdc-kicker {
+  font-size: 11px;
+  color: #ff9e9e;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.sdc-title {
+  margin-top: 4px;
+  font-size: 18px;
+  font-weight: 700;
+}
+.sdc-close {
+  background: transparent;
+  border: 0;
+  color: #94a3b8;
+  font-size: 16px;
+  cursor: pointer;
+}
+.sdc-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 14px 20px;
+}
+.sdc-summary-item {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.sdc-summary-item .num {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 22px;
+  color: #ffc7c7;
+  font-weight: 700;
+}
+.sdc-summary-item span:last-child {
+  color: #94a3b8;
+  font-size: 12px;
+}
+.sdc-section {
+  padding: 0 20px 14px;
+  min-height: 0;
+}
+.sdc-section-title {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+.sdc-list {
+  max-height: 280px;
+  overflow: auto;
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+  background: #07101a;
+}
+.sdc-row {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #112236;
+  align-items: center;
+}
+.sdc-row:last-child { border-bottom: 0; }
+.sdc-thumb {
+  width: 112px;
+  aspect-ratio: 16 / 9;
+  border: 1px solid #1a3a4a;
+  border-radius: 4px;
+  background: #102234;
+  overflow: hidden;
+}
+.sdc-thumb img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+.sdc-thumb-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #5a6a78;
+  font-size: 10px;
+  font-weight: 700;
+}
+.sdc-row-body {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+.sdc-row-title {
+  color: #d8e8e8;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sdc-row-meta {
+  margin-top: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: #5a6a78;
+  font-size: 11px;
+  font-family: ui-monospace, Consolas, monospace;
+}
+.sdc-row-channel {
+  margin-top: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #8fa4b6;
+  font-size: 11px;
+}
+.sdc-row-channel span:last-child {
+  color: #5f7486;
+  font-family: ui-monospace, Consolas, monospace;
+}
+.sdc-row-count {
+  min-width: 64px;
+  text-align: right;
+  color: #00e5ff;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 16px;
+  font-weight: 700;
+}
+.sdc-row-count span {
+  display: block;
+  color: #5a6a78;
+  font-size: 10px;
+  font-weight: 400;
+}
+.sdc-empty {
+  padding: 18px;
+  color: #5a6a78;
+  text-align: center;
+}
+.sdc-warning {
+  margin: 0 20px 16px;
+  padding: 12px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(220, 80, 80, 0.45);
+  background: rgba(110, 28, 28, 0.2);
+  color: #ffc7c7;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.sdc-warning ul {
+  margin: 6px 0;
+  padding-left: 18px;
+}
+.sdc-warning p {
+  margin: 6px 0 0;
+  color: #d8b4b4;
+}
+.sdc-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid #1a3a4a;
+  background: rgba(0,0,0,0.18);
+}
+.sdc-actions button {
+  border-radius: 4px;
+  padding: 8px 14px;
+  border: 1px solid #1a4a5a;
+  background: #0d2042;
+  color: #d8e8e8;
+  cursor: pointer;
+}
+.sdc-actions button.danger {
+  background: rgba(150, 36, 36, 0.86);
+  border-color: rgba(255, 120, 120, 0.72);
+  color: #fff;
+  font-weight: 700;
+}
+.sdc-actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* KPI tiles (= 6 個 grid) */
+.sd-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.sd-kpi-tile {
+  background: linear-gradient(135deg, rgba(0, 188, 212, 0.10), #06121e);
+  border: 1px solid rgba(0, 188, 212, 0.35);
+  border-radius: 5px;
+  padding: 8px 10px;
+  min-width: 0;
+}
+.sd-kpi-label {
+  font-size: 9px;
+  color: #5a6a78;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.sd-kpi-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #00e5ff;
+  font-family: ui-monospace, Consolas, monospace;
+  line-height: 1.15;
+  margin-top: 2px;
+}
+.sd-kpi-value.amber { color: #fbbf24; }
+.sd-kpi-value.green { color: #1de9b6; }
+.sd-kpi-value.pink { color: #f472b6; }
+.sd-kpi-value.dim { color: #d8e8e8; font-weight: 600; }
+.sd-kpi-value .unit {
+  font-size: 10px;
+  font-weight: 500;
+  color: #94a3b8;
+  margin-left: 2px;
+}
+.sd-kpi-sub {
+  font-size: 9px;
+  color: #94a3b8;
+  font-family: ui-monospace, Consolas, monospace;
+  margin-top: 1px;
+}
+.sd-kpi-sub .v2 {
+  color: #00bcd4;
+  font-weight: 600;
+}
+.sd-kpi-sub .v2.amber { color: #fbbf24; }
+
+/* Tags 行 */
+.sd-tags-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #112236;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.sd-tags-row .label {
+  font-size: 10px;
+  color: #5a6a78;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.sd-tag-host {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+.sd-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 12px;
+  background: rgba(168, 85, 247, 0.18);
+  color: #d8b4fe;
+  border: 1px solid rgba(168, 85, 247, 0.45);
+}
+.sd-tag-chip .x {
+  cursor: pointer;
+  color: rgba(216, 180, 254, 0.55);
+  font-size: 10px;
+  line-height: 1;
+}
+.sd-tag-add-pill {
+  display: inline-flex;
+  align-items: center;
+  border: 1px dashed #1a3a4a;
+  border-radius: 12px;
+  padding: 0 6px;
+}
+.sd-tag-add-input {
+  background: transparent;
+  border: 0;
+  outline: none;
+  color: #d8e8e8;
+  font-size: 11px;
+  padding: 3px 0;
+  width: 110px;
+}
+.sd-tag-add-input::placeholder { color: #5a6a78; }
+
+/* Tabs */
+.sd-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid #1a3a4a;
+  margin-bottom: 10px;
+}
+.sd-tab {
+  background: transparent;
+  border: 0;
+  color: #94a3b8;
+  padding: 8px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.sd-tab:hover { color: #d8e8e8; }
+.sd-tab.active {
+  color: #00e5ff;
+  border-bottom-color: #00bcd4;
+}
+.sd-tab .ct {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 10px;
+  opacity: 0.7;
+  margin-left: 4px;
+}
+
+.sd-tab-body { background: transparent; }
+.sd-tab-pane { display: none; }
+.sd-tab-pane.active { display: block; }
+
+/* コメント tab */
+.sd-filter-chips {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 6px 0;
+  margin-bottom: 6px;
+}
+.sd-filter-chip {
+  font-size: 10px;
+  padding: 3px 9px;
+  border-radius: 11px;
+  background: #1a2742;
+  color: #94a3b8;
+  border: 1px solid #1a3a4a;
+  cursor: pointer;
+  user-select: none;
+}
+.sd-filter-chip:hover {
+  color: #d8e8e8;
+  border-color: #2a4a5a;
+}
+.sd-filter-chip.active {
+  background: rgba(0, 229, 255, 0.18);
+  color: #00e5ff;
+  border-color: #00bcd4;
+}
+.sd-filter-chip.amber.active {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fbbf24;
+  border-color: #f59e0b;
+}
+.sd-filter-chip .ct {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 9px;
+  opacity: 0.7;
+  margin-left: 3px;
+}
+.sd-comment-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0 8px;
+}
+.sd-comment-search-row input {
+  flex: 1;
+  background: #061018;
+  border: 1px solid #1a3a4a;
+  color: #d8e8e8;
+  border-radius: 4px;
+  padding: 5px 9px;
+  font-size: 11px;
+  outline: none;
+}
+.sd-comment-search-row input:focus { border-color: #00bcd4; }
+
+/* virtualization は modal-content の scroll を監視するため、ここで内側 scroll を作らない
+   (overflow:auto を付けるとイベントが modal-content まで bubble せず、virtualization が
+   updateWindow しなくなり「途中からコメントが出ない」状態になる) */
+.sd-comment-list {
+  background: #061018;
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+
+/* リスナー tab */
+.sd-listener-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  background: #0a1628;
+  border: 1px solid #1a3a4a;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+.sd-listener-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.sd-listener-filter-row .label {
+  font-size: 9px;
+  color: #5a6a78;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  width: 60px;
+  flex-shrink: 0;
+}
+.sd-listener-filter input[type="text"] {
+  flex: 1;
+  background: #061018;
+  border: 1px solid #1a3a4a;
+  color: #d8e8e8;
+  border-radius: 4px;
+  padding: 5px 9px;
+  font-size: 11px;
+  outline: none;
+}
+.sd-listener-filter input[type="text"]:focus { border-color: #00bcd4; }
+.sd-listener-filter .tag-pill {
+  font-size: 10px;
+  padding: 3px 9px;
+  border-radius: 11px;
+  background: #1a2742;
+  color: #94a3b8;
+  border: 1px solid #1a3a4a;
+  cursor: pointer;
+  user-select: none;
+}
+.sd-listener-filter .tag-pill.active {
+  background: #004d54;
+  color: #00e5ff;
+  border-color: #00bcd4;
+}
+.sd-listener-filter .tag-pill.user.active {
+  background: rgba(168, 85, 247, 0.45);
+  color: #ffffff;
+  border-color: #a855f7;
+}
+/* user pill の非アクティブ時は system pill と同じ neutral にする
+   (= 「アクティブな pill だけ色付け」原則。.tag-pill のデフォルトを継承させる) */
+.sd-listener-filter .tag-pill .ct {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 9px;
+  opacity: 0.7;
+  margin-left: 3px;
+}
+.sd-listener-summary {
+  font-size: 10px;
+  color: #94a3b8;
+  padding: 4px 0;
+  margin-bottom: 6px;
+}
+.sd-listener-summary b {
+  color: #00e5ff;
+  font-weight: 600;
+}
+
+/* リスナータブも modal-content scroll に乗せる (= 内側 scroll を作らない) */
+.sd-listener-list {
+  background: #061018;
+  border-radius: 4px;
+}
+.sd-listener-row-mgr {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 10px;
+  border-bottom: 1px solid #0d1b2a;
+  cursor: pointer;
+  font-size: 11px;
+}
+/* has-response-check は接続中 + 自枠 (= 末尾に対応済みボタンを出す) で付く class */
+.sd-listener-row-mgr.has-response-check {
+  grid-template-columns: auto 1fr auto auto 28px;
+}
+.sd-listener-row-mgr:hover { background: #0d1b2a; }
+.sd-listener-row-mgr.listener-responded {
+  border-left: 2px solid rgba(52, 211, 153, 0.7);
+  padding-left: 8px;
+}
+.sd-listener-row-mgr.current-sc { background: rgba(245, 158, 11, 0.05); }
+.sd-listener-row-mgr .lst-av {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  background: #1a2742;
+  color: #d8e8e8;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.sd-listener-row-mgr .lst-av img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sd-listener-row-mgr .lst-av.is-member {
+  box-shadow: 0 0 0 2px rgba(29, 233, 182, 0.4);
+}
+.sd-listener-row-mgr .lst-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sd-listener-row-mgr .lst-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.sd-listener-row-mgr .primary {
+  color: #d8e8e8;
+  font-weight: 600;
+  font-size: 12px;
+}
+.sd-listener-row-mgr .secondary {
+  color: #5a6a78;
+  font-size: 10px;
+}
+.sd-listener-row-mgr .lst-bg {
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  border: 1px solid;
+}
+.sd-listener-row-mgr .lst-bg.is-member {
+  color: #1de9b6;
+  border-color: #1de9b6;
+  background: rgba(29, 233, 182, 0.12);
+}
+/* システムランクバッジ (= 新規 / 新参 / 常連 / 古参 / 復帰 / 離脱)。
+   sd-listener-row-mgr (= 配信詳細モーダル) と listener-item (= 接続中リスナータブ /
+   リスナー検索タブ) 両方で同じ色を使うため、 両方の selector を列挙。 2026-05-14。
+   デフォルトは 常連 色 (= amber)。 */
+.sd-listener-row-mgr .lst-bg.tag-system,
+.listener-item .lst-bg.tag-system {
+  color: #fbbf24;
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.12);
+}
+.sd-listener-row-mgr .lst-bg.tag-system.first,
+.listener-item .lst-bg.tag-system.first {
+  color: #bbf7d0;
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.12);
+}
+.sd-listener-row-mgr .lst-bg.tag-system.returning,
+.listener-item .lst-bg.tag-system.returning {
+  color: #bae6fd;
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+}
+.sd-listener-row-mgr .lst-bg.tag-system.veteran,
+.listener-item .lst-bg.tag-system.veteran {
+  color: #d8b4fe;
+  border-color: #a855f7;
+  background: rgba(168, 85, 247, 0.18);
+}
+.sd-listener-row-mgr .lst-bg.tag-system.comeback,
+.listener-item .lst-bg.tag-system.comeback {
+  color: #fda4af;
+  border-color: #f43f5e;
+  background: rgba(244, 63, 94, 0.16);
+}
+.sd-listener-row-mgr .lst-bg.tag-system.abandoned,
+.listener-item .lst-bg.tag-system.abandoned {
+  color: #94a3b8;
+  border-color: #475569;
+  background: rgba(100, 116, 139, 0.18);
+}
+.sd-listener-row-mgr .lst-bg.tag-user {
+  color: #d8b4fe;
+  border-color: rgba(168, 85, 247, 0.45);
+  background: rgba(168, 85, 247, 0.15);
+}
+/* この枠でメンバー加入 (= comment_type='membership' = "X へようこそ") の listener に
+   付くバッジ。既存 tag-system / is-member とは独立した「お祝い」感を rose で表現。 */
+.sd-listener-row-mgr .lst-bg.tag-member-join {
+  color: #fda4af;
+  border-color: rgba(244, 63, 94, 0.55);
+  background: rgba(244, 63, 94, 0.15);
+}
+.sd-listener-row-mgr .notes-inline {
+  color: #5a6a78;
+  font-size: 10px;
+  font-style: italic;
+}
+.sd-listener-row-mgr .lst-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: #5a6a78;
+}
+.sd-listener-row-mgr .when {
+  font-family: ui-monospace, Consolas, monospace;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+.sd-listener-row-mgr .last-cmt {
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+.sd-listener-row-mgr .lst-heatmap {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 24px;
+  width: 100px;
+  flex-shrink: 0;
+}
+.sd-listener-row-mgr .lst-heatmap .cell {
+  flex: 1;
+  background: #1a2742;
+  border-radius: 1px;
+  min-height: 2px;
+}
+.sd-listener-row-mgr .lst-heatmap .cell.l1 { background: rgba(0, 188, 212, 0.4); }
+.sd-listener-row-mgr .lst-heatmap .cell.l2 { background: rgba(0, 188, 212, 0.7); }
+.sd-listener-row-mgr .lst-heatmap .cell.l3 { background: #00e5ff; }
+.sd-listener-row-mgr .lst-heatmap .cell.sc { background: #fbbf24; }
+.sd-listener-row-mgr .lst-stat {
+  text-align: right;
+  font-family: ui-monospace, Consolas, monospace;
+  flex-shrink: 0;
+}
+.sd-listener-row-mgr .lst-stat .count {
+  font-size: 13px;
+  color: #00e5ff;
+  font-weight: 700;
+}
+.sd-listener-row-mgr .lst-stat .sc-cur {
+  font-size: 11px;
+  color: #fbbf24;
+  font-weight: 700;
+}
+.sd-listener-row-mgr .lst-stat .sc-tot {
+  font-size: 9px;
+  color: #94a3b8;
+}
+
+/* 統計 tab */
+.sd-stats-section {
+  background: #061018;
+  border-radius: 4px;
+  padding: 12px;
+}
+.sd-stats-section h3 {
+  font-size: 11px;
+  color: #5a6a78;
+  margin: 0 0 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.sd-stats-section + .sd-stats-section { margin-top: 10px; }
+.sd-stats-summary {
+  font-size: 10px;
+  color: #94a3b8;
+  margin-top: 6px;
+}
+.sd-stats-summary b {
+  color: #00e5ff;
+  font-weight: 600;
+}
+.sd-timeline-wrap {
+  position: relative;
+}
+.sd-timeline {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 80px;
+  padding: 4px 0;
+  border-bottom: 1px solid #1a3a4a;
+}
+.sd-timeline .bar {
+  flex: 1;
+  background: rgba(0, 188, 212, 0.5);
+  min-height: 2px;
+  border-radius: 2px 2px 0 0;
+}
+.sd-timeline .bar.peak { background: #00e5ff; }
+.sd-timeline .bar.cumulative { background: rgba(56, 189, 248, 0.7); }
+.sd-timeline-axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: #5a6a78;
+  font-family: ui-monospace, Consolas, monospace;
+  padding-top: 4px;
+}
+.sd-timeline-total {
+  position: absolute;
+  right: 8px;
+  top: 6px;
+  font-size: 11px;
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.sd-composition {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sd-comp-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 80px;
+  gap: 8px;
+  align-items: center;
+  font-size: 11px;
+}
+.sd-comp-row .label-first { color: #bbf7d0; }
+.sd-comp-row .label-returning { color: #bae6fd; }
+.sd-comp-row .label-regular { color: #fde68a; }
+.sd-comp-row .label-veteran { color: #d8b4fe; }
+.sd-comp-row .label-comeback { color: #fda4af; }
+.sd-comp-row .bar-track {
+  height: 14px;
+  background: #0a1628;
+  border-radius: 7px;
+  overflow: hidden;
+}
+.sd-comp-row .bar-fill {
+  height: 100%;
+}
+.sd-comp-row .bar-fill.first { background: #22c55e; }
+.sd-comp-row .bar-fill.returning { background: #38bdf8; }
+.sd-comp-row .bar-fill.regular { background: #f59e0b; }
+.sd-comp-row .bar-fill.veteran { background: #a855f7; }
+.sd-comp-row .bar-fill.comeback { background: #f43f5e; }
+.sd-comp-row .pct {
+  text-align: right;
+  font-family: ui-monospace, Consolas, monospace;
+}
+
+.sd-top-words {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sd-word-row {
+  display: grid;
+  grid-template-columns: 18px 100px 1fr 40px;
+  gap: 8px;
+  align-items: center;
+  font-size: 11px;
+}
+.sd-word-row .rank {
+  color: #5a6a78;
+  font-family: ui-monospace, Consolas, monospace;
+}
+.sd-word-row .word {
+  color: #d8e8e8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sd-word-row .word.top { font-weight: 600; }
+.sd-word-row .bar-track {
+  height: 8px;
+  background: #0a1628;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.sd-word-row .bar-fill {
+  height: 100%;
+  background: #00bcd4;
+}
+.sd-word-row .count {
+  text-align: right;
+  font-family: ui-monospace, Consolas, monospace;
+  color: #94a3b8;
+}
+.sd-word-row .count.top { color: #00e5ff; }
+
+/* lazy load 用ローディング / エラー表示 (統計タブ + リスナータブ共通) */
+/* min-height で modal の主要エリアをほぼ満たし、loading 表示が中央に来るようにする */
+.sd-stats-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 24px;
+  background: #061018;
+  border-radius: 4px;
+  color: #94a3b8;
+  min-height: 60vh;
+}
+.sd-stats-loading-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #1a3a4a;
+  border-top-color: #00bcd4;
+  border-radius: 50%;
+  animation: sd-stats-spin 0.9s linear infinite;
+}
+@keyframes sd-stats-spin {
+  to { transform: rotate(360deg); }
+}
+.sd-stats-loading-msg {
+  font-size: 12px;
+  color: #00e5ff;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.sd-stats-loading-hint {
+  font-size: 10px;
+  color: #5a6a78;
+  text-align: center;
+  max-width: 480px;
+  line-height: 1.6;
+}
+.sd-stats-error {
+  padding: 20px;
+  background: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  border-radius: 4px;
+  color: #ef9a9a;
+  font-size: 11px;
+}
+
+.sd-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.sd-stats-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-bottom: 1px solid #112236;
+}
+.sd-stats-row .key { color: #94a3b8; }
+.sd-stats-row .val {
+  color: #00e5ff;
+  font-family: ui-monospace, Consolas, monospace;
+  font-weight: 700;
+}
+.sd-stats-row .val.amber { color: #fbbf24; }
+.sd-stats-row .val.dim { color: #d8e8e8; }
+.sd-stats-row .val.green { color: #bbf7d0; }
+.sd-stats-row .val a {
+  color: inherit;
+  text-decoration: none;
+}
+.sd-stats-row .val a:hover { text-decoration: underline; }
+
+/* === Step 3 フェーズ 3.3: インポート / エクスポート UI === */
+
+#io-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.io-card {
+  background: #0d1b2a;
+  border: 1px solid #1a3a4a;
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.io-card h3 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #00bcd4;
+}
+
+.io-card-desc {
+  font-size: 12px;
+  color: #4a6a7a;
+  margin: 0 0 10px 0;
+  line-height: 1.5;
+}
+
+.io-card button {
+  background: #0d2042;
+  color: #d8e8e8;
+  border: 1px solid #1a4a5a;
+  border-radius: 4px;
+  padding: 7px 14px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.io-card button:hover {
+  background: #1a2742;
+}
+
+.io-card button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.io-result {
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: #0a1628;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: monospace;
+  white-space: pre-wrap;
+  display: none;
+}
+
+.io-result.show { display: block; }
+.io-result.ok   { color: #80cbc4; }
+.io-result.warn { color: #ffb74d; }
+.io-result.err  { color: #ef9a9a; }
+
+/* ============================================================
+   コメント検索 (Phase C — `.cs-` プレフィックスで scope を区切る)
+   ============================================================ */
+.cs-panel {
+  font-size: 12px; color: #d8e8e8;
+  /* mock 仕様: 検索パネルは frame (#0d1b2a) として、上に summary-card と
+     stream を載せる。listener-manager-section の bg (#0a1628) より明るめに
+     して、子要素 (summary-card は更に暗く、stream は border) が見分けつくように。 */
+  background: #0d1b2a;
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+  padding: 12px;
+}
+
+/* --- 検索フォーム --- */
+.cs-form {
+  background: #0a1628;
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.cs-form-grid {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 8px 12px;
+  margin-bottom: 10px;
+}
+.cs-form-grid > label {
+  align-self: center;
+  font-size: 11px;
+  color: #94a3b8;
+}
+.cs-form-grid input[type="text"] {
+  background: #061018;
+  border: 1px solid #1a3a4a;
+  color: #d8e8e8;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+  outline: none;
+}
+.cs-form-grid input[type="text"]:focus { border-color: #00bcd4; }
+
+.cs-form-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  margin-bottom: 10px;
+  align-items: start;
+}
+.cs-field > label {
+  display: block;
+  font-size: 11px;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+.cs-field-scope select {
+  background: #061018;
+  border: 1px solid #1a3a4a;
+  color: #d8e8e8;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.cs-type-row { display: flex; flex-wrap: wrap; gap: 4px; }
+.cs-type-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 11px;
+  background: #1a2742;
+  border: 1px solid #1a3a4a;
+  color: #94a3b8;
+  cursor: pointer;
+  user-select: none;
+}
+/* チェックボックスは視覚的に隠す (a11y のためフォーカスは維持)。pill 全体クリックで toggle、
+   active 時は :has(input:checked) で塗り潰しに変わるため checkbox 自体の表示は不要。 */
+.cs-type-pill input[type="checkbox"] {
+  position: absolute;
+  width: 1px; height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  margin: 0;
+}
+.cs-type-pill:has(input:checked) {
+  background: rgba(0, 229, 255, 0.18);
+  border-color: #00bcd4;
+  color: #00e5ff;
+}
+
+.cs-period-row { display: flex; align-items: center; gap: 6px; }
+.cs-period-row input[type="date"] {
+  background: #061018;
+  border: 1px solid #1a3a4a;
+  color: #d8e8e8;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: ui-monospace, Consolas, monospace;
+  color-scheme: dark;
+}
+.cs-period-sep { font-size: 11px; color: #5a6a78; }
+
+.cs-form-actions {
+  display: flex; gap: 8px; justify-content: flex-end; align-items: center;
+}
+.cs-form-hint { flex: 1; font-size: 10px; color: #5a6a78; }
+.cs-form-actions button {
+  background: #1a2742;
+  border: 1px solid #1a3a4a;
+  color: #94a3b8;
+  border-radius: 4px;
+  padding: 5px 14px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.cs-form-actions button:hover { color: #d8e8e8; border-color: #00bcd4; }
+.cs-form-actions button.primary {
+  background: #00bcd4; color: #06080d; border-color: #00bcd4; font-weight: 600;
+}
+.cs-form-actions button.primary:hover { background: #00e5ff; }
+
+/* --- KPI サマリーカード (6 項目: コメント / 金額 / リスナー / いいね / ピーク / 配信)
+       panel bg #0d1b2a 上に「より暗い + cyan tint」で乗せて差別化。 --- */
+.cs-summary-card {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+  background: linear-gradient(90deg, rgba(0, 188, 212, 0.10), #06121e);
+  border: 1px solid rgba(0, 188, 212, 0.45);
+  border-radius: 5px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+}
+@media (max-width: 1100px) {
+  .cs-summary-card { grid-template-columns: repeat(3, 1fr); }
+}
+.cs-stat-label {
+  font-size: 9px; color: #5a6a78;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.cs-stat-v {
+  font-size: 18px; font-weight: 700; color: #00e5ff;
+  font-family: ui-monospace, Consolas, monospace;
+  line-height: 1.15;
+}
+.cs-stat-v.amber { color: #fbbf24; }
+/* 配信ログ V3 列色と統一 (eac5536): like=pink / peak=green */
+.cs-stat-v.pink { color: #f06292; }
+.cs-stat-v.green { color: #00e676; }
+.cs-stat-v.small { font-size: 13px; }
+.cs-stat-v .unit {
+  font-size: 11px; font-weight: 500; color: #94a3b8; margin-left: 2px;
+}
+.cs-stat-avg {
+  font-size: 10px; color: #94a3b8;
+  font-family: ui-monospace, Consolas, monospace;
+  margin-top: 1px;
+}
+.cs-stat-avg .k { color: #5a6a78; margin-right: 3px; }
+.cs-stat-avg .v2 { color: #00bcd4; font-weight: 600; }
+.cs-stat-avg .v2.amber { color: #fbbf24; }
+
+/* --- 配信単位アコーディオン (panel と同じ bg=#0d1b2a なので border を強めて分離) --- */
+.cs-stream {
+  background: #0d1b2a;
+  border: 1px solid #2a4a5a;
+  border-radius: 4px;
+  margin-top: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+.cs-stream-h {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto auto;
+  column-gap: 12px; row-gap: 4px;
+  align-items: center;
+  padding: 9px 12px;
+  cursor: pointer;
+}
+.cs-stream-h:hover { background: #112236; }
+.cs-stream-h .cs-arrow {
+  color: #5a6a78; font-size: 10px; transition: transform 100ms;
+  grid-row: 1 / span 2; align-self: start; padding-top: 2px;
+}
+.cs-stream.cs-collapsed .cs-stream-h .cs-arrow { transform: rotate(-90deg); }
+.cs-stream-h .cs-title {
+  font-size: 12px; font-weight: 600; color: #d8e8e8;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+  grid-column: 2; grid-row: 1;
+}
+.cs-stream-h .cs-date {
+  font-size: 10px; color: #5a6a78;
+  font-family: ui-monospace, Consolas, monospace;
+  grid-column: 3; grid-row: 1; text-align: right;
+}
+.cs-stream-h .cs-kpi-row {
+  grid-column: 2 / 4; grid-row: 2;
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px;
+}
+@media (max-width: 1100px) {
+  .cs-stream-h .cs-kpi-row { grid-template-columns: repeat(3, 1fr); }
+}
+.cs-stream-h .cs-kpi {
+  display: flex; flex-direction: column; gap: 1px; min-width: 0;
+}
+.cs-stream-h .cs-kpi-k {
+  font-size: 9px; color: #5a6a78; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.cs-stream-h .cs-kpi-v {
+  font-size: 12px; color: #00e5ff; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cs-stream-h .cs-kpi-v.amber { color: #fbbf24; }
+/* 配信ログ V3 列色と統一 (eac5536): peak=green / like=pink / 時間=white(=本文色) /
+   dim(#5a6a78) は使えるよう残置。コメントリスナー数はクラス無し default cyan。 */
+.cs-stream-h .cs-kpi-v.green { color: #00e676; }
+.cs-stream-h .cs-kpi-v.pink { color: #f06292; }
+.cs-stream-h .cs-kpi-v.white { color: #d8e8e8; }
+.cs-stream-h .cs-kpi-v.dim { color: #5a6a78; font-weight: 600; }
+.cs-stream-body {
+  background: #061018;
+  border-top: 1px solid #1a3a4a;
+  padding: 4px 10px;
+}
+.cs-stream.cs-collapsed .cs-stream-body { display: none; }
+/* virtualization の上下 spacer (= scrollbar の長さを確保するためのプレースホルダ) */
+.cs-virt-spacer { width: 100%; }
+
+/* --- 状態表示 (0 件 / エラー / 読み込み中 / 初期) --- */
+.cs-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px dashed #1a3a4a;
+  border-radius: 6px;
+  margin-top: 12px;
+  min-height: 180px;
+}
+.cs-state .cs-state-icon {
+  font-size: 36px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+  font-family: ui-monospace, Consolas, monospace;
+}
+.cs-state .cs-state-title {
+  font-size: 14px; color: #d8e8e8; font-weight: 600;
+  margin-bottom: 6px;
+}
+.cs-state .cs-state-hint {
+  font-size: 11px; color: #5a6a78;
+  margin-bottom: 14px;
+  max-width: 360px;
+}
+.cs-state .cs-state-actions {
+  display: flex; gap: 8px;
+}
+.cs-state .cs-state-actions button {
+  background: #1a2742;
+  border: 1px solid #1a3a4a;
+  color: #d8e8e8;
+  border-radius: 4px;
+  padding: 6px 16px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.cs-state .cs-state-actions button:hover { border-color: #00bcd4; color: #00e5ff; }
+
+.cs-state-error .cs-state-icon { color: #ef9a9a; opacity: 0.7; }
+.cs-state-error .cs-state-title { color: #ef9a9a; }
+.cs-state-error { border-color: rgba(239, 154, 154, 0.4); background: rgba(239, 154, 154, 0.06); }
+
+.cs-state-loading .cs-state-icon {
+  animation: cs-spin 1.2s linear infinite;
+  color: #00bcd4;
+  opacity: 0.9;
+}
+@keyframes cs-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.cs-state-initial { opacity: 0.7; }
+
+/* --- システムタグ pill (オレンジ系) / ユーザータグ pill (紫系) --- */
+.cs-type-pill.cs-tag-system:has(input:checked) {
+  background: rgba(245, 158, 11, 0.18);
+  border-color: #f59e0b;
+  color: #fbbf24;
+}
+.cs-type-pill.cs-tag-user {
+  border-color: rgba(168, 85, 247, 0.45);
+  color: #d8b4fe;
+  background: rgba(168, 85, 247, 0.10);
+}
+.cs-type-pill.cs-tag-user:has(input:checked) {
+  background: rgba(168, 85, 247, 0.45);
+  color: #ffffff;
+  border-color: #a855f7;
+}
+
+/* --- ユーザー / 配信枠 picker トリガーボタン --- */
+.cs-picker-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #061018;
+  border: 1px solid #1a3a4a;
+  color: #d8e8e8;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  min-width: 200px;
+  text-align: left;
+}
+.cs-picker-btn:hover { border-color: #00bcd4; }
+.cs-picker-btn .cs-picker-caret { color: #5a6a78; margin-left: auto; font-size: 10px; }
+
+/* --- picker-pill 列 (mock 仕様: 選択中の個別 chip + 「+ 追加」ボタン) --- */
+.cs-form-row-stack { grid-template-columns: 1fr; }
+.cs-picker-chips {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  align-items: center;
+  background: #061018;
+  border: 1px solid #1a3a4a;
+  border-radius: 4px;
+  padding: 4px 6px;
+  min-height: 28px;
+}
+.cs-picker-chips:hover { border-color: #2a5a6a; }
+.cs-picker-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: rgba(0, 229, 255, 0.10);
+  color: #00e5ff;
+  border: 1px solid rgba(0, 229, 255, 0.25);
+}
+.cs-picker-chip.cs-picker-chip-system {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+.cs-picker-chip.cs-picker-chip-user-tag {
+  background: rgba(168, 85, 247, 0.12);
+  color: #d8b4fe;
+  border-color: rgba(168, 85, 247, 0.45);
+}
+.cs-picker-chip.cs-picker-chip-stream {
+  background: rgba(168, 85, 247, 0.12);
+  color: #d8b4fe;
+  border-color: rgba(168, 85, 247, 0.3);
+  max-width: 320px;
+  /* base の inline-flex を維持し、ラベル span 側で ellipsis (✕ がはみ出さないように) */
+}
+.cs-picker-chip.cs-picker-chip-stream > span:first-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
+}
+.cs-picker-chip-x {
+  cursor: pointer;
+  color: rgba(0, 229, 255, 0.55);
+  font-size: 10px; line-height: 1;
+  margin-left: 2px;
+  flex-shrink: 0;
+}
+.cs-picker-chip-x:hover { color: #ef9a9a; }
+.cs-picker-chip-system .cs-picker-chip-x { color: rgba(251, 191, 36, 0.55); }
+.cs-picker-chip-user-tag .cs-picker-chip-x,
+.cs-picker-chip-stream .cs-picker-chip-x { color: rgba(216, 180, 254, 0.55); }
+.cs-picker-chip .cs-picker-chip-avatar {
+  width: 14px; height: 14px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 8px; font-weight: 600;
+  background: #1a2742; color: #d8e8e8;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.cs-picker-chip .cs-picker-chip-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.cs-picker-add {
+  display: inline-flex; align-items: center;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: transparent;
+  border: 1px dashed #1a3a4a;
+  color: #5a6a78;
+  cursor: pointer;
+}
+.cs-picker-add:hover { color: #00bcd4; border-color: rgba(0, 188, 212, 0.5); }
+.cs-picker-empty {
+  font-size: 11px; color: #5a6a78;
+  padding: 3px 4px;
+}
+
+/* --- popover (modal-style overlay) --- */
+.cs-popover-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 12000;
+}
+.cs-popover {
+  background: #0d1b2a;
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+  width: 480px;
+  max-width: 92vw;
+  max-height: 80vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  color: #d8e8e8;
+}
+.cs-popover-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #1a3a4a;
+}
+.cs-popover-title {
+  font-size: 13px; font-weight: 600; color: #00e5ff;
+}
+.cs-popover-search {
+  flex: 1;
+  background: #061018;
+  border: 1px solid #1a3a4a;
+  color: #d8e8e8;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  outline: none;
+}
+.cs-popover-search:focus { border-color: #00bcd4; }
+.cs-popover-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+  min-height: 200px;
+}
+.cs-popover-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #112236;
+}
+.cs-popover-row:hover { background: #112236; }
+.cs-popover-row input[type="checkbox"] { margin: 0; cursor: pointer; }
+.cs-popover-row .cs-row-main {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; gap: 1px;
+}
+.cs-popover-row .cs-row-primary {
+  font-size: 12px; color: #d8e8e8;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cs-popover-row .cs-row-secondary {
+  font-size: 10px; color: #5a6a78;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-family: ui-monospace, Consolas, monospace;
+}
+.cs-popover-row .cs-row-stat {
+  font-size: 10px; color: #94a3b8;
+  font-family: ui-monospace, Consolas, monospace;
+  flex-shrink: 0;
+}
+.cs-popover-row .cs-row-amber { color: #fbbf24; }
+.cs-popover-footer {
+  display: flex; gap: 8px; padding: 10px 12px;
+  border-top: 1px solid #1a3a4a;
+  align-items: center;
+}
+.cs-popover-count {
+  flex: 1;
+  font-size: 11px; color: #94a3b8;
+}
+.cs-popover-footer button {
+  background: #1a2742;
+  border: 1px solid #1a3a4a;
+  color: #94a3b8;
+  border-radius: 4px;
+  padding: 5px 14px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.cs-popover-footer button:hover { color: #d8e8e8; border-color: #00bcd4; }
+.cs-popover-footer button.primary {
+  background: #00bcd4; color: #06080d; border-color: #00bcd4; font-weight: 600;
+}
+.cs-popover-footer button.primary:hover { background: #00e5ff; }
+.cs-popover-empty {
+  padding: 24px 12px; text-align: center; color: #5a6a78; font-size: 11px;
+}
+
+/* --- 保存検索ストリップ + 「条件を変更」 / 「保存」 --- */
+.cs-saved-strip {
+  display: flex; align-items: center; gap: 4px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #1a3a4a;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.cs-toggle-btn {
+  background: #1a2742;
+  border: 1px solid #00bcd4;
+  color: #00e5ff;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 11px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-right: 6px;
+}
+.cs-toggle-btn:hover { background: #004d54; }
+.cs-saved-pins {
+  display: flex; gap: 4px; flex-wrap: wrap; flex: 1;
+}
+.cs-saved-pin {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px;
+  padding: 3px 9px;
+  border-radius: 12px;
+  background: #1a2742;
+  color: #94a3b8;
+  border: 1px solid #1a3a4a;
+  cursor: pointer;
+  user-select: none;
+}
+.cs-saved-pin:hover { color: #d8e8e8; border-color: #00bcd4; }
+.cs-saved-pin.cs-active {
+  background: #004d54; color: #00e5ff; border-color: #00bcd4;
+}
+.cs-saved-pin .cs-star { color: #fbbf24; }
+.cs-saved-pin .cs-pin-x {
+  margin-left: 4px; color: #5a6a78; font-size: 11px;
+  cursor: pointer;
+}
+.cs-saved-pin .cs-pin-x:hover { color: #ef9a9a; }
+.cs-saved-add {
+  background: transparent;
+  border: 1px dashed #1a3a4a;
+  color: #5a6a78;
+  border-radius: 12px;
+  padding: 3px 9px;
+  font-size: 10px;
+  cursor: pointer;
+}
+.cs-saved-add:hover { color: #00bcd4; border-color: rgba(0, 188, 212, 0.5); }
+
+/* --- 適用中条件チップ (collapsed 状態表示) --- */
+.cs-applied-chips {
+  display: flex; gap: 4px; flex-wrap: wrap; align-items: center;
+  padding: 8px 0;
+  margin-bottom: 8px;
+}
+.cs-applied-chips .cs-chips-label {
+  font-size: 9px; color: #5a6a78;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  margin-right: 4px;
+}
+.cs-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 12px;
+  background: rgba(0, 229, 255, 0.10);
+  color: #00e5ff;
+  border: 1px solid rgba(0, 229, 255, 0.25);
+}
+.cs-chip.cs-chip-amber {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+.cs-chip.cs-chip-purple {
+  background: rgba(168, 85, 247, 0.12);
+  color: #d8b4fe;
+  border-color: rgba(168, 85, 247, 0.3);
+}
+.cs-chip-empty {
+  font-size: 10px; color: #5a6a78; font-style: italic;
+}
+
+/* --- 保存検索ダイアログ --- */
+.cs-save-dialog { width: 480px; }
+.cs-save-dialog-body {
+  padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.cs-save-dialog-body input[type="text"] {
+  background: #061018;
+  border: 1px solid #1a3a4a;
+  color: #d8e8e8;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+  outline: none;
+}
+.cs-save-dialog-body input[type="text"]:focus { border-color: #00bcd4; }
+
+/* --- タグ管理 modal (タブ: リスナータグ / 配信枠タグ) --- */
+.cs-tag-admin { width: 440px; max-height: 80vh; }
+.cs-tag-admin-tabs {
+  display: flex;
+  border-bottom: 1px solid #1a3a4a;
+  background: #061018;
+}
+.cs-tag-admin-tab {
+  flex: 1;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: #94a3b8;
+  padding: 8px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.cs-tag-admin-tab:hover { color: #d8e8e8; }
+.cs-tag-admin-tab.active {
+  color: #00e5ff;
+  border-bottom-color: #00bcd4;
+  background: rgba(0, 188, 212, 0.06);
+}
+.cs-tag-admin-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+  min-height: 200px;
+}
+.cs-tag-admin-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 12px;
+  border-bottom: 1px solid #112236;
+}
+.cs-tag-admin-row:hover { background: #112236; }
+.cs-tag-admin-row .cs-tag-admin-name {
+  background: rgba(168, 85, 247, 0.15);
+  color: #d8b4fe;
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  border-radius: 12px;
+  padding: 3px 10px;
+  font-size: 11px;
+  outline: none;
+  min-width: 100px;
+}
+.cs-tag-admin-row .cs-tag-admin-name:focus {
+  background: rgba(168, 85, 247, 0.25);
+  border-color: #a855f7;
+}
+.cs-tag-admin-row .cs-tag-admin-count {
+  font-size: 10px; color: #94a3b8;
+  font-family: ui-monospace, Consolas, monospace;
+}
+.cs-tag-admin-row .cs-tag-admin-del {
+  background: transparent;
+  border: 1px solid rgba(239, 154, 154, 0.35);
+  color: rgba(239, 154, 154, 0.7);
+  border-radius: 4px;
+  padding: 3px 9px;
+  font-size: 10px;
+  cursor: pointer;
+}
+.cs-tag-admin-row .cs-tag-admin-del:hover {
+  background: rgba(239, 154, 154, 0.15);
+  color: #ef9a9a;
+  border-color: #ef9a9a;
+}
+
+/* --- ユーザー popover (タグ strip 2 系統 + bulk-row + アバター付き行) --- */
+.cs-user-popover { width: 540px; }
+.cs-tag-strip-group {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 12px;
+  border-bottom: 1px solid #112236;
+  background: #061018;
+}
+.cs-tag-strip-label {
+  font-size: 9px; color: #5a6a78;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  flex-shrink: 0;
+  width: 60px;
+}
+.cs-tag-strip-tags { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
+.cs-tag-strip-tags .cs-tag {
+  font-size: 10px; padding: 3px 9px; border-radius: 11px;
+  background: #1a2742;
+  color: #94a3b8;
+  border: 1px solid #1a3a4a;
+  cursor: pointer;
+  user-select: none;
+}
+.cs-tag-strip-tags .cs-tag.cs-active {
+  background: #004d54; color: #00e5ff; border-color: #00bcd4;
+}
+.cs-tag-strip-tags .cs-tag .cs-tag-ct {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 9px; opacity: 0.7; margin-left: 3px;
+}
+.cs-user-tags-group .cs-tag-strip-tags .cs-tag {
+  border-color: rgba(168, 85, 247, 0.45);
+  color: #d8b4fe;
+  background: rgba(168, 85, 247, 0.10);
+}
+.cs-user-tags-group .cs-tag-strip-tags .cs-tag.cs-active {
+  background: rgba(168, 85, 247, 0.45);
+  color: #ffffff;
+  border-color: #a855f7;
+}
+.cs-user-tags-group .cs-tag-empty {
+  font-size: 10px; color: #5a6a78; padding: 3px 4px;
+}
+.cs-stream-tags-group .cs-tag-strip-tags .cs-tag {
+  border-color: rgba(168, 85, 247, 0.45);
+  color: #d8b4fe;
+  background: rgba(168, 85, 247, 0.10);
+}
+.cs-stream-tags-group .cs-tag-strip-tags .cs-tag.cs-active {
+  background: rgba(168, 85, 247, 0.45);
+  color: #ffffff;
+  border-color: #a855f7;
+}
+.cs-stream-popover { width: 540px; }
+
+.cs-tag-bulk-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 12px;
+  background: rgba(0, 229, 255, 0.06);
+  border-bottom: 1px solid #112236;
+  font-size: 10px; color: #94a3b8;
+}
+.cs-tag-bulk-row .cs-tag-bulk-info { flex: 1; }
+.cs-tag-bulk-row button {
+  background: #1a2742;
+  border: 1px solid rgba(0, 188, 212, 0.5);
+  color: #00e5ff;
+  border-radius: 3px;
+  padding: 3px 9px;
+  font-size: 10px;
+  cursor: pointer;
+}
+.cs-tag-bulk-row button:hover { background: #004d54; }
+
+/* リスナー行: アバター + 名前 + システムタグ + ユーザータグ + 件数 */
+.cs-popover-row .cs-row-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600;
+  background: #1a2742; color: #d8e8e8;
+  overflow: hidden;
+}
+.cs-popover-row .cs-row-avatar img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.cs-popover-row .cs-row-tags {
+  display: inline-flex; gap: 3px; flex-wrap: wrap;
+  margin-left: 4px;
+}
+.cs-popover-row .cs-row-tag {
+  display: inline-flex; align-items: center;
+  font-size: 9px; padding: 1px 5px;
+  border-radius: 8px;
+  border: 1px solid;
+}
+.cs-popover-row .cs-row-tag.cs-row-tag-system { color: #fbbf24; border-color: #f59e0b; background: rgba(245, 158, 11, 0.12); }
+.cs-popover-row .cs-row-tag.cs-row-tag-system-first { color: #bbf7d0; border-color: #22c55e; background: rgba(34, 197, 94, 0.12); }
+.cs-popover-row .cs-row-tag.cs-row-tag-system-returning { color: #bae6fd; border-color: #38bdf8; background: rgba(56, 189, 248, 0.12); }
+.cs-popover-row .cs-row-tag.cs-row-tag-system-veteran { color: #d8b4fe; border-color: #a855f7; background: rgba(168, 85, 247, 0.18); }
+.cs-popover-row .cs-row-tag.cs-row-tag-user {
+  color: #d8b4fe; border-color: rgba(168, 85, 247, 0.45);
+  background: rgba(168, 85, 247, 0.15);
+}
+
+/* --- 期間 popover (preset + range + 2 ヶ月カレンダー + 年月ピッカー) --- */
+.cs-period-popover {
+  background: #0d1b2a;
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+  width: 580px;
+  max-width: 92vw;
+  max-height: 86vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  color: #d8e8e8;
+}
+.cs-period-presets {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #112236;
+}
+.cs-period-presets button {
+  background: #1a2742;
+  border: 1px solid #1a3a4a;
+  color: #94a3b8;
+  border-radius: 11px;
+  padding: 3px 12px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.cs-period-presets button:hover {
+  border-color: #00bcd4; color: #00e5ff;
+}
+.cs-period-presets button.active {
+  background: rgba(0, 229, 255, 0.18);
+  border-color: #00bcd4; color: #00e5ff;
+}
+.cs-period-fields {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #112236;
+  font-size: 11px; color: #94a3b8;
+}
+.cs-period-fields input[type="date"] {
+  background: #061018;
+  border: 1px solid #1a3a4a;
+  color: #d8e8e8;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: ui-monospace, Consolas, monospace;
+  color-scheme: dark;
+  margin-left: 4px;
+}
+.cs-period-cals {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  padding: 12px;
+}
+.cs-month-cal {
+  background: #061018;
+  border: 1px solid #112236;
+  border-radius: 4px;
+  padding: 8px;
+}
+.cs-month-cal-h {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 11px; color: #d8e8e8; font-weight: 600;
+  margin-bottom: 6px;
+}
+.cs-month-cal-h .cs-month-nav {
+  background: transparent; border: 0; color: #5a6a78;
+  font-size: 12px; cursor: pointer;
+  padding: 2px 6px;
+}
+.cs-month-cal-h .cs-month-nav:hover { color: #00bcd4; }
+.cs-month-cal-h .cs-month-name {
+  cursor: pointer; user-select: none;
+}
+.cs-month-cal-h .cs-month-name:hover { color: #00e5ff; }
+.cs-month-cal-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px;
+  font-size: 10px;
+  font-family: ui-monospace, Consolas, monospace;
+}
+.cs-month-cal-grid .cs-dow {
+  text-align: center; color: #5a6a78; padding: 2px 0;
+}
+.cs-month-cal-grid .cs-dow.cs-sun { color: #ef9a9a; }
+.cs-month-cal-grid .cs-dow.cs-sat { color: #80b3ff; }
+.cs-month-cal-grid .cs-day {
+  text-align: center; padding: 4px 0;
+  border-radius: 2px; cursor: pointer;
+  background: transparent; color: #94a3b8;
+}
+.cs-month-cal-grid .cs-day:hover { background: #1a2742; color: #00e5ff; }
+.cs-month-cal-grid .cs-day.cs-other-month { color: #2a3a4a; }
+.cs-month-cal-grid .cs-day.cs-in-range { background: rgba(0, 188, 212, 0.15); color: #00e5ff; }
+.cs-month-cal-grid .cs-day.cs-range-end {
+  background: #00bcd4; color: #06080d; font-weight: 700;
+}
+.cs-period-ym-picker {
+  padding: 12px;
+  border-top: 1px solid #112236;
+}
+.cs-period-ym-picker .cs-ym-h {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 13px; color: #d8e8e8; font-weight: 600;
+  margin-bottom: 8px;
+}
+.cs-period-ym-picker .cs-ym-h button {
+  background: transparent; border: 0; color: #5a6a78;
+  font-size: 14px; cursor: pointer; padding: 2px 8px;
+}
+.cs-period-ym-picker .cs-ym-h button:hover { color: #00bcd4; }
+.cs-period-ym-picker .cs-ym-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;
+}
+.cs-period-ym-picker .cs-ym-grid .cs-ym-cell {
+  text-align: center;
+  padding: 8px 4px;
+  border-radius: 3px;
+  background: #1a2742;
+  color: #94a3b8;
+  border: 1px solid #1a3a4a;
+  cursor: pointer;
+  font-size: 11px;
+}
+.cs-period-ym-picker .cs-ym-grid .cs-ym-cell:hover {
+  border-color: #00bcd4; color: #00e5ff;
+}
+.cs-period-ym-picker .cs-ym-grid .cs-ym-cell.active {
+  background: #00bcd4; color: #06080d; font-weight: 700; border-color: #00bcd4;
+}
+
+/* --- リスナー詳細モーダルのタグ chip 編集 --- */
+.ld-tag-edit {
+  display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
+  margin: 4px 0 8px;
+}
+.ld-tag-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 12px;
+  background: rgba(168, 85, 247, 0.18);
+  color: #d8b4fe;
+  border: 1px solid rgba(168, 85, 247, 0.45);
+}
+.ld-tag-x {
+  cursor: pointer;
+  color: rgba(216, 180, 254, 0.55);
+  font-size: 10px;
+  line-height: 1;
+}
+.ld-tag-x:hover { color: #ef9a9a; }
+.ld-tag-add-pill {
+  display: inline-flex; align-items: center;
+  border: 1px dashed #1a3a4a;
+  border-radius: 12px;
+  padding: 0 6px;
+}
+.ld-tag-add-pill:focus-within { border-color: #00bcd4; }
+.ld-tag-add-input {
+  background: transparent;
+  border: 0;
+  outline: none;
+  color: #d8e8e8;
+  font-size: 11px;
+  padding: 3px 0;
+  width: 110px;
+}
+.ld-tag-add-input::placeholder { color: #5a6a78; }
+
+/* ============================================================
+   設定画面 (= settings-frame): sidebar + content の 2 カラム。
+   開いている間は他 frame を hide してウィンドウ占有 (body.settings-open).
+   ============================================================ */
+
+/* 開いている間は他 frame を隠す。frame の display:flex 等を上書きするため !important 不要だが安全のため指定 */
+body.settings-open #conn-frame,
+body.settings-open #app-frame,
+body.settings-open #cl-frame { display: none; }
+
+/* settings-frame は通常 hidden、open で flex 表示 + viewport の残りを埋める */
+.settings-frame { display: none; }
+body.settings-open .settings-frame {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 4px 6px 6px;
+}
+
+.settings-frame .frame-head { display: flex; align-items: center; gap: 10px; }
+.settings-frame .frame-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0;
+}
+
+.settings-close-btn {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid #2a4a5a;
+  color: #94a3b8;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+.settings-close-btn:hover {
+  border-color: #00bcd4;
+  color: #00e5ff;
+}
+
+/* 2 カラムレイアウト
+   selector を `.settings-frame .settings-layout` にしているのは、 同じ要素に当たる
+   `.settings-frame .frame-body { display: flex; ... }` (= 上記 5816) と specificity
+   を揃え、 ソース順で後ろにある本 rule が display:grid を勝たせるため。
+   旧 `.settings-layout` 単独 (specificity 0,1,0) では負けて grid-template-columns が
+   無視され、 nav が content shrink で 68px になっていた (= 2026-05-23 報告)。 */
+.settings-frame .settings-layout {
+  display: grid;
+  /* 200px だと「データ・バックアップ」 「デバッグ・サポート」 等の Japanese 10
+     文字級 nav item が DPI / フォント差で折り返す環境があった (= 2026-05-23 報告)。
+     220px に拡張して余裕を持たせる。 nav-item 側で nowrap + ellipsis の保険も併用。 */
+  grid-template-columns: 220px 1fr;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* === 左サイドバー === */
+.settings-nav {
+  background: #07111b;
+  border-right: 1px solid #1a3a4a;
+  padding: 10px 8px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.settings-nav-item {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #8aa0b0;
+  padding: 9px 12px;
+  border-radius: 6px;
+  text-align: left;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+  width: 100%;
+  /* nav 幅 200px に対し、 「データ・バックアップ」 「デバッグ・サポート」 等が
+     フォント / DPI 環境次第で折り返す現象を防ぐ (= 2026-05-23 報告)。
+     text 部分は nowrap、 万一の overflow は ellipsis で逃す。 */
+  white-space: nowrap;
+}
+/* テキスト span (= icon の次の無 class span) を nav 残り幅全部に伸ばす。
+   flex: 1 が無いと flex item の natural size のまま伸びず、 min-width: 0 で縮んだ
+   結果 ellipsis (`...`) が発動して逆に見づらくなる (= 2026-05-23 1st 修正時の罠)。
+   220px nav なら日本語 10 字級は十分入る幅が確保される。 */
+.settings-nav-item > span:not(.settings-nav-icon) {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.settings-nav-item:hover {
+  background: #102a40;
+  color: #d8e8e8;
+}
+.settings-nav-item.active {
+  background: #102a40;
+  border-color: #00bcd4;
+  color: #00e5ff;
+}
+.settings-nav-icon {
+  color: #4a6a78;
+  font-size: 8px;
+  flex-shrink: 0;
+}
+.settings-nav-item:hover .settings-nav-icon { color: #8aa0b0; }
+.settings-nav-item.active .settings-nav-icon { color: #00bcd4; }
+
+.settings-nav-item-danger {
+  margin-top: auto;
+  border-top: 1px solid #1a3a4a;
+  padding-top: 12px;
+  border-radius: 6px;
+}
+.settings-nav-item-danger:not(.active):not(:hover) { color: #94605d; }
+.settings-nav-item-danger:not(.active):not(:hover) .settings-nav-icon { color: #94605d; }
+.settings-nav-item-danger.active {
+  border-color: #ef4444;
+  background: #2a1115;
+  color: #fca5a5;
+}
+.settings-nav-item-danger.active .settings-nav-icon { color: #ef4444; }
+
+/* === 右コンテンツエリア === */
+.settings-content {
+  overflow-y: auto;
+  padding: 16px 22px 24px;
+  background: #0a1628;
+}
+
+.settings-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 800px;
+}
+.settings-panel[hidden] { display: none; }
+
+.settings-panel-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #d8e8e8;
+  margin: 4px 0 4px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #1a3a4a;
+}
+
+.settings-section {
+  background: #0d1b2a;
+  border: 1px solid #1a3a4a;
+  border-radius: 10px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.settings-section-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.settings-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #d8e8e8;
+  margin: 0;
+}
+.settings-section-meta {
+  font-size: 11px;
+  color: #64748b;
+}
+.settings-section-desc {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.6;
+}
+.settings-section-desc-tight { font-size: 11px; }
+
+.settings-section-danger {
+  border-color: #7f1d1d;
+  background: #1f1015;
+}
+.settings-section-danger .settings-section-title { color: #fca5a5; }
+.settings-section-danger .settings-section-desc { color: #fca5a5; }
+
+/* === badge / button / input === */
+.settings-status-badge {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  text-align: center;
+  background: #07111b;
+  color: #64748b;
+  border: 1px solid #1a3a4a;
+}
+.settings-status-badge.ok {
+  background: #052e16;
+  color: #4ade80;
+  border-color: #166534;
+}
+.settings-status-badge.ng {
+  background: #3a1a1a;
+  color: #f87171;
+  border-color: #7f1d1d;
+}
+
+/* YouTube アカウント情報カード (= ログイン中のみ表示) */
+.settings-yt-account {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: #07111b;
+  border: 1px solid #1a3a4a;
+  border-radius: 8px;
+}
+.settings-yt-account-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #1a3a4a;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  font-size: 18px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.settings-yt-account-body {
+  flex: 1;
+  min-width: 0;
+}
+.settings-yt-account-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #d8e8e8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.settings-yt-account-handle {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #94a3b8;
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.settings-btn {
+  padding: 9px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  background: #07111b;
+  color: #d8e8e8;
+  border: 1px solid #2a4a5a;
+  font-family: inherit;
+  transition: border-color 120ms ease, color 120ms ease, background 120ms ease;
+}
+.settings-btn:hover { border-color: #00bcd4; color: #00e5ff; }
+.settings-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.settings-btn-primary { border-color: #00bcd4; color: #00e5ff; }
+.settings-btn-secondary { border-color: #475569; color: #94a3b8; }
+.settings-btn-secondary:hover { border-color: #00bcd4; color: #00e5ff; }
+.settings-btn-ghost {
+  background: transparent;
+  border-color: #334155;
+  color: #94a3b8;
+}
+.settings-btn-ghost:hover { border-color: #00bcd4; color: #00e5ff; }
+.settings-btn-danger {
+  background: #7f1d1d;
+  border-color: #ef4444;
+  color: #fee2e2;
+}
+.settings-btn-danger:hover { background: #991b1b; border-color: #f87171; color: #fee2e2; }
+.settings-btn-block { width: 100%; }
+.settings-btn-sm { padding: 4px 10px; font-size: 11px; }
+
+.settings-button-row { display: flex; gap: 8px; }
+.settings-button-row .settings-btn { flex: 1; }
+
+.settings-text-input {
+  background: #07111b;
+  color: #d8e8e8;
+  border: 1px solid #1a4a5a;
+  border-radius: 5px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 120ms ease;
+  width: 100%;
+}
+.settings-text-input:focus { border-color: #00bcd4; }
+.settings-text-input-mono { font-family: "Consolas", "Menlo", monospace; font-size: 12px; }
+
+.settings-input-row { display: flex; gap: 6px; align-items: center; }
+.settings-input-row .settings-text-input { flex: 1; }
+
+.settings-row-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: #64748b;
+}
+.settings-row-meta-text { color: #64748b; }
+.settings-row-right { text-align: right; }
+.settings-row-left { text-align: left; }
+
+/* リスナー判定セクション内のサブ見出し (= 常連 / 古参) */
+.settings-subsection-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #80cbc4;
+  margin: 6px 0 6px;
+  letter-spacing: 0.04em;
+}
+
+/* リスナーランク一覧 */
+.settings-rank-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.settings-rank-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  background: #07111b;
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+}
+.settings-rank-badge {
+  display: inline-block;
+  min-width: 56px;
+  text-align: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #102a40;
+  border: 1px solid #2a4a5a;
+  flex-shrink: 0;
+  /* 既存 .label-first/-returning/-regular/-veteran (sd-comp-row 用) の color を流用 */
+}
+.settings-rank-badge.label-first { color: #bbf7d0; }
+.settings-rank-badge.label-returning { color: #bae6fd; }
+.settings-rank-badge.label-regular { color: #fde68a; }
+.settings-rank-badge.label-veteran { color: #d8b4fe; }
+.settings-rank-badge.label-comeback { color: #fda4af; }
+.settings-rank-badge.label-abandoned { color: #94a3b8; }
+.settings-rank-badge-member { color: #fca5a5; }
+
+/* コメントタグ一覧用の badge: settings-rank-badge と同じレイアウト + 既存
+   .comment-listener-tag-{status} の色を流用する。 chat panel のタグと視覚的に
+   同じ色 / アクセントを保つことで、 「あ、 これがあのタグね」 と即時関連付けできる。 */
+.settings-comment-tag {
+  display: inline-block;
+  min-width: 56px;
+  text-align: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #102b36;
+  border: 1px solid #2a4a5a;
+  flex-shrink: 0;
+}
+/* 各タグの色 (= chat panel の comment-listener-tag-* に揃える) */
+.settings-comment-tag.comment-listener-tag-first-time {
+  border-color: #22c55e; color: #bbf7d0; background: #0f2f1b;
+}
+.settings-comment-tag.comment-listener-tag-returning {
+  border-color: #38bdf8; color: #bae6fd; background: #0b2838;
+}
+.settings-comment-tag.comment-listener-tag-regular-arrival {
+  border-color: #f59e0b; color: #fde68a; background: #3a2608;
+}
+.settings-comment-tag.comment-listener-tag-long-absence {
+  border-color: #fda4af; color: #fda4af; background: #3a141a;
+}
+
+/* ランク一覧の動的変数 X/Y/N/M を強調表示。
+   ユーザ指定: X=新規色 / Y=古参色 / N=復帰色 / M=常連色 で 4 設定値の役割を視覚的に対応付け。
+   JS の renderRankVars() で textContent に数値を埋める。 */
+.rank-var {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 0 4px;
+  margin: 0 1px;
+  border-radius: 3px;
+  text-align: center;
+  font-weight: 700;
+  font-family: 'Consolas', monospace;
+  background: #102a40;
+}
+.rank-var.rank-var-x { color: #bbf7d0; }  /* X = 新規色 (緑) */
+.rank-var.rank-var-y { color: #d8b4fe; }  /* Y = 古参色 (紫) */
+.rank-var.rank-var-n { color: #fda4af; }  /* N = 復帰色 (桃) */
+.rank-var.rank-var-m { color: #fde68a; }  /* M = 常連色 (黄) */
+
+/* 設定 input にも同色のアウトラインで「この入力 = X / Y / N / M」を視覚化 */
+#settings-newcomer-days { border-color: #bbf7d055; }
+#settings-newcomer-days:focus { border-color: #bbf7d0; outline-color: #bbf7d0; }
+#settings-veteran-days  { border-color: #d8b4fe55; }
+#settings-veteran-days:focus { border-color: #d8b4fe; outline-color: #d8b4fe; }
+#settings-regular-window { border-color: #fda4af55; }
+#settings-regular-window:focus { border-color: #fda4af; outline-color: #fda4af; }
+#settings-regular-min { border-color: #fde68a55; }
+#settings-regular-min:focus { border-color: #fde68a; outline-color: #fde68a; }
+
+/* リスナー判定設定のプリセットボタン (= ゆるめ / 標準 / 厳しめ) */
+.settings-rank-presets {
+  display: flex; align-items: center; gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  background: #07111b;
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+}
+.settings-rank-presets-label {
+  font-size: 12px; color: #94a3b8;
+  font-weight: 600;
+}
+.settings-rank-preset-btn {
+  display: inline-flex; flex-direction: column; align-items: flex-start;
+  gap: 2px;
+  padding: 6px 12px;
+  background: #102a40;
+  border: 1px solid #2a4a5a;
+  border-radius: 6px;
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.settings-rank-preset-btn:hover {
+  border-color: #00bcd4;
+  color: #00e5ff;
+  background: #0a2233;
+}
+.settings-rank-preset-btn.active {
+  border-color: #00bcd4;
+  background: #004d54;
+  color: #00e5ff;
+}
+.settings-rank-preset-hint {
+  font-size: 10px; color: #5a6a78; font-weight: 400;
+  font-family: 'Consolas', monospace;
+}
+.settings-rank-preset-btn:hover .settings-rank-preset-hint { color: #94a3b8; }
+.settings-rank-preset-btn.active .settings-rank-preset-hint { color: #94a3b8; }
+
+/* 設定 input の下に補足説明を出す hint (= 何の数字か即時わかる) */
+.settings-field-hint {
+  display: block;
+  font-size: 11px;
+  color: #5a6a78;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+.settings-field-hint strong { color: #94a3b8; font-weight: 600; }
+
+/* ライブプレビュー (= 現しきい値で各ランクに何人) */
+.settings-rank-preview {
+  margin-top: 14px;
+  padding: 12px;
+  background: linear-gradient(180deg, #0a2233 0%, #07111b 100%);
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+}
+.settings-rank-preview-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #1a3a4a;
+}
+.settings-rank-preview-title {
+  font-size: 12px; font-weight: 600; color: #00bcd4;
+}
+.settings-rank-preview-meta {
+  font-size: 11px; color: #5a6a78;
+}
+.settings-rank-preview-counts {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.settings-rank-preview-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px;
+  background: #102a40;
+  border: 1px solid #2a4a5a;
+  border-radius: 14px;
+  font-size: 12px;
+}
+.settings-rank-preview-chip .label { color: #94a3b8; font-weight: 600; }
+.settings-rank-preview-chip .count {
+  color: #cbd5e1; font-weight: 700; font-family: 'Consolas', monospace;
+}
+.settings-rank-preview-chip.label-first .label { color: #bbf7d0; }
+.settings-rank-preview-chip.label-returning .label { color: #bae6fd; }
+.settings-rank-preview-chip.label-regular .label { color: #fde68a; }
+.settings-rank-preview-chip.label-veteran .label { color: #d8b4fe; }
+.settings-rank-preview-chip.label-comeback .label { color: #fda4af; }
+.settings-rank-preview-chip.label-abandoned .label { color: #94a3b8; }
+.settings-rank-preview-empty {
+  font-size: 11px; color: #5a6a78; padding: 4px 0;
+}
+
+/* 視覚タイムライン (= 初コメ時刻軸 + 3 ゾーン + 境界マーカー) */
+.settings-rank-timeline {
+  margin-top: 14px;
+  padding: 12px 16px;
+  background: #07111b;
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+}
+.settings-rank-timeline-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.settings-rank-timeline-title {
+  font-size: 12px; font-weight: 600; color: #00bcd4;
+}
+.settings-rank-timeline-meta {
+  font-size: 11px; color: #5a6a78;
+}
+.settings-rank-timeline-track {
+  position: relative;
+  height: 56px;
+  display: flex;
+  background: #0a1a26;
+  border: 1px solid #1a3a4a;
+  border-radius: 4px;
+  overflow: visible;
+  margin-bottom: 32px; /* 下に境界マーカーラベル分の余白 */
+}
+.settings-rank-timeline-zone {
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  height: 100%;
+  font-size: 11px;
+  font-weight: 600;
+  overflow: hidden;
+  transition: width 0.18s ease;
+  min-width: 0;
+}
+.settings-rank-timeline-zone .zone-label {
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  padding: 0 4px;
+}
+.settings-rank-timeline-zone.zone-veteran {
+  background: linear-gradient(135deg, rgba(216,180,254,0.25), rgba(216,180,254,0.10));
+  color: #d8b4fe;
+  border-radius: 4px 0 0 4px;
+}
+.settings-rank-timeline-zone.zone-regular {
+  background: linear-gradient(135deg, rgba(253,230,138,0.25), rgba(253,230,138,0.10));
+  color: #fde68a;
+}
+.settings-rank-timeline-zone.zone-returning {
+  background: linear-gradient(135deg, rgba(186,230,253,0.25), rgba(186,230,253,0.10));
+  color: #bae6fd;
+  border-radius: 0 4px 4px 0;
+}
+
+/* 境界マーカー (= 縦線 + 下に日数ラベル)。 Y / X / 最終枠 の 3 個。
+   left は JS で px 計算して style.left を設定 (= track width に依存)。 */
+.settings-rank-timeline-marker {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  background: #cbd5e1;
+  pointer-events: none;
+  transition: left 0.18s ease;
+}
+.settings-rank-timeline-marker.marker-y { background: #d8b4fe; }
+.settings-rank-timeline-marker.marker-x { background: #bae6fd; }
+.settings-rank-timeline-marker.marker-now {
+  background: #00e5ff;
+  right: -1px;
+  left: auto;
+  box-shadow: 0 0 6px rgba(0,229,255,0.5);
+}
+.settings-rank-timeline-marker-label {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  white-space: nowrap;
+  color: #cbd5e1;
+  background: #0a1a26;
+  border: 1px solid #2a4a5a;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: 'Consolas', monospace;
+}
+.settings-rank-timeline-marker.marker-y .settings-rank-timeline-marker-label {
+  color: #d8b4fe; border-color: #d8b4fe55;
+}
+.settings-rank-timeline-marker.marker-x .settings-rank-timeline-marker-label {
+  color: #bae6fd; border-color: #bae6fd55;
+}
+.settings-rank-timeline-marker.marker-now .settings-rank-timeline-marker-label {
+  color: #00e5ff; border-color: #00e5ff55;
+}
+.settings-rank-desc {
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.5;
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-row-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+.settings-row-mono { font-family: "Consolas", "Menlo", monospace; color: #94a3b8; }
+.settings-row-flex { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.settings-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+.settings-field-label { color: #94a3b8; }
+
+.settings-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #d8e8e8;
+}
+.settings-checkbox-row input[type="checkbox"] { cursor: pointer; }
+
+/* === 自チャンネル設定: リッチカード ===
+   旧 .owner-chip (= テキストだけ) を置き換え。アバター + 表示名 + handle/UC のカードに。
+   アバター・名前は YouTube から fetch する (resolveChannelInfo / getCurrentChannel)。 */
+.settings-owner-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+}
+.settings-owner-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #07111b;
+  border: 1px solid #1a4a5a;
+  border-radius: 8px;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.settings-owner-card:hover { border-color: #2a6a7a; }
+.settings-owner-card-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #102a40;
+  object-fit: cover;
+  border: 1px solid #1a4a5a;
+}
+.settings-owner-card-avatar.loading {
+  background: linear-gradient(90deg, #102a40 25%, #1a3a4a 50%, #102a40 75%);
+  background-size: 200% 100%;
+  animation: settings-avatar-shimmer 1.4s infinite linear;
+}
+@keyframes settings-avatar-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+.settings-owner-card-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.settings-owner-card-name {
+  font-size: 13px;
+  color: #e2e8f0;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.settings-owner-card-name.placeholder { color: #4a6a78; font-weight: 400; font-style: italic; }
+.settings-owner-card-handle {
+  font-size: 11px;
+  color: #80cbc4;
+  font-family: "Consolas", "Menlo", monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.settings-owner-card-id {
+  font-size: 10px;
+  color: #4a6a78;
+  font-family: "Consolas", "Menlo", monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.settings-owner-card-remove {
+  background: transparent;
+  border: 1px solid transparent;
+  color: #94a3b8;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: border-color 120ms ease, background 120ms ease, color 120ms ease;
+}
+.settings-owner-card-remove:hover {
+  border-color: #7f1d1d;
+  background: #2a1115;
+  color: #fca5a5;
+}
+
+/* 未設定 (= 自チャンネル 0 件) のときの警告 */
+.settings-owner-empty {
+  padding: 14px 16px;
+  background: #2a1f0a;
+  border: 1px solid #b87b1f;
+  border-radius: 8px;
+  color: #ffb74d;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* 「私のチャンネルを追加」ボタン (= ログイン時のみ表示) */
+.settings-owner-add-self {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.settings-owner-add-self-icon {
+  font-size: 16px;
+  font-weight: 600;
+}
+.settings-owner-add-self.loading { opacity: 0.7; cursor: wait; }
+.settings-owner-add-self.loading .settings-owner-add-self-text::after { content: ' …'; }
+
+/* === list (effects / backups) === */
+.settings-list {
+  background: #07111b;
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.settings-list-scroll { max-height: 280px; overflow-y: auto; }
+
+.settings-list-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #1a3a4a;
+  transition: background 120ms ease;
+}
+.settings-list-row:last-child { border-bottom: none; }
+.settings-list-row:hover { background: #102a40; }
+.settings-list-row-static { cursor: default; }
+.settings-list-row-static:hover { background: transparent; }
+
+.settings-list-icon {
+  font-size: 16px;
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.settings-list-info { flex: 1; min-width: 0; }
+.settings-list-name {
+  color: #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.settings-list-sub {
+  color: #64748b;
+  font-size: 10px;
+  font-family: "Consolas", "Menlo", monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.settings-list-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.settings-list-badge-builtin {
+  background: #052e16;
+  color: #4ade80;
+  border: 1px solid #166534;
+}
+.settings-list-badge-custom {
+  background: #1e293b;
+  color: #94a3b8;
+  border: 1px solid #334155;
+}
+.settings-list-badge-broken {
+  background: #431407;
+  color: #f87171;
+  border: 1px solid #7f1d1d;
+}
+.settings-list-badge-full { background: #1e293b; color: #94a3b8; }
+.settings-list-badge-scene { background: #052e16; color: #4ade80; }
+.settings-list-badge-effect { background: #172554; color: #60a5fa; }
+.settings-list-badge-plugin { background: #3b0764; color: #c084fc; }
+.settings-list-badge-auto-upgrade { background: #431407; color: #fb923c; }
+
+.settings-list-chevron { color: #475569; font-size: 14px; flex-shrink: 0; }
+
+.settings-list-empty {
+  padding: 18px;
+  text-align: center;
+  color: #475569;
+  font-size: 12px;
+}
+
+.settings-list-action {
+  background: transparent;
+  border: 1px solid #334155;
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+.settings-list-action-restore { color: #4ade80; }
+.settings-list-action-restore:hover { border-color: #4ade80; }
+.settings-list-action-delete { color: #f87171; }
+.settings-list-action-delete:hover { border-color: #f87171; }
+
+/* === effect detail (sub-screen) === */
+.settings-detail { display: flex; flex-direction: column; gap: 12px; }
+.settings-detail[hidden] { display: none; }
+.settings-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.settings-detail-back {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.settings-detail-back:hover { color: #00e5ff; }
+.settings-detail-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.settings-detail-row {
+  display: flex;
+  padding: 7px 0;
+  border-bottom: 1px solid #1a3a4a;
+  font-size: 12px;
+}
+.settings-detail-row:last-child { border-bottom: none; }
+.settings-detail-label { width: 90px; color: #64748b; flex-shrink: 0; }
+.settings-detail-value {
+  color: #e2e8f0;
+  font-family: "Consolas", "Menlo", monospace;
+  word-break: break-all;
+}
+.settings-detail-pre {
+  background: #07111b;
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 11px;
+  color: #94a3b8;
+  overflow-x: auto;
+  margin: 0;
+}
+.settings-detail-warn {
+  background: #431407;
+  border: 1px solid #7f1d1d;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 12px;
+  color: #f87171;
+}
+
+/* 既存 io-section をそのまま流用するが、settings-content 内では gap を詰める */
+.settings-section #io-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ============================================================
+   進捗 UI (= フッタ常駐 sync-footer + backup-progress-dialog)
+   こめはぶブランドトーン (#00bcd4 / #00e5ff / #00e676) に統一
+   ============================================================ */
+
+/* --- 共通: バー --- */
+.kh-progress-bar-track {
+  background: rgba(0, 188, 212, 0.08);
+  border: 1px solid #1a3a4a;
+  border-radius: 5px;
+  overflow: hidden;
+  position: relative;
+}
+.kh-progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #00bcd4, #00e5ff);
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.35);
+  transition: width 0.3s ease-out, background 0.2s, box-shadow 0.2s;
+}
+.kh-progress-bar-fill.is-done {
+  background: linear-gradient(90deg, #00e676, #1de9b6);
+  box-shadow: 0 0 8px rgba(0, 230, 118, 0.45);
+}
+.kh-progress-bar-fill.is-error {
+  background: linear-gradient(90deg, #ef5350, #ff7961);
+  box-shadow: 0 0 8px rgba(239, 83, 80, 0.4);
+}
+.kh-progress-bar-fill.is-warn {
+  background: linear-gradient(90deg, #ffa726, #ffcc66);
+  box-shadow: 0 0 8px rgba(255, 167, 38, 0.4);
+}
+
+/* --- フッタ常駐 (= sync-footer) --- */
+.sync-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 7px 14px;
+  background: rgba(13, 27, 42, 0.96);
+  color: #d8e8e8;
+  font-size: 12px;
+  line-height: 1.4;
+  border-top: 1px solid #1a3a4a;
+  z-index: 99998;
+  display: none;
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.45);
+  transition: opacity 0.4s ease-out;
+}
+.sync-footer-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sync-icon {
+  display: inline-block;
+  min-width: 18px;
+  font-size: 14px;
+  color: #00e5ff;
+}
+.sync-icon.is-done { color: #00e676; }
+.sync-icon.is-error { color: #ef5350; }
+.sync-icon.is-warn { color: #ffa726; }
+.sync-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #d8e8e8;
+}
+.sync-bar-track {
+  width: 180px;
+  height: 8px;
+  flex-shrink: 0;
+}
+.sync-percent {
+  min-width: 42px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  color: #00e5ff;
+  font-weight: 600;
+}
+.sync-percent.is-done { color: #00e676; }
+.sync-percent.is-error { color: #ef5350; }
+.sync-percent.is-warn { color: #ffa726; }
+.sync-count {
+  min-width: 130px;
+  text-align: right;
+  font-size: 11px;
+  color: #6a8a9a;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+/* --- バックアップ進捗ダイアログ --- */
+.backup-progress-dialog {
+  min-width: 340px;
+  background: #0d1b2a;
+  border: 1px solid #1a3a4a;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5),
+              0 0 0 1px rgba(0, 188, 212, 0.15);
+}
+.backup-progress-phase {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #d8e8e8;
+  opacity: 0.85;
+}
+.backup-progress-bar-track {
+  margin-top: 12px;
+  height: 14px;
+  border-radius: 7px;
+}
+.backup-progress-percent {
+  margin-top: 8px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: #00e5ff;
+  font-weight: 600;
+}
+.backup-progress-elapsed {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #6a8a9a;
+  text-align: right;
+}
+
+/* --- 終了時 shutdown export モーダル 専用パーツ --- */
+.shutdown-export-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+  text-align: center;
+  filter: drop-shadow(0 0 6px rgba(0, 229, 255, 0.4));
+}
+.shutdown-export-count {
+  margin-top: 4px;
+  text-align: right;
+  font-size: 11px;
+  color: #6a8a9a;
+  font-variant-numeric: tabular-nums;
+}

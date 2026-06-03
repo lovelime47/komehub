@@ -1,0 +1,75 @@
+{
+  "id": "com.comment-hub.template.chat-manga-bubble",
+  "name": "chat-manga-bubble",
+  "displayName": "ふきだし",
+  "version": "1.0.0",
+  "obsHint": "OBS幅 480px 推奨 / 高さは任意。漫画のふきだし風コメント表示",
+  "fonts": ["Cherry Bomb One", "Zen Maru Gothic", "Noto Sans JP"],
+  "exportPolicy": {
+    "allowTemplateExport": true,
+    "note": "このテンプレートの HTML / CSS / JS は Live Comment Hub 用のオリジナル素材です。"
+  },
+  "uiSchema": [
+    { "key": "maxComments", "type": "slider", "label": "最大表示数", "min": 5, "max": 30, "step": 1, "default": 8 },
+    { "key": "fontSize", "type": "slider", "label": "文字サイズ", "min": 12, "max": 40, "default": 22, "suffix": "px" },
+    { "key": "nameSize", "type": "slider", "label": "名前サイズ", "min": 0.5, "max": 1.0, "step": 0.05, "default": 0.7, "suffix": "em" },
+    { "key": "commentGap", "type": "slider", "label": "コメント間隔", "min": 4, "max": 40, "step": 1, "default": 14, "suffix": "px" },
+    { "key": "showTail", "type": "toggle", "label": "ふきだしの尻尾", "default": true, "onLabel": "表示", "offLabel": "非表示" },
+    { "key": "showName", "type": "toggle", "label": "名前表示", "default": true, "onLabel": "表示", "offLabel": "非表示" },
+    { "key": "nameInline", "type": "toggle", "label": "名前を本文と同じ行に", "default": false, "onLabel": "1ライン", "offLabel": "2ライン" },
+    { "key": "showAvatar", "type": "toggle", "label": "アバター表示", "default": false, "onLabel": "表示", "offLabel": "非表示" },
+    { "key": "showBadge", "type": "toggle", "label": "バッジ表示", "default": false, "onLabel": "表示", "offLabel": "非表示" },
+    { "key": "bubbleStyle", "type": "buttons", "label": "ふきだしスタイル", "default": "manga", "options": [
+      { "value": "manga", "label": "マンガ (白地+黒縁)" },
+      { "value": "riso", "label": "リソ/ポスター" }
+    ]},
+    { "key": "risoAccentPreset", "type": "buttons", "label": "リソ背面色プリセット", "linkedColor": "risoAccent", "default": "flamingo", "showIf": { "key": "bubbleStyle", "value": "riso" }, "options": [
+      { "value": "flamingo", "label": "フラミンゴ", "hex": "#ff5d73" },
+      { "value": "pink", "label": "ショッキングピンク", "hex": "#ff3d8b" },
+      { "value": "blue", "label": "リソブルー", "hex": "#2f6fd0" },
+      { "value": "green", "label": "ミントグリーン", "hex": "#00a95c" },
+      { "value": "orange", "label": "マンダリン", "hex": "#ff6a2b" },
+      { "value": "lemon", "label": "レモン", "hex": "#ffc400" },
+      { "value": "grape", "label": "グレープ", "hex": "#8a5fd6" },
+      { "value": "sumi", "label": "墨", "hex": "#232323" }
+    ]},
+    { "key": "risoAccent", "type": "color", "label": "リソ背面色 (プリセットから微調整可)", "default": "#ff5d73", "showIf": { "key": "bubbleStyle", "value": "riso" } },
+    { "key": "colorPreset", "type": "buttons", "label": "色プリセット (選ぶと下の個別色を上書きします)", "default": "classic", "options": [
+      { "value": "classic", "label": "クラシック", "applyValues": {
+        "bubbleColor": "#ffffff", "borderColor": "#1a1a1a", "nameColor": "#1a1a1a", "textColor": "#1a1a1a", "memberColorValue": "#5e8a3a"
+      }},
+      { "value": "chalk", "label": "チョークボード", "applyValues": {
+        "bubbleColor": "#1a1a1a", "borderColor": "#f8f8f8", "nameColor": "#fef9c3", "textColor": "#f8f8f8", "memberColorValue": "#a3e635"
+      }},
+      { "value": "retro", "label": "レトロ", "applyValues": {
+        "bubbleColor": "#f5e6c8", "borderColor": "#5d3a1a", "nameColor": "#5d3a1a", "textColor": "#3a2410", "memberColorValue": "#8a6a2a"
+      }},
+      { "value": "cyber", "label": "サイバー", "applyValues": {
+        "bubbleColor": "#0a1828", "borderColor": "#00e5ff", "nameColor": "#00e5ff", "textColor": "#cdefff", "memberColorValue": "#a78bfa"
+      }},
+      { "value": "midnight", "label": "ミッドナイト", "applyValues": {
+        "bubbleColor": "#1e1b4b", "borderColor": "#c4b5fd", "nameColor": "#fbbf24", "textColor": "#e0e7ff", "memberColorValue": "#86efac"
+      }},
+      { "value": "aqua", "label": "アクア", "applyValues": {
+        "bubbleColor": "#e0f7fa", "borderColor": "#006064", "nameColor": "#006064", "textColor": "#062b30", "memberColorValue": "#0288d1"
+      }},
+      { "value": "neon-rose", "label": "ネオンローズ", "applyValues": {
+        "bubbleColor": "#0a0a0a", "borderColor": "#ec4899", "nameColor": "#f0abfc", "textColor": "#fbcfe8", "memberColorValue": "#fde047"
+      }},
+      { "value": "flamingo", "label": "フラミンゴ", "applyValues": {
+        "bubbleColor": "#ffffff", "borderColor": "#ec4899", "nameColor": "#ec4899", "textColor": "#be185d", "memberColorValue": "#9333ea"
+      }}
+    ]},
+    { "key": "bubbleColor", "type": "color", "label": "ふきだし背景色", "default": "#ffffff" },
+    { "key": "borderColor", "type": "color", "label": "枠線色", "default": "#1a1a1a" },
+    { "key": "nameColor", "type": "color", "label": "名前の色", "default": "#1a1a1a" },
+    { "key": "textColor", "type": "color", "label": "本文の色", "default": "#1a1a1a" },
+    { "key": "memberColor", "type": "toggle", "label": "メンバーシップ色分け", "default": false, "onLabel": "ON", "offLabel": "OFF" },
+    { "key": "memberColorValue", "type": "color", "label": "メンバーの名前色", "default": "#5e8a3a", "showIf": { "key": "memberColor", "value": true } },
+    { "key": "backgroundImage", "type": "image", "label": "背景画像" },
+    { "key": "paddingBottom", "type": "slider", "label": "下パディング", "min": 0, "max": 200, "step": 1, "default": 12, "suffix": "px", "showIf": { "key": "backgroundImage", "value": true } },
+    { "key": "paddingLeft", "type": "slider", "label": "左パディング", "min": 0, "max": 200, "step": 1, "default": 12, "suffix": "px", "showIf": { "key": "backgroundImage", "value": true } },
+    { "key": "paddingRight", "type": "slider", "label": "右パディング", "min": 0, "max": 200, "step": 1, "default": 12, "suffix": "px", "showIf": { "key": "backgroundImage", "value": true } },
+    { "key": "customCss", "type": "textarea", "label": "カスタムCSS", "placeholder": ".bubble { box-shadow: none; }" }
+  ]
+}

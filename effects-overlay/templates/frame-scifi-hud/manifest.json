@@ -1,0 +1,68 @@
+{
+  "id": "com.comment-hub.template.frame-scifi-hud",
+  "name": "frame-scifi-hud",
+  "displayName": "SF-HUD",
+  "version": "1.0.0",
+  "obsHint": "OBS幅 460px 前後 / 高さは任意。角カットの SF/HUD 風フレーム",
+  "fonts": ["Orbitron", "Noto Sans JP"],
+  "exportPolicy": {
+    "allowTemplateExport": true,
+    "note": "framed-list-renderless 派生。SF/HUD 演出。"
+  },
+  "uiSchema": [
+    { "key": "maxComments", "type": "slider", "label": "最大表示数", "min": 3, "max": 30, "step": 1, "default": 8 },
+    { "key": "width", "type": "slider", "label": "フレーム幅", "min": 320, "max": 720, "step": 10, "default": 460, "suffix": "px" },
+    { "key": "frameHeight", "type": "slider", "label": "フレーム高さ", "min": 220, "max": 1200, "step": 10, "default": 600, "suffix": "px" },
+    { "key": "fontSize", "type": "slider", "label": "文字サイズ", "min": 12, "max": 30, "step": 1, "default": 18, "suffix": "px" },
+    { "key": "colorPreset", "type": "buttons", "label": "色プリセット (選ぶと下の個別色を上書きします)", "default": "cyan-orange", "options": [
+      { "value": "cyan-orange", "label": "シアン×オレンジ", "applyValues": {
+        "accentColor": "#00ddff", "highlightColor": "#ffaa00",
+        "textColor": "#ffffff", "bgColor": "#000f1e",
+        "borderColor": "#00ddff"
+      }},
+      { "value": "green-amber", "label": "軍用グリーン×アンバー", "applyValues": {
+        "accentColor": "#5fff5f", "highlightColor": "#ffb000",
+        "textColor": "#e8ffe8", "bgColor": "#0a1408",
+        "borderColor": "#5fff5f"
+      }},
+      { "value": "red-yellow", "label": "アラート (赤×黄)", "applyValues": {
+        "accentColor": "#ff5f5f", "highlightColor": "#ffec40",
+        "textColor": "#ffffff", "bgColor": "#1e0008",
+        "borderColor": "#ff5f5f"
+      }},
+      { "value": "blue-orange", "label": "戦術 (青×オレンジ)", "applyValues": {
+        "accentColor": "#5fa8ff", "highlightColor": "#ff8800",
+        "textColor": "#ffffff", "bgColor": "#000a1e",
+        "borderColor": "#5fa8ff"
+      }},
+      { "value": "white-cyan", "label": "クリーン (白×シアン)", "applyValues": {
+        "accentColor": "#ffffff", "highlightColor": "#00ddff",
+        "textColor": "#e0e8ff", "bgColor": "#0a0f18",
+        "borderColor": "#ffffff"
+      }}
+    ]},
+    { "key": "accentColor", "type": "color", "label": "アクセント色 (枠・名前)", "default": "#00ddff" },
+    { "key": "highlightColor", "type": "color", "label": "強調色 (kicker・警告)", "default": "#ffaa00" },
+    { "key": "textColor", "type": "color", "label": "本文の色", "default": "#ffffff" },
+    { "key": "bgColor", "type": "color", "label": "背景色", "default": "#000f1e" },
+    { "key": "borderColor", "type": "color", "label": "枠線・区切り色", "default": "#00ddff" },
+    { "key": "frameOpacity", "type": "slider", "label": "背景濃度", "min": 0.2, "max": 1, "step": 0.05, "default": 0.85 },
+    { "key": "showAvatar", "type": "toggle", "label": "アバター表示", "default": true, "onLabel": "表示", "offLabel": "非表示" },
+    { "key": "showBadge", "type": "toggle", "label": "メンバーバッジ表示", "default": true, "onLabel": "表示", "offLabel": "非表示" },
+    { "key": "memberColor", "type": "toggle", "label": "メンバー名を色分け", "default": true, "onLabel": "ON", "offLabel": "OFF" },
+    { "key": "memberColorValue", "type": "color", "label": "メンバー名の色", "default": "#80ff80", "showIf": { "key": "memberColor", "value": true } },
+    { "key": "showHeader", "type": "toggle", "label": "ヘッダー表示", "default": true, "onLabel": "表示", "offLabel": "非表示" },
+    { "key": "kickerText", "type": "text", "label": "ヘッダー上の小ラベル", "default": "SECTOR 7", "showIf": { "key": "showHeader", "value": true } },
+    { "key": "headerText", "type": "text", "label": "ヘッダータイトル", "default": "COMMS", "showIf": { "key": "showHeader", "value": true } },
+    { "key": "showFooter", "type": "toggle", "label": "フッター表示", "default": true, "onLabel": "表示", "offLabel": "非表示" },
+    { "key": "footerText", "type": "text", "label": "フッターテキスト", "default": "SIGNAL 87% / OPS 0214Z", "showIf": { "key": "showFooter", "value": true } },
+    { "key": "dense", "type": "toggle", "label": "コンパクト表示", "default": false, "onLabel": "ON", "offLabel": "OFF" },
+    { "key": "animationStyle", "type": "buttons", "label": "アニメーション", "default": "slide-up", "options": [
+      { "value": "slide-up", "label": "下から" },
+      { "value": "slide-left", "label": "右から" },
+      { "value": "fade-in", "label": "フェード" },
+      { "value": "none", "label": "なし" }
+    ]},
+    { "key": "customCss", "type": "textarea", "label": "カスタムCSS", "placeholder": ".frame-shell { border-color: #ffaa00; }" }
+  ]
+}

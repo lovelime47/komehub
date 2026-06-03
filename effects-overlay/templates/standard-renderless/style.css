@@ -1,0 +1,264 @@
+/*
+ * standard-renderless
+ *
+ * 雑談向けの標準テンプレートであり、htmlFirst / renderless の参照実装です。
+ * 装飾を抑えつつ、任意背景でも読めるように軽い文字ハローと安定した行揃えを持たせます。
+ */
+
+/* ── Reset ── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
+
+body {
+  background: transparent;
+  font-size: var(--font-size, 24px);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+body.komehub-dev-preview-enabled {
+  padding-top: 88px;
+}
+
+/* ── Container ── */
+#comments {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--comment-gap, 14px);
+  padding: var(--padding-top, 12px) var(--padding-right, 12px) var(--padding-bottom, 12px) var(--padding-left, 12px);
+  overflow: hidden;
+}
+
+/* 表示位置 (左/右) + 横幅: 共通機構 (runtime applyCommonLayout) が body.kh-pos-* と
+   --kh-stage-width を付与する。common.css 未読込のため同一ルールを自前で持つ。
+   縦配置はテンプレ既定を尊重し、左右と横幅のみ上書き。 */
+body.kh-pos-left > #comments,
+body.kh-pos-right > #comments {
+  width: var(--kh-stage-width, 480px);
+  max-width: 100%;
+}
+body.kh-pos-left > #comments { left: var(--kh-stage-edge, 0px); right: auto; }
+body.kh-pos-right > #comments { left: auto; right: var(--kh-stage-edge, 0px); }
+
+#comments.direction-down {
+  justify-content: flex-start;
+}
+
+/* ── 行の高さの基準値 ── */
+:root {
+  --line-h: calc(var(--line-height, 1.5) * 1em);
+  /* hhea メトリクス補正: アバターやバッジを文字の視覚中心に寄せる。 */
+  --glyph-offset: 0.056em;
+  /* 標準テンプレート用の控えめなハロー。装飾を増やさず明背景での可読性を底上げする。 */
+  --halo:
+    -1px -1px 0 rgba(0,0,0,0.72),
+     0   -1px 0 rgba(0,0,0,0.72),
+     1px -1px 0 rgba(0,0,0,0.72),
+    -1px  0   0 rgba(0,0,0,0.72),
+     1px  0   0 rgba(0,0,0,0.72),
+    -1px  1px 0 rgba(0,0,0,0.72),
+     0    1px 0 rgba(0,0,0,0.72),
+     1px  1px 0 rgba(0,0,0,0.72),
+     0 0 5px rgba(0,0,0,0.78),
+     0 0 14px rgba(0,0,0,0.42);
+}
+
+/* ── Comment ── */
+.comment {
+  /* 1コメント行。背景カードを持たず、名前・本文を素直に並べる標準形。 */
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-family: var(--font-family, 'Noto Sans JP', sans-serif);
+  line-height: var(--line-height, 1.5);
+  text-shadow: var(--halo);
+  /* Lifecycle */
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+/* ── Lifecycle phases ── */
+.comment.is-entering {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.comment.is-active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.comment.is-leaving {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+/* ── Avatar ── */
+.avatar {
+  --avatar-size: 1.3em;
+  width: var(--avatar-size);
+  height: var(--avatar-size);
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: var(--avatar-display, none);
+  border: 1.5px solid rgba(255,255,255,0.16);
+  /* 2ライン時: 名前行のグリフ視覚中心に揃える */
+  margin-top: calc((var(--line-height, 1.5) * var(--name-size, 0.72em) - var(--avatar-size)) / 2 + var(--glyph-offset));
+}
+
+/* ── Name wrap (badge + name + amount) ── */
+.name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Badge ── */
+.badge {
+  width: 1em;
+  height: 1em;
+  border-radius: 2px;
+  flex-shrink: 0;
+  display: var(--badge-display, none);
+  margin-top: calc(var(--glyph-offset) * 2);
+}
+
+/* ── Name ── */
+.name {
+  font-size: var(--name-size, 0.72em);
+  font-family: var(--name-font-family, inherit);
+  color: var(--name-color, #8f8f8f);
+  font-weight: 500;
+  display: var(--name-display, inline);
+}
+
+/* ── body-wrap: アバターの横に名前+テキストを縦配置 ── */
+.body-wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+/* ── 1ライン(name-inline): inline flow で name+text を同行に共存 ── */
+/* flex-row-wrap だと text が分割不可な flex item として丸ごと次行に押し出される。
+   block 化して name-wrap は inline-flex、text は inline にすることで、
+   name のすぐ後ろから text が始まり、コンテナ幅で text 内 inline 折り返しする。 */
+.name-inline .body-wrap {
+  display: block;
+}
+.name-inline .name-wrap {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-right: 4px;
+}
+.name-inline .avatar {
+  margin-top: calc((var(--line-h) - var(--avatar-size)) / 2 + var(--glyph-offset));
+}
+.name-inline .name {
+  font-weight: 600;
+}
+
+/* ── Text ── */
+.text {
+  font-size: 1em;
+  font-family: var(--text-font-family, inherit);
+  color: var(--text-color, #e0e0e0);
+  font-weight: 500;
+  line-height: var(--line-height, 1.5);
+}
+.text img {
+  height: 1.4em;
+  vertical-align: middle;
+  margin: 0 1px;
+}
+.text a {
+  color: var(--text-color, #e0e0e0);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+/* ── Amount ── */
+.amount {
+  font-size: 0.8em;
+  color: var(--name-color, #8f8f8f);
+  margin-left: 4px;
+  font-weight: 600;
+}
+
+/* ── Membership header ── */
+.membership-header {
+  font-size: 0.8em;
+  color: #a5d6a7;
+}
+
+/* ── Sticker ── */
+.sticker {
+  height: 2.4em;
+}
+
+/* ── Superchat tiers ── */
+.comment.is-superchat .name { font-weight: 700; }
+.comment.tier-blue    .name { color: #90caf9; }
+.comment.tier-teal    .name { color: #80cbc4; }
+.comment.tier-green   .name { color: #a5d6a7; }
+.comment.tier-yellow  .name { color: #fff176; }
+.comment.tier-orange  .name { color: #ffb74d; }
+.comment.tier-magenta .name { color: #f48fb1; }
+.comment.tier-red     .name { color: #ef9a9a; }
+
+/* ── Member / Moderator / Owner name colors ── */
+#comments.member-color .comment.is-member .name { color: var(--member-color, #2ba640); }
+.comment.is-moderator .name { color: #5e84f1; }
+.comment.is-owner .name     { color: #ffd600; }
+
+/* ── Membership join ── */
+.comment.is-membership .name { color: #a5d6a7; }
+
+/* ── Dev preview panel ── */
+.komehub-dev-preview-panel {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 9999;
+  width: min(420px, calc(100vw - 24px));
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+  color: #f8fafc;
+}
+
+.komehub-dev-preview-title {
+  margin-bottom: 8px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.komehub-dev-preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.komehub-dev-preview-button {
+  appearance: none;
+  border: 0;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+}
+
+.komehub-dev-preview-button.is-active {
+  background: #2563eb;
+}

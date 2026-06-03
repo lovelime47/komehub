@@ -1,0 +1,118 @@
+{
+  "effects": [
+    {
+      "id": "com.comment-hub.cracker",
+      "name": "クラッカー",
+      "icon": "🎉",
+      "badgeColor": { "bg": "#4a1d00", "fg": "#fb923c" },
+      "version": "1.0.0",
+      "builtin": true,
+      "params": {
+        "count": 16,
+        "distance": 5,
+        "spread": 5,
+        "duration": 3000
+      }
+    },
+    {
+      "id": "com.comment-hub.fall",
+      "name": "落下物",
+      "icon": "🍂",
+      "badgeColor": { "bg": "#1e3a5f", "fg": "#60a5fa" },
+      "version": "1.0.0",
+      "builtin": true,
+      "params": {
+        "count": 3,
+        "speed": 5,
+        "sizeMin": 30,
+        "sizeMax": 50
+      }
+    },
+    {
+      "id": "com.comment-hub.rise",
+      "name": "上昇",
+      "icon": "💖",
+      "badgeColor": { "bg": "#1a3a2f", "fg": "#4ade80" },
+      "version": "1.0.0",
+      "builtin": true,
+      "params": {
+        "count": 6,
+        "speed": 4,
+        "sway": 3,
+        "sizeMin": 24,
+        "sizeMax": 48,
+        "duration": 2000
+      }
+    },
+    {
+      "id": "com.comment-hub.fixed",
+      "name": "固定表示",
+      "icon": "📌",
+      "badgeColor": { "bg": "#312e81", "fg": "#a78bfa" },
+      "version": "1.0.0",
+      "builtin": true,
+      "params": {
+        "position": "random",
+        "x": 50,
+        "y": 50,
+        "width": 200,
+        "duration": 3000
+      }
+    },
+    {
+      "id": "com.comment-hub.sprout",
+      "name": "芽吹き",
+      "icon": "🌱",
+      "badgeColor": { "bg": "#052e16", "fg": "#4ade80" },
+      "version": "1.0.0",
+      "builtin": true,
+      "params": {
+        "origin": "bottom",
+        "height": 200,
+        "stayDuration": 2000,
+        "duration": 3000
+      }
+    },
+    {
+      "id": "com.comment-hub.slide",
+      "name": "スライド",
+      "icon": "🐟",
+      "badgeColor": { "bg": "#1a2742", "fg": "#94a3b8" },
+      "version": "1.0.0",
+      "builtin": true,
+      "params": {
+        "direction": "left",
+        "width": 40,
+        "duration": 3000
+      }
+    },
+    {
+      "id": "com.comment-hub.firework",
+      "name": "花火",
+      "icon": "🎆",
+      "badgeColor": { "bg": "#4a1d00", "fg": "#fbbf24" },
+      "version": "1.0.0",
+      "builtin": true,
+      "params": {
+        "origin": { "x": 50, "y": 100 },
+        "target": { "x": 50, "y": 30 },
+        "count": 60,
+        "spread": 300,
+        "duration": 4000
+      }
+    },
+    {
+      "id": "com.comment-hub.screen-overlay",
+      "name": "全画面オーバーレイ",
+      "icon": "🔦",
+      "badgeColor": { "bg": "#312e81", "fg": "#c4b5fd" },
+      "version": "1.0.0",
+      "builtin": true,
+      "params": {
+        "blendMode": "normal",
+        "opacity": 0.8,
+        "duration": 3000
+      }
+    }
+  ]
+}

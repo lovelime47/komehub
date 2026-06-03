@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!--
+    data-kh-start="ticker" なので、runtime は横流れ starter として起動します。
+    #track が実際に右から左へ移動する帯です。
+
+    よく変更する場所:
+    - data-kh-template を別の <template> ID にすると、1コメント分の HTML を差し替えられます。
+    - data-kh-dev-preview は preview=1 のサンプルデータ preset です。
+    - 見た目の余白や移動量は CSS の #comments / #track と script.js の padding で調整します。
+  -->
+  <div
+    id="comments"
+    data-kh-start="ticker"
+    data-kh-track="#track"
+    data-kh-template="#ticker-item-template"
+    data-kh-style-id="ticker-renderless-config-style"
+    data-kh-options="#komehub-template-options"
+    data-kh-dev-preview="ticker-basic">
+    <div id="track"></div>
+  </div>
+
+  <!--
+    横流れ 1 件分の HTML 骨格です。
+    renderComment() は使わず、data-kh で model の値を差し込みます。
+
+    data-kh の主な値:
+    - name: 表示名です。ここでは親 .comment の title 属性にも入れています。
+    - membershipHeader: メンバー加入/ギフトなどの見出しです。空なら data-kh-empty="hide" で非表示になります。
+    - badge: メンバーバッジ画像 URL です。
+    - amount: スパチャ金額表示です。
+    - text: コメント本文です。YouTube emoji などは runtime 側で HTML に変換されます。
+    - sticker: スタンプ画像 URL です。
+  -->
+  <template id="ticker-item-template">
+    <div class="comment" data-kh="name" data-kh-attr="title">
+      <span class="membership-badge" data-kh="membershipHeader" data-kh-empty="hide"></span>
+      <span class="meta-row">
+        <img class="badge" data-kh="badge" data-kh-empty="hide" alt="">
+        <span class="name" data-kh="name"></span>
+      </span>
+      <span class="amount" data-kh="amount" data-kh-empty="hide"></span>
+      <span class="text" data-kh="text"></span>
+      <span class="sticker"><img data-kh="sticker" data-kh-empty="hide" alt=""></span>
+    </div>
+  </template>
+
+  <!--
+    この JSON は Live Comment Hub の設定 UI と CSS/JS をつなぐ定義です。
+    manifest.json の uiSchema にある key と対応します。
+
+    主な変更ポイント:
+    - cssVars: 設定値を CSS 変数へ流し込みます。例: fontSize=20 → --font-size: 20px
+    - toggleClasses: true/false 設定で #comments に class を付け外しします。例: showName=true → #comments.show-name
+    - callbacks: CSS 変数だけでは足りない処理を script.js 側に任せます。
+      namePosition や animSpeed は track の再計算が必要なので callback にしています。
+    - preview.applyConfig: preview=1 で開いたときの初期設定です。実運用のデフォルト値ではありません。
+
+    注意:
+    type="application/json" の中は厳密な JSON なので、コメントは書けません。
+  -->
+  <script id="komehub-template-options" type="application/json">
+  {
+    "config": {
+      "maxComments": true,
+      "cssVars": {
+        "fontSize": ["--font-size", "px"],
+        "nameFont": "--name-font-family",
+        "textFont": "--text-font-family",
+        "nameColor": "--name-color",
+        "textColor": "--text-color",
+        "memberColorValue": "--member-color"
+      },
+      "toggleClasses": {
+        "showName": "show-name",
+        "showBadge": "show-badge",
+        "memberColor": "member-color"
+      },
+      "callbacks": {
+        "positionY": true,
+        "fontSize": true,
+        "namePosition": true,
+        "glowIntensity": true,
+        "glowCustomColor": true,
+        "animSpeed": true
+      },
+      "customCss": true
+    },
+    "preview": {
+      "preset": "ticker-basic",
+      "title": "Ticker renderless",
+      "applyConfig": {
+        "maxComments": 10,
+        "positionY": 0,
+        "fontSize": 20,
+        "showName": true,
+        "showBadge": false,
+        "namePosition": "bottom",
+        "nameColor": "#ffffff",
+        "textColor": "#ffffff",
+        "memberColor": false,
+        "memberColorValue": "#2ba640",
+        "glowIntensity": 50,
+        "glowCustomColor": "#00dcff",
+        "animSpeed": "normal"
+      }
+    }
+  }
+  </script>
+  <script src="script.js"></script>
+</body>
+</html>

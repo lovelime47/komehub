@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>こめはぶ ヘルプ</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      overflow-y: auto;
+      background: #0d1b2a;
+      color: #d8e8e8;
+    }
+
+    .manual {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 28px 24px 64px;
+      font-size: 14px;
+      line-height: 1.75;
+    }
+
+    .manual-header {
+      padding-bottom: 18px;
+      border-bottom: 1px solid #1a3a4a;
+      margin-bottom: 20px;
+    }
+
+    .manual-lead {
+      max-width: 760px;
+      color: #b0c8c8;
+    }
+
+    .manual-eyebrow {
+      margin: 0 0 4px;
+      color: #64748b;
+      font-size: 12px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      color: #00bcd4;
+      font-size: 22px;
+      line-height: 1.35;
+    }
+
+    h2 {
+      margin: 28px 0 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #1a3a4a;
+      color: #00bcd4;
+      font-size: 17px;
+      line-height: 1.35;
+    }
+
+    h3 {
+      margin: 18px 0 6px;
+      color: #d8e8e8;
+      font-size: 14px;
+    }
+
+    h4 {
+      margin: 14px 0 4px;
+      color: #b0c8c8;
+      font-size: 13px;
+    }
+
+    p {
+      margin: 6px 0;
+      color: #d8e8e8;
+    }
+
+    ol, ul {
+      margin: 6px 0 8px 22px;
+      padding: 0;
+      color: #d8e8e8;
+    }
+
+    li { margin: 4px 0; }
+
+    code {
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: #1a3a4a;
+      color: #7dd3fc;
+      font-family: Consolas, Monaco, monospace;
+      font-size: 12px;
+    }
+
+    /* === 2 ペイン (sticky TOC + 1 カラム本文) === */
+    .manual-layout {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      gap: 28px;
+      align-items: start;
+    }
+
+    .manual-toc {
+      position: sticky;
+      top: 16px;
+    }
+
+    .manual-toc h2 {
+      margin: 0 0 10px;
+      padding: 0;
+      border: 0;
+      font-size: 12px;
+      font-weight: 700;
+      color: #94a3b8;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .toc {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .toc a {
+      padding: 7px 10px;
+      border-radius: 6px;
+      color: #b0c8c8;
+      text-decoration: none;
+      font-size: 13px;
+    }
+
+    .toc a:hover {
+      background: #142a3a;
+      color: #00bcd4;
+    }
+
+    /* === 本文ブロック (1 カラム縦並び) === */
+    .content-stack > section {
+      margin-bottom: 8px;
+    }
+
+    .card {
+      margin: 12px 0;
+      padding: 14px 16px;
+      border: 1px solid #1a3a4a;
+      border-radius: 8px;
+      background: #0a1929;
+    }
+
+    .card h3:first-child {
+      margin-top: 0;
+    }
+
+    /* === 補足: 周辺情報 (青) === */
+    .note {
+      margin: 12px 0;
+      padding: 10px 12px;
+      border-left: 3px solid #00bcd4;
+      background: #0a1f29;
+      color: #b0c8c8;
+      font-size: 13px;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .note::before {
+      content: "ℹ ";
+      color: #00bcd4;
+      font-weight: 700;
+    }
+
+    /* === 警告: 操作前の注意 (オレンジ) === */
+    .warn {
+      margin: 12px 0;
+      padding: 10px 12px;
+      border-left: 4px solid #f0883e;
+      background: #2a1810;
+      color: #fed7aa;
+      font-size: 13px;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .warn::before {
+      content: "⚠ ";
+      color: #f0883e;
+      font-weight: 700;
+    }
+
+    /* === 危険: 元に戻せない操作 (赤) === */
+    .danger {
+      margin: 12px 0;
+      padding: 10px 12px;
+      border-left: 4px solid #ef4444;
+      background: #2a0d0d;
+      color: #fca5a5;
+      font-size: 13px;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .danger::before {
+      content: "❗ ";
+      color: #ef4444;
+      font-weight: 700;
+    }
+
+    @media (max-width: 820px) {
+      .manual {
+        padding: 20px 16px 40px;
+      }
+
+      .manual-layout {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .manual-toc {
+        position: static;
+      }
+
+      .toc {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .toc a {
+        flex: 0 0 auto;
+        padding: 6px 10px;
+        border: 1px solid #1a3a4a;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="manual">
+    <header class="manual-header">
+      <p class="manual-eyebrow">Live Comment Hub / こめはぶ</p>
+      <h1>配信者向けヘルプ</h1>
+      <p class="manual-lead">
+        こめはぶは、YouTube Live のコメントを取得し、OBS やブラウザにコメント表示テンプレートとコメント連動演出を出すためのツールです。
+        このヘルプでは、配信で使うための操作だけを順に説明します。
+      </p>
+    </header>
+
+    <div class="manual-layout">
+      <aside class="manual-toc">
+        <h2>目次</h2>
+        <nav class="toc" aria-label="目次">
+          <a href="#start">1. まず使ってみる</a>
+          <a href="#obs">2. OBS / ブラウザ表示</a>
+          <a href="#templates">3. コメント表示テンプレート</a>
+          <a href="#effects">4. コメント連動演出</a>
+          <a href="#tts">5. コメント読み上げ</a>
+          <a href="#remote">6. スマホ操作</a>
+          <a href="#listener">7. リスナー管理</a>
+          <a href="#scene">8. シーン運用</a>
+          <a href="#trouble">9. 困ったとき</a>
+        </nav>
+      </aside>
+
+      <div class="content-stack">
+
+    <section id="start">
+      <h2>1. まず使ってみる</h2>
+
+      <div class="card">
+        <h3>初回は「準備」から始める</h3>
+        <ol>
+          <li>右上の <code>準備</code> を開きます。</li>
+          <li>現在ライブ中の YouTube 配信 URL を貼り付けて、<code>接続</code> を押します。自分の配信でなくても動作確認できます。</li>
+          <li>コメントがアプリ内に流れることを確認します。</li>
+          <li>準備の各ステージ (接続 / OBS 表示 / リスナー履歴) を順に確認します。</li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <h3>自チャンネル設定 (初見・常連判定を使う場合)</h3>
+        <p>
+          初見歓迎演出やリスナー管理を使う場合は、自分の YouTube チャンネル ID (<code>UC...</code> 形式)
+          を登録します。<code>準備</code> の Stage 3、またはリスナー管理画面の上部から登録できます。
+        </p>
+        <p>
+          チャンネルが複数ある場合は複数登録できます。サブチャンネルでの配信も自分の配信として扱われます。
+        </p>
+      </div>
+
+      <p class="note">
+        コメント取得だけなら YouTube ログインは基本的に不要です。
+      </p>
+    </section>
+
+    <section id="obs">
+      <h2>2. OBS / ブラウザに表示する</h2>
+
+      <div class="card">
+        <h3>OBS に入れる</h3>
+        <ol>
+          <li><code>準備</code> の <code>OBS に表示</code> を開くか、メイン画面の各 URL を確認します。</li>
+          <li>コメント表示 URL を OBS のブラウザソースへドラッグアンドドロップします。</li>
+          <li>続けて、コメント連動演出 URL も同じ手順で別のブラウザソースとして追加します。</li>
+          <li>または各 URL をクリックでコピーし、OBS のブラウザソースに貼り付けます。</li>
+          <li>OBS 側で表示位置とサイズを調整します。</li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <h3>OBS を使わずブラウザで確認する</h3>
+        <p>
+          各 URL の隣にある <code>開く</code> を押すと、同じ URL を既定ブラウザで確認できます。
+          配信に接続していない状態では実コメントが出ないため、先に配信 URL へ接続してください。
+        </p>
+      </div>
+
+      <p class="note">
+        OBS でソースをドラッグして拡大すると、文字も画像もまとめて拡大されます。文字サイズを変えたい場合は、テンプレート設定側の文字サイズを調整します。
+      </p>
+    </section>
+
+    <section id="templates">
+      <h2>3. コメント表示テンプレート</h2>
+
+      <div class="card">
+        <h3>テンプレートを選ぶ</h3>
+        <ol>
+          <li>メイン画面の <code>コメント表示テンプレート</code> を開きます。</li>
+          <li><code>テンプレートを追加</code> を押し、現在のシーンに使うテンプレートをいくつか追加します。</li>
+          <li>追加したテンプレートのうち 1 つをラジオボタンで選択します。選んだものが、そのシーンの配信用コメント表示になります。</li>
+          <li>複数のテンプレートを追加しておくと、配信中に切り替えて使えます。</li>
+        </ol>
+
+        <h4>見た目を調整する</h4>
+        <p>
+          各テンプレートの <code>設定</code> で、色、文字サイズ、表示件数、速度、背景などを調整します。
+          設定は自動保存され、すぐ表示に反映されます。
+        </p>
+
+        <h4>動作を確認する</h4>
+        <p>
+          設定画面の <code>確認用に開く</code> でブラウザ表示を確認できます。URL はクリックでコピー、ドラッグで OBS へ追加できます。
+          実コメントを待たずに動きを試したい場合は、メイン画面の <code>テストコメント</code> でダミーコメントを送れます。
+        </p>
+      </div>
+
+      <p class="note">
+        各テンプレ設定の <code>開発者向け</code> は、HTML / CSS / JS を編集してテンプレート自体を作る人のための項目です。配信で使うだけなら通常は開かなくて構いません。
+      </p>
+    </section>
+
+    <section id="effects">
+      <h2>4. コメント連動演出</h2>
+
+      <div class="card">
+        <h3>演出を使う</h3>
+        <ol>
+          <li>シーンを選び、<code>コメント連動演出</code> を開きます。</li>
+          <li>使いたい演出を ON にします。</li>
+          <li>キーワード、スパチャ条件、リスナー条件、素材、効果音などを調整します。</li>
+          <li><code>テスト</code> で配信前に表示を確認します。</li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <h3>リスナー条件の用語</h3>
+        <p>
+          コメント連動演出の <code>リスナー条件</code> で使う 4 種類の判定です。
+          自チャンネル設定が必要です (= 過去配信履歴を元に判定するため)。
+        </p>
+        <ul>
+          <li><strong>初見</strong>: 自分のチャンネルに <em>初めて</em> コメントしたリスナー。サブチャンネルへの過去コメは含めて判定します。</li>
+          <li><strong>再訪</strong>: 常連以外で、この配信に <em>初めて</em> コメントした状態。「お久しぶり」演出に向きます。</li>
+          <li><strong>常連</strong>: 自分の直近 10 配信のうち 3 枠以上でコメントしたリスナー。</li>
+          <li><strong>今北</strong>: 常連リスナーが、この配信に <em>初めて</em> コメントした状態。常連の入場演出に向きます。</li>
+        </ul>
+        <p>
+          常連の判定基準 (= 直近 N 配信中 M 枠) は、設定モーダルの <code>リスナー分類</code> から変更できます。
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>出すぎるときの調整</h3>
+        <ul>
+          <li>特定の演出が多すぎる場合は、その演出のクールダウンを長くします。</li>
+          <li>同じ人の連投で出すぎる場合は、全体設定の同一ユーザー間隔を長くします。</li>
+          <li>画面が重い場合は、最大同時演出数を下げます。</li>
+          <li>急いで止めたいときは、サイドバーの <code>演出全停止</code> を使います。</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>ポン出し</h3>
+        <p>
+          <code>ポン出しバーに表示</code> を ON にした演出は、メイン画面のポン出しバーから手動で出せます。
+          コメント条件を待たずに出したい拍手、クラッカー、紙吹雪などに向いています。
+        </p>
+        <p>
+          配信中に手元で操作したい場合は、メイン画面の <code>ポン出し</code> から専用ウィンドウを開きます。
+          専用ウィンドウにはポン出し素材、演出の停止 / 再開、クリア、TTS の即時操作がまとまっています。
+        </p>
+      </div>
+
+    </section>
+
+    <section id="tts">
+      <h2>5. コメント読み上げ</h2>
+
+      <div class="card">
+        <h3>はじめに</h3>
+        <p>
+          流れてきたコメントを音声で読み上げる機能です。読み上げソフトとしては
+          <strong>内蔵 (Windows 標準)</strong>、<strong>棒読みちゃん</strong>、
+          <strong>VOICEVOX</strong> のいずれかを選べます。
+          メイン画面の <code>コメント読み上げ</code> カードから操作します。
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>有効化 / 一時停止 / クリア / テスト</h3>
+        <ul>
+          <li><code>ON / OFF</code>: 読み上げの有効・無効を切り替えます。</li>
+          <li><code>一時停止 / 再開</code>: 一時停止中の通常コメントは破棄されます (= 後から読み上げない)。スパチャ・メンバーシップは初期設定では待機キューに残ります。</li>
+          <li><code>クリア</code>: 待機中のコメントと再生中の音声をすぐに止めます。</li>
+          <li><code>テスト</code>: サンプル文を再生して動作を確認できます。</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>ソフトを選ぶ</h3>
+        <p>
+          設定画面の「出力先ソフト」から選びます。各ソフトの特徴は次の通りです。
+        </p>
+        <ul>
+          <li><strong>内蔵</strong>: Windows の標準音声合成。追加ソフト不要で、すぐ使えます。</li>
+          <li><strong>棒読みちゃん</strong>: 棒読みちゃんを別途インストール・起動しておく必要があります。音量・速度などはハブ側でも上書き可能です。</li>
+          <li><strong>VOICEVOX</strong>: VOICEVOX エンジンを別途起動しておく必要があります。キャラクターとスタイル (ノーマル / あまあま 等) を選べます。</li>
+        </ul>
+        <p>
+          選んだソフトが起動していない場合は、メイン画面の <code>コメント読み上げ</code>
+          バッジが赤色で <code>VOICEVOX 未起動</code> のように表示されます。
+          ソフトを起動し直すと 10 秒以内に自動で復帰します。
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>出力デバイスの選び方</h3>
+        <p>
+          共通設定の <code>出力デバイス</code> で読み上げ音声の出力先を指定できます。
+          内蔵と VOICEVOX に適用されます (棒読みちゃんは棒読み側で設定してください)。
+        </p>
+        <ul>
+          <li><strong>システム既定</strong>: Windows のサウンド設定で既定になっているデバイスへ流します。何も指定しない場合のデフォルトです。</li>
+          <li><strong>配信に乗せたい場合</strong>: <code>VB-Audio Cable Input</code> 等の仮想ケーブルを選び、OBS の音声入力で同じケーブルを拾います。</li>
+          <li><strong>配信者だけ聞きたい場合</strong>: 物理ヘッドホン (例: <code>PHL 288E2</code> 等) を選びます。</li>
+        </ul>
+        <p class="warn">
+          一部のデバイス (キャプチャボード等) は SAPI 経由では再生できません。
+          テスト再生で「クラスが登録されていません」のようなエラーが出る場合は別のデバイスを試してください。
+          配信に乗せる用途なら VB-Audio Cable Input を強く推奨します。
+        </p>
+        <p>
+          ドロップダウンを開く瞬間にデバイス一覧を更新します。デバイスを後から接続した場合は一旦閉じて開き直してください。
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>読み上げ対象を絞る</h3>
+        <p>
+          共通設定で読み上げ対象 (通常コメント / スパチャ / メンバーシップ / ギフト) を切り替えられます。
+          投稿者ロール (オーナー / モデレーター / メンバー) も個別に ON / OFF できます。
+        </p>
+        <ul>
+          <li>初期設定では <strong>オーナー (= 自分) のコメントは読み上げない</strong> 動作です。</li>
+          <li>長すぎるコメントは <strong>最大文字数</strong> で打ち切られます (初期値 120 文字)。</li>
+          <li>絵文字・URL を読み上げるかどうかも個別に設定できます。</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>困ったとき</h3>
+        <ul>
+          <li><strong>赤いバッジで「未起動」と出る</strong>: 選んだソフト (VOICEVOX / 棒読み) を起動してください。バッジ自動復帰まで最大 10 秒。</li>
+          <li><strong>テストは鳴るが、配信に乗らない</strong>: 出力デバイスがヘッドホン等になっていないか確認。配信に乗せるなら VB-Audio Cable Input を選んでください。</li>
+          <li><strong>特定のコメントだけ読まれない</strong>: 共通設定の読み上げ対象 (通常 / スパチャ等) と最大文字数を確認。長文は途中で打ち切られます。</li>
+          <li><strong>連投で読み上げが追いつかない</strong>: <code>クリア</code> ボタンで待機キューを空にできます。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="remote">
+      <h2>6. スマホ操作</h2>
+
+      <div class="card">
+        <h3>スマホでポン出しを操作する</h3>
+        <ol>
+          <li>メイン画面から <code>ポン出し</code> ウィンドウを開きます。</li>
+          <li><code>スマホで開く</code> を押します。</li>
+          <li>初回は確認画面を読み、問題なければ <code>有効にしてQR表示</code> を押します。</li>
+          <li>表示された QR コードをスマホで読み取ります。</li>
+          <li>URL を手で送りたい場合は、URL 表示をタップするとクリップボードにコピーできます。</li>
+        </ol>
+        <p>
+          2 回目以降に確認を省きたい場合は、確認画面で <code>次からこの確認を表示しない</code> を ON にしてから有効化してください。
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>リモートでできること</h3>
+        <ul>
+          <li>ポン出し素材を実行する</li>
+          <li>演出を停止 / 再開する</li>
+          <li>表示中演出と待機キューをクリアする</li>
+          <li>TTS を ON / OFF、一時停止、クリアする</li>
+          <li>全画面ボタンでスマホ表示を広く使う</li>
+          <li>現枠のコメント / リスナーを閲覧する (= 後述「スマホで現枠を見る」)</li>
+          <li>コメント検索結果を見る</li>
+          <li>「コメント対応済み」「リスナー対応済み」「コメ非表示 / リスナー非表示」のトグルを切り替える</li>
+        </ul>
+        <p class="note">
+          スマホ操作はリモート専用ポートで開きます。通常の管理機能、削除、初期化、インポート / エクスポート、テンプレート編集はスマホ側には公開しません。
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>スマホで現枠を見る</h3>
+        <p>
+          ポン出しウィンドウからリモートを有効化すると、ポン出し以外にも
+          コメント / リスナーの閲覧画面がスマホで開けます。
+          配信中、PC のメイン画面を見続けずに手元で内容を確認したい時に使います。
+        </p>
+        <ul>
+          <li><code>/remote/</code> ホーム画面: 現枠のステータスと各画面への入口</li>
+          <li><code>/remote/comments</code>: 流れている現枠コメントの一覧</li>
+          <li><code>/remote/listeners</code>: 現枠で発言したリスナーの一覧</li>
+          <li><code>/remote/listeners/{ch}</code>: リスナーごとの詳細
+              (過去コメ / SC 累計 / 配信ログ)</li>
+          <li><code>/remote/search</code>: コメント検索結果 (= リスナー詳細から遷移)</li>
+        </ul>
+        <p class="note">
+          いずれの画面も「読む + 軽い操作」用途で、文字入力を伴うタグ付けやニックネーム編集はできません。
+          メモ書きや編集は PC 側のリスナー管理画面で行ってください。
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>Windows セキュリティの警告が出たら</h3>
+        <p>
+          スマホから同じ Wi-Fi / LAN 経由で接続するため、Windows セキュリティが通信許可を確認することがあります。
+          表示された場合は <strong>プライベート ネットワーク</strong> を許可してください。
+        </p>
+        <p class="warn">
+          カフェや公共 Wi-Fi などのパブリック ネットワークでは許可しないでください。
+        </p>
+      </div>
+    </section>
+
+    <section id="listener">
+      <h2>7. リスナー管理</h2>
+
+      <div class="card">
+        <h3>できること</h3>
+        <ul>
+          <li>リスナーごとのコメント履歴を確認できます。</li>
+          <li>初見、再訪、今北、常連などの判定に使われます。</li>
+          <li>コメント連動演出の条件として、初見歓迎などに利用できます。</li>
+        </ul>
+        <p>
+          メイン画面の <code>リスナー管理を開く</code> から専用画面に入ります。一覧、配信ログ、コメント検索、インポート / エクスポートのタブがあります。
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>配信中の手元操作 (対応済み / 非表示 トグル)</h3>
+        <p>
+          配信中の対応漏れ防止 / 視認したくないリスナー対策のため、
+          コメント単位 / リスナー単位で 4 つのトグルが用意されています。
+          PC のメイン UI とスマホのリモート画面の両方で使えます。
+        </p>
+        <ul>
+          <li><strong>対応済み</strong> (コメ単位): 質問やリクエストへの反応漏れを防ぐ。
+              対応した時点でチェックを入れると、コメント検索の <code>未対応のみ</code>
+              で残りを絞り込めます。</li>
+          <li><strong>対応済み</strong> (リスナー × 配信枠): その枠でそのリスナーに
+              対応した記録。同じリスナーが翌枠に来た時はリセットされ、対応漏れを
+              防ぎます。</li>
+          <li><strong>コメ非表示</strong> (リスナー単位、累計): 指定リスナーのコメを
+              管理 UI のコメリストから隠します。</li>
+          <li><strong>リスナー非表示</strong> (リスナー単位、累計): 指定リスナーを
+              リスナーリストから隠します。</li>
+        </ul>
+        <p>
+          切替は即時反映 + 5 秒間 <code>元に戻す</code> ボタンが画面下に出ます (Snackbar Undo)。
+          誤タップを防ぐため、コメ非表示 / リスナー非表示の ON / OFF はリスナー詳細の
+          <code>⋯</code> メニューからの二段確認に変えています。
+        </p>
+        <p class="note">
+          コメ非表示 / リスナー非表示は <strong>配信者の UI 視認だけ</strong> 抑制します。
+          演出 / OBS テンプレ / TTS / コメント配信は通常通り動作するため、
+          相手にブロックや BAN として気付かれません。
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>わんコメからインポート</h3>
+        <ol>
+          <li>リスナー管理の <code>インポート / エクスポート</code> タブを開きます。</li>
+          <li>わんコメを終了してから、<code>わんコメからインポート</code> を選び、わんコメフォルダを指定します。</li>
+          <li>自分のチャンネル設定を基準に、自チャンネル配信ぶんのリスナー履歴を取り込みます。</li>
+        </ol>
+        <p class="warn">
+          わんコメ起動中は取得結果が不安定になります。先にわんコメを終了してください。
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>わんコメへ書き戻し / 自動同期</h3>
+        <p>
+          こめはぶで蓄積したリスナー / コメントは <code>わんコメへ書き戻し</code> でわんコメ DB に反映できます。
+          初回はインポートを先に 1 度実行し、スキーマハッシュを記録しておく必要があります。
+        </p>
+        <p>
+          設定モーダルの <code>自動同期</code> を ON にしておくと、ハブの起動時にわんコメから取り込み、
+          ハブの終了時にわんコメへ書き戻しが自動で実行されます。日常運用は自動同期に任せられます。
+        </p>
+        <p class="warn">
+          わんコメ起動中・配信中の書き戻しはスキップされます (DB 競合防止)。
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>コメント検索</h3>
+        <p>
+          リスナー管理の <code>コメント検索</code> タブから、過去のコメントを横断検索できます。
+          配信中に「あの話どこかで聞いたな」をすぐ拾うのにも使えます。
+        </p>
+        <ul>
+          <li><strong>キーワード</strong>: コメ本文の部分一致</li>
+          <li><strong>リスナー名 / channel id</strong>: 特定の人だけに絞る</li>
+          <li><strong>期間</strong>: プリセット (今日 / 直近 7 日 / 30 日 等) または日付指定</li>
+          <li><strong>コメント種別</strong>: 通常 / スパチャ / メンバー / ギフト など</li>
+          <li><strong>タグ</strong>: 自分で付けたリスナータグ / 配信タグ</li>
+          <li><strong>未対応のみ</strong>: <code>対応済み</code> 未チェックのコメだけ</li>
+        </ul>
+        <p>
+          よく使う組み合わせは <code>保存検索</code> として保存できます。
+          保存検索は左サイドから 1 タップで呼び出せます。
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>配信ログ / 配信詳細</h3>
+        <p>
+          リスナー管理の <code>配信ログ</code> タブで、過去配信の一覧が見られます。
+          コメ数 / SC 累計 / 視聴ピーク / いいね数 でソートできます。
+        </p>
+        <p>
+          配信行をクリックすると、その配信の <strong>詳細モーダル</strong> が開きます。
+          詳細モーダルには次が含まれます:
+        </p>
+        <ul>
+          <li>サムネ + タイトル + 配信時刻 + KPI (= コメ / SC / 視聴ピーク / 平均同接 / エンゲージ率)</li>
+          <li>時系列ヒートマップ (= bin 幅は配信長に応じて自動調整)</li>
+          <li>頻出語ランキング (= 一般語 stopword 除外済)</li>
+          <li>その枠で発言したリスナー一覧 + 各リスナーの活動 heatmap</li>
+          <li>コメント検索 (= 当該配信内に絞った検索)</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="scene">
+      <h2>8. シーン運用</h2>
+
+      <div class="card">
+        <h3>シーンとは</h3>
+        <p>
+          シーンは、配信内容ごとのコメント表示テンプレートと演出セットです。
+          雑談、歌枠、ゲーム配信を分けておくと、OBS 表示や演出の切り替えが楽になります。
+        </p>
+      </div>
+
+      <div class="card">
+        <h3>おすすめの使い分け</h3>
+        <ul>
+          <li>雑談: コメント表示を読みやすくし、初見歓迎や軽いリアクション演出を使う。</li>
+          <li>歌枠: 横流れコメントや拍手、ペンライト系の演出を使う。</li>
+          <li>ゲーム: 画面を邪魔しない小さめのテンプレートと控えめな演出にする。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="trouble">
+      <h2>9. 困ったとき</h2>
+
+      <div class="card">
+        <h3>コメントが出ない</h3>
+        <ul>
+          <li>配信 URL に接続できているか確認します。</li>
+          <li>接続後にコメントが実際に投稿されているか確認します。</li>
+          <li>テンプレートがシーンに追加され、ラジオボタンで選択されているか確認します。</li>
+          <li>OBS ではなくブラウザで URL を開き、表示されるか確認します。</li>
+          <li>動作だけ試したい場合は、<code>テストコメント</code> でダミーを送って確認します。</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>演出が出ない</h3>
+        <ul>
+          <li>コメント連動演出が ON になっているか確認します。</li>
+          <li>演出ごとの条件にコメントが一致しているか確認します。</li>
+          <li>テストボタンで表示できるか確認します。</li>
+          <li>全体設定の最大同時演出数やクールダウンで待機していないか確認します。</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>表示が大きい / 小さい</h3>
+        <ul>
+          <li>文字サイズはテンプレート設定で調整します。</li>
+          <li>OBS のブラウザソースの幅と高さを確認します。</li>
+          <li>OBS 上でドラッグ拡大した場合は、全体が画像として拡大されます。</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>スマホで開けない</h3>
+        <ul>
+          <li>PC とスマホが同じ Wi-Fi / LAN に接続されているか確認します。</li>
+          <li>QR 画面の URL をタップしてコピーし、スマホのブラウザへ貼り付けて試します。</li>
+          <li>Windows セキュリティの警告で <code>許可しない</code> を押した場合は、Windows の <code>ファイアウォールによるアプリケーションの許可</code> から <code>Live Comment Hub</code>、開発中は <code>Electron</code> / <code>node.exe</code> / <code>komehub_core</code> の <code>プライベート</code> を許可します。</li>
+          <li>スマホ側の VPN、ゲスト Wi-Fi、AP 分離が有効な場合は、同じ Wi-Fi でも PC に届かないことがあります。</li>
+        </ul>
+      </div>
+
+      <p class="danger">
+        <code>すべての設定を初期化</code> は強い操作です。実行前に退避が作成されますが、通常の調整では使わないでください。
+      </p>
+    </section>
+
+      </div>
+    </div>
+  </main>
+</body>
+</html>

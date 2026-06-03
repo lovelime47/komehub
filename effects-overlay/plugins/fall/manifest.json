@@ -1,0 +1,50 @@
+{
+  "id": "com.comment-hub.fall",
+  "version": "1.0.0",
+  "name": "落下",
+  "emoji": "🍂",
+  "entry": "fall.js",
+  "globalName": "Fall",
+  "interface": {
+    "methods": [
+      "fire"
+    ],
+    "hasPause": false
+  },
+  "defaultAssets": [
+    "🤣"
+  ],
+  "defaultParams": {
+    "count": 3,
+    "speed": 5,
+    "sizeMin": 30,
+    "sizeMax": 50
+  },
+  "dependencies": [
+    "physics"
+  ],
+  "migrations": {},
+  "uiSchema": [
+    {
+      "key": "count",
+      "type": "slider",
+      "label": "個数",
+      "min": 0,
+      "max": 30,
+      "default": 3
+    },
+    {
+      "key": "scale",
+      "type": "slider",
+      "label": "サイズ",
+      "min": 10,
+      "max": 300,
+      "default": 100,
+      "suffix": "%"
+    }
+  ],
+  "badgeColor": {
+    "bg": "#1e3a5f",
+    "fg": "#60a5fa"
+  }
+}

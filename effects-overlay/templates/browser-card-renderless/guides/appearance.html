@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>見た目を変える - browser-card-renderless</title>
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow"><a href="../structure.html">structure</a> / appearance</p>
+    <h1>見た目を変える</h1>
+    <p class="lead">多層カードの見た目はほぼ <code>style.css</code> で調整します。カード構造を変える場合だけ <code>index.html</code> も触ります。</p>
+  </header>
+
+  <section>
+    <h2>最初に触る場所</h2>
+    <div class="grid">
+      <div class="box"><h3>カード幅</h3><p><code>--card-width</code> と <code>.browser-card-list</code> を見ます。</p></div>
+      <div class="box"><h3>角丸</h3><p><code>--card-radius</code> が外側と内側の丸みに効きます。</p></div>
+      <div class="box"><h3>余白</h3><p><code>--card-gap</code>、<code>.card-content</code>、<code>.compact-card</code> を調整します。</p></div>
+      <div class="box"><h3>テーマ色</h3><p><code>[data-kh-theme]</code> ごとの <code>--theme-a/b/c</code> を変えます。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>例: カードを細くする</h2>
+    <pre><code>.browser-card-list {
+  width: min(var(--card-width, 440px), calc(100vw - 24px));
+}</code></pre>
+    <p>設定 UI から変えたい場合は <code>manifest.json</code> の <code>cardWidth</code> default も揃えます。</p>
+  </section>
+
+  <section>
+    <h2>例: 左レールを消す</h2>
+    <pre><code>"toggleCssVars": {
+  "showMetaRail": ["--rail-display", "flex", "none"]
+}</code></pre>
+    <pre><code>.meta-rail {
+  display: var(--rail-display, flex);
+}</code></pre>
+  </section>
+
+  <section>
+    <h2>例: typing を速くする</h2>
+    <pre><code>.typing-char {
+  animation: typing-rise 180ms ease forwards;
+  animation-delay: min(calc(var(--char-index) * 14ms), 520ms);
+}</code></pre>
+  </section>
+
+  <section>
+    <h2>注意点</h2>
+    <div class="box note">
+      <ul>
+        <li>カードの幅や padding を大きく変えたら、OBS の推奨幅も見直します。</li>
+        <li>背景レイヤーは <code>.card-backdrop</code> と <code>.card-shell</code> の2層です。</li>
+        <li><code>.is-paid-pulse</code> は JS の <code>afterBindComment()</code> で一時的に付きます。</li>
+      </ul>
+    </div>
+  </section>
+</div>
+</body>
+</html>

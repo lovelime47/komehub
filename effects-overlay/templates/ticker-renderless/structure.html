@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ticker-renderless 構造解説</title>
+<link rel="stylesheet" href="guides/guide.css">
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow">effects-overlay/templates/ticker-renderless/structure.html</p>
+    <h1>ticker-renderless 構造解説</h1>
+    <p class="lead">
+      横流れコメントを HTML-first / renderless で作るための案内です。
+      list と違い、コメントを積むのではなく <code>#track</code> 全体を <code>transform</code> で左へ動かします。
+    </p>
+    <nav class="nav-row" aria-label="ページ内目次">
+      <a href="#files">ファイルの役割</a>
+      <a href="#startup">起動の流れ</a>
+      <a href="#comment-flow">コメント表示の流れ</a>
+      <a href="#edit-map">変更箇所マップ</a>
+      <a href="#rules">分担ルール</a>
+    </nav>
+  </header>
+
+  <section id="files">
+    <h2>ファイルの役割</h2>
+    <div class="grid">
+      <div class="box">
+        <h3><code>index.html</code></h3>
+        <p><code>#comments</code>、横移動する <code>#track</code>、コメント1件分の <code>&lt;template&gt;</code>、設定 JSON を持ちます。</p>
+      </div>
+      <div class="box">
+        <h3><code>style.css</code></h3>
+        <p>グローテキスト、名前位置、スパチャ強調、<code>#track</code> の transition を受け持ちます。</p>
+      </div>
+      <div class="box">
+        <h3><code>script.js</code></h3>
+        <p>横流れ starter を起動し、縦位置、名前位置、光彩、速度変更時に runtime へ再計算を依頼します。</p>
+      </div>
+      <div class="box">
+        <h3><code>manifest.json</code></h3>
+        <p>文字サイズ、名前表示、光彩色、速度など、横流れ作者が触りたい設定 UI を定義します。</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="startup">
+    <h2>起動の流れ</h2>
+    <div class="steps">
+      <div class="step">
+        <h3>ticker starter を選ぶ</h3>
+        <p><code>data-kh-start="ticker"</code> と <code>mode: 'ticker'</code> により、runtime は横流れ starter として起動します。</p>
+      </div>
+      <div class="step">
+        <h3>renderless model を有効にする</h3>
+        <p><code>renderlessModel: true</code> により、<code>renderComment()</code> ではなく <code>&lt;template&gt;</code> と <code>data-kh</code> で描画します。</p>
+      </div>
+      <div class="step">
+        <h3>track を動かす</h3>
+        <p>コメント追加時に runtime が <code>#track</code> の幅と位置を計算し、CSS transition で左へ動かします。</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="comment-flow">
+    <h2>コメント1件が表示されるまで</h2>
+    <div class="steps">
+      <div class="step">
+        <h3>template 複製</h3>
+        <p><code>#ticker-item-template</code> から <code>.comment</code> が複製されます。</p>
+      </div>
+      <div class="step">
+        <h3>data-kh bind</h3>
+        <p><code>name</code>、<code>membershipHeader</code>、<code>badge</code>、<code>amount</code>、<code>text</code>、<code>sticker</code> が差し込まれます。</p>
+      </div>
+      <div class="step">
+        <h3>track に追加</h3>
+        <p>新しいコメントが <code>#track</code> の右側へ入り、track 全体の移動距離が更新されます。</p>
+      </div>
+      <div class="step">
+        <h3>古いコメントを整理</h3>
+        <p>画面外へ出たコメントから削除されます。左端に見えているコメントを急に消さないことが重要です。</p>
+      </div>
+    </div>
+    <pre><code>new comment
+  -> &lt;template id="ticker-item-template"&gt;
+  -> #track.appendChild(comment)
+  -> #track.style.transform = translateX(...)
+  -> transition: transform var(--anim-duration)</code></pre>
+  </section>
+
+  <section id="edit-map">
+    <h2>変更箇所マップ</h2>
+    <div class="grid">
+      <a class="guide-card" href="guides/appearance.html"><h3>見た目を変えたい</h3><p>グロー、文字サイズ、名前位置、横間隔、スパチャ強調を調整する。</p></a>
+      <a class="guide-card" href="guides/fields.html"><h3>表示項目を増やしたい</h3><p><code>&lt;template&gt;</code> に <code>data-kh</code> 要素を追加する。</p></a>
+      <a class="guide-card" href="guides/model.html"><h3>元データを加工したい</h3><p>必要なときだけ <code>beforeCommitComment()</code> を追加する。</p></a>
+      <a class="guide-card" href="guides/settings.html"><h3>設定 UI を増やしたい</h3><p>CSS 変数、toggle class、callback のどれへつなぐか決める。</p></a>
+      <a class="guide-card" href="guides/themes.html"><h3>グロー色を増やしたい</h3><p><code>GLOW_COLORS</code>、manifest の options、callback を揃える。</p></a>
+      <a class="guide-card" href="guides/effects.html"><h3>横流れの動きを変えたい</h3><p>速度、再計算、overflow trim、track transition の注意点を見る。</p></a>
+    </div>
+  </section>
+
+  <section id="rules">
+    <h2>分担ルール</h2>
+    <div class="grid">
+      <div class="box"><h3>HTML は1件分の形</h3><p>横流れでも1コメント分の DOM は <code>&lt;template&gt;</code> に置きます。</p></div>
+      <div class="box"><h3>CSS は光彩と transition</h3><p>見た目と <code>#track</code> の移動 transition を受け持ちます。</p></div>
+      <div class="box"><h3>JS は設定反映</h3><p>DOM を作らず、runtime の ticker helper へ再計算や速度変更を依頼します。</p></div>
+      <div class="box"><h3>runtime は移動管理</h3><p>コメント追加、track の transform、画面外コメントの整理を担当します。</p></div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

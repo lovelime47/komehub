@@ -1,0 +1,4 @@
+.lcv-hide,
+[data-lcv-hidden='true'] {
+  display: none !important;
+}

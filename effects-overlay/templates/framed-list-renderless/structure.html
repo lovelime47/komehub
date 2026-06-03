@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>framed-list-renderless 構造解説</title>
+<style>
+  :root {
+    --bg: #f6f8fb;
+    --panel: #ffffff;
+    --soft: #edf5f7;
+    --line: #ccd9e2;
+    --text: #15212c;
+    --muted: #536879;
+    --accent: #0f8f84;
+    --warn: #a16207;
+    --code-bg: #111923;
+    --code-text: #e8eef5;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif;
+    line-height: 1.75;
+  }
+
+  a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+
+  .page {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 28px 20px 56px;
+  }
+
+  header {
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .eyebrow {
+    margin: 0 0 8px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  h1 {
+    margin: 0 0 10px;
+    font-size: 30px;
+    line-height: 1.25;
+  }
+
+  .lead {
+    max-width: 900px;
+    margin: 0;
+    color: var(--muted);
+  }
+
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 18px;
+  }
+
+  nav a,
+  .link-row a,
+  .link-row span {
+    display: inline-block;
+    padding: 6px 9px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--panel);
+    color: var(--text);
+    font-size: 13px;
+  }
+
+  section {
+    padding-top: 28px;
+  }
+
+  h2 {
+    margin: 0 0 12px;
+    color: var(--accent);
+    font-size: 22px;
+  }
+
+  h3 {
+    margin: 0 0 8px;
+    font-size: 16px;
+  }
+
+  p {
+    margin: 0 0 12px;
+  }
+
+  code {
+    padding: 2px 5px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: #eef2f6;
+    font-family: Consolas, Monaco, monospace;
+    font-size: 0.92em;
+  }
+
+  pre {
+    margin: 12px 0 0;
+    padding: 14px;
+    overflow-x: auto;
+    border-radius: 8px;
+    background: var(--code-bg);
+    color: var(--code-text);
+    font-family: Consolas, Monaco, monospace;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  pre code {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: inherit;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 12px;
+  }
+
+  .box {
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+  }
+
+  .box p,
+  .box li {
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .box ul,
+  .box ol {
+    margin: 8px 0 0 20px;
+    padding: 0;
+  }
+
+  .box li {
+    margin: 5px 0;
+  }
+
+  .guide-card {
+    display: block;
+    height: 100%;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+    color: var(--text);
+  }
+
+  .guide-card:hover {
+    border-color: var(--accent);
+    text-decoration: none;
+  }
+
+  .guide-card p {
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .flow {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(130px, 1fr));
+    gap: 10px;
+  }
+
+  .step {
+    position: relative;
+    min-height: 118px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--panel);
+  }
+
+  .step::after {
+    content: ">";
+    position: absolute;
+    top: 42px;
+    right: -10px;
+    color: #8aa0af;
+    font-weight: 800;
+  }
+
+  .step:last-child::after {
+    content: "";
+  }
+
+  .step-num {
+    display: inline-block;
+    min-width: 24px;
+    margin-bottom: 8px;
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .step p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .map {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--panel);
+  }
+
+  .map dt,
+  .map dd {
+    margin: 0;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .map dt {
+    background: var(--soft);
+    font-weight: 700;
+  }
+
+  .map dd {
+    color: var(--muted);
+  }
+
+  .map dt:last-of-type,
+  .map dd:last-of-type {
+    border-bottom: 0;
+  }
+
+  .note {
+    border-left: 4px solid var(--warn);
+    background: #fff8eb;
+  }
+
+  .link-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  @media (max-width: 860px) {
+    .flow {
+      grid-template-columns: 1fr;
+    }
+
+    .step::after {
+      content: "v";
+      top: auto;
+      right: 18px;
+      bottom: -15px;
+    }
+
+    .map {
+      grid-template-columns: 1fr;
+    }
+
+    .map dt {
+      border-bottom: 0;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow">effects-overlay/templates/framed-list-renderless/structure.html</p>
+    <h1>framed-list-renderless 構造解説</h1>
+    <p class="lead">
+      この HTML は、サンプルフォルダだけを見て新しいテンプレートを作れるようにするための案内です。
+      メインドキュメントを読まなくても、HTML、CSS、JS、manifest、runtime の分担が分かることを目的にしています。
+    </p>
+    <p class="lead" style="background:#fff8eb;border-left:4px solid #d4a93a;padding:10px 14px;border-radius:0 6px 6px 0;color:#15212c;">
+      <strong>共通の仕組みやリファレンスを読むには:</strong>
+      こめはぶ本体の「テンプレート管理 → テンプレート開発ガイドを開く」から
+      アプリ内ヘルプを開いてください。テンプレート作成ガイド・API リファレンス・
+      わんコメ移植ガイド・チュートリアル例が読めます。本ページはこのサンプル固有の構造解説です。
+    </p>
+    <nav aria-label="ページ内目次">
+      <a href="#files">ファイルの役割</a>
+      <a href="#startup">起動の流れ</a>
+      <a href="#comment-flow">コメント表示の流れ</a>
+      <a href="#edit-map">変更箇所マップ</a>
+      <a href="guides/first-edit.html">最初の改造</a>
+      <a href="guides/usage.html">配信者向け設定</a>
+      <a href="#rules">分担ルール</a>
+    </nav>
+  </header>
+
+  <section id="files">
+    <h2>ファイルの役割</h2>
+    <div class="grid">
+      <div class="box">
+        <h3><code>index.html</code></h3>
+        <p>
+          画面の骨格です。フレーム、ヘッダー、フッター、コメント一覧の差し込み先、
+          コメント1件分の <code>&lt;template&gt;</code>、HTML-first 用の JSON 設定を持ちます。
+        </p>
+      </div>
+      <div class="box">
+        <h3><code>style.css</code></h3>
+        <p>
+          見た目の責務を持ちます。固定高さ、余白、色、テーマ、lifecycle animation、
+          typing animation、role class の色分けをここで調整します。
+        </p>
+      </div>
+      <div class="box">
+        <h3><code>script.js</code></h3>
+        <p>
+          表示用 model を作ります。DOM を組み立てるのではなく、
+          <code>beforeCommitComment()</code> で <code>display.html</code> や
+          <code>display.prefix</code> などを作ります。
+        </p>
+      </div>
+      <div class="box">
+        <h3><code>manifest.json</code></h3>
+        <p>
+          テンプレートの登録情報と設定 UI の定義です。ここにある key が、
+          <code>index.html</code> の JSON config や <code>script.js</code> の callbacks と対応します。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section id="startup">
+    <h2>起動の流れ</h2>
+    <div class="flow">
+      <div class="step">
+        <span class="step-num">1</span>
+        <h3>HTML 読み込み</h3>
+        <p><code>index.html</code> が読み込まれ、<code>#comments</code> と <code>#comment-template</code> が用意されます。</p>
+      </div>
+      <div class="step">
+        <span class="step-num">2</span>
+        <h3>CSS 適用</h3>
+        <p><code>style.css</code> が runtime 共通 CSS とテンプレート固有 CSS を読みます。</p>
+      </div>
+      <div class="step">
+        <span class="step-num">3</span>
+        <h3>JSON 設定</h3>
+        <p><code>#komehub-template-options</code> の JSON が HTML-first 設定として読まれます。</p>
+      </div>
+      <div class="step">
+        <span class="step-num">4</span>
+        <h3>runtime 起動</h3>
+        <p><code>htmlFirst.start()</code> が <code>data-kh-start="list"</code> を list starter として初期化します。</p>
+      </div>
+      <div class="step">
+        <span class="step-num">5</span>
+        <h3>コメント待機</h3>
+        <p>runtime がコメントを受け取り、template へ値を bind できる状態になります。</p>
+      </div>
+    </div>
+
+    <div class="box note" style="margin-top:14px">
+      <h3>このサンプルの重要点</h3>
+      <p>
+        <code>renderComment()</code> で HTML 文字列を丸ごと作るのではなく、
+        HTML の <code>&lt;template&gt;</code> と <code>data-kh</code> に runtime が値を差し込みます。
+        そのため、HTML と CSS を見れば構造と見た目を追いやすくなります。
+      </p>
+    </div>
+  </section>
+
+  <section id="comment-flow">
+    <h2>コメント1件が表示されるまで</h2>
+    <div class="flow">
+      <div class="step">
+        <span class="step-num">1</span>
+        <h3>raw comment</h3>
+        <p><code>name</code>、<code>comment</code>、<code>amountDisplay</code> などの元データが入ります。</p>
+      </div>
+      <div class="step">
+        <span class="step-num">2</span>
+        <h3>model 加工</h3>
+        <p>raw comment に、<code>beforeCommitComment()</code> が作る <code>display.prefix</code>、<code>display.html</code> を足したものが model です。</p>
+      </div>
+      <div class="step">
+        <span class="step-num">3</span>
+        <h3>template 複製</h3>
+        <p>runtime が <code>#comment-template</code> を複製し、コメント1件分の DOM を作ります。</p>
+      </div>
+      <div class="step">
+        <span class="step-num">4</span>
+        <h3>data-kh bind</h3>
+        <p><code>data-kh="name"</code> は <code>model.name</code>、<code>data-kh="display.html"</code> は <code>model.display.html</code> を HTML に入れます。</p>
+      </div>
+      <div class="step">
+        <span class="step-num">5</span>
+        <h3>表示と効果</h3>
+        <p>lifecycle class と <code>afterBindComment()</code> により、登場 animation や highlight が動きます。</p>
+      </div>
+    </div>
+
+    <pre><code>rawComment.comment
+  -> beforeCommitComment()
+  -> display.html
+  -> &lt;div class="comment-text" data-kh="display.html" data-kh-mode="html"&gt;
+  -> .typing-char / @keyframes typing-in</code></pre>
+  </section>
+
+  <section id="edit-map">
+    <h2>変更箇所マップ</h2>
+    <p>
+      具体的な作業手順は専用ページに分けています。
+      まず目的に近いページを開き、そこにある手順とコード例を見ながら編集してください。
+    </p>
+    <div class="grid">
+      <a class="guide-card" href="guides/first-edit.html">
+        <h3>最初の改造を試したい</h3>
+        <p>タイトル、色、カード、本文、タイピングのような安全に触れる場所から始める。</p>
+      </a>
+      <a class="guide-card" href="guides/usage.html">
+        <h3>配信者向けに調整したい</h3>
+        <p>OBS 推奨サイズ、表示位置、色、文字サイズ、タイピング演出の実用設定を見る。</p>
+      </a>
+      <a class="guide-card" href="guides/appearance.html">
+        <h3>見た目を変えたい</h3>
+        <p>色、余白、フォント、フレーム高さ、typing、入退場 animation を調整する。</p>
+      </a>
+      <a class="guide-card" href="guides/fields.html">
+        <h3>表示項目を増やしたい</h3>
+        <p><code>&lt;template&gt;</code> に要素を追加し、<code>data-kh</code> で model の値を表示する。</p>
+      </a>
+      <a class="guide-card" href="guides/model.html">
+        <h3>元データを加工したい</h3>
+        <p><code>beforeCommitComment()</code> で raw comment から表示用 model を作る。</p>
+      </a>
+      <a class="guide-card" href="guides/settings.html">
+        <h3>設定 UI を増やしたい</h3>
+        <p><code>manifest.json</code> の <code>uiSchema</code> から CSS 変数、class、callback へつなぐ。</p>
+      </a>
+      <a class="guide-card" href="guides/themes.html">
+        <h3>色プリセットを増やしたい</h3>
+        <p><code>manifest.json</code> の <code>colorPreset</code> に候補を追加し、既存の色設定へ反映する。</p>
+      </a>
+      <a class="guide-card" href="guides/effects.html">
+        <h3>一時効果を付けたい</h3>
+        <p><code>afterBindComment()</code> と <code>context.effects</code> で lifecycle に乗る効果を作る。</p>
+      </a>
+    </div>
+  </section>
+
+  <section id="rules">
+    <h2>分担ルール</h2>
+    <div class="grid">
+      <div class="box">
+        <h3>HTML は構造</h3>
+        <p>
+          何をどの順番で表示するかを決めます。
+          <code>data-kh</code> は model の値を差し込む目印です。
+        </p>
+      </div>
+      <div class="box">
+        <h3>CSS は見た目</h3>
+        <p>
+          配置、色、余白、サイズ、animation を受け持ちます。
+          コメント流入時に高さを揺らしたくない場合は、固定高さの考え方を崩さないようにします。
+        </p>
+      </div>
+      <div class="box">
+        <h3>JS は model と効果</h3>
+        <p>
+          <code>beforeCommitComment()</code> では DOM を触らず model を作ります。
+          DOM へ一時的な class や timer を付ける処理は <code>afterBindComment()</code> に寄せます。
+        </p>
+      </div>
+      <div class="box">
+        <h3>manifest は作者 UI</h3>
+        <p>
+          ユーザーに触らせたい設定だけを定義します。
+          設定 key は CSS 変数、toggle class、callback のどれかへ明確につなぎます。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>同じフォルダで見るファイル</h2>
+    <div class="link-row">
+      <span>index.html</span>
+      <span>style.css</span>
+      <span>script.js</span>
+      <span>manifest.json</span>
+      <span>assets/</span>
+      <span>guides/</span>
+    </div>
+  </section>
+</div>
+</body>
+</html>

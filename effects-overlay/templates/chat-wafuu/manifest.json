@@ -1,0 +1,27 @@
+{
+  "id": "com.comment-hub.template.chat-wafuu",
+  "name": "chat-wafuu",
+  "displayName": "和風",
+  "version": "1.0.0",
+  "obsHint": "OBS幅 480px 推奨 / 高さは任意",
+  "fonts": ["Kiwi Maru", "Noto Sans JP"],
+  "uiSchema": [
+    { "key": "maxComments", "type": "slider", "label": "最大表示数", "min": 5, "max": 50, "step": 1, "default": 12 },
+    { "key": "fontSize", "type": "slider", "label": "文字サイズ", "min": 10, "max": 60, "default": 24, "suffix": "px" },
+    { "key": "nameSize", "type": "slider", "label": "名前サイズ", "min": 0.5, "max": 1.0, "step": 0.05, "default": 0.68, "suffix": "em" },
+    { "key": "showName", "type": "toggle", "label": "名前表示", "default": true, "onLabel": "表示", "offLabel": "非表示" },
+    { "key": "nameInline", "type": "toggle", "label": "名前を本文と同じ行に", "default": true, "onLabel": "1ライン", "offLabel": "2ライン" },
+    { "key": "showAvatar", "type": "toggle", "label": "アバター表示", "default": false, "onLabel": "表示", "offLabel": "非表示" },
+    { "key": "showBadge", "type": "toggle", "label": "バッジ表示", "default": false, "onLabel": "表示", "offLabel": "非表示" },
+    { "key": "direction", "type": "buttons", "label": "流れる方向", "options": [{ "value": "up", "label": "↑ 上へ" }, { "value": "down", "label": "↓ 下へ" }], "default": "up" },
+    { "key": "nameColor", "type": "color", "label": "名前の色", "default": "#8a7a6a" },
+    { "key": "textColor", "type": "color", "label": "コメントの色", "default": "#4a4035" },
+    { "key": "memberColor", "type": "toggle", "label": "メンバーシップ色分け", "default": false, "onLabel": "ON", "offLabel": "OFF" },
+    { "key": "memberColorValue", "type": "color", "label": "メンバーの名前色", "default": "#2ba640", "showIf": { "key": "memberColor", "value": true } },
+    { "key": "backgroundImage", "type": "image", "label": "背景画像" },
+    { "key": "paddingTop", "type": "slider", "label": "上パディング", "min": 0, "max": 200, "step": 1, "default": 12, "suffix": "px", "showIf": [{ "key": "backgroundImage", "value": true }, { "key": "direction", "value": "down" }] },
+    { "key": "paddingBottom", "type": "slider", "label": "下パディング", "min": 0, "max": 200, "step": 1, "default": 12, "suffix": "px", "showIf": [{ "key": "backgroundImage", "value": true }, { "key": "direction", "value": "up" }] },
+    { "key": "paddingLeft", "type": "slider", "label": "左パディング", "min": 0, "max": 200, "step": 1, "default": 12, "suffix": "px", "showIf": { "key": "backgroundImage", "value": true } },
+    { "key": "paddingRight", "type": "slider", "label": "右パディング", "min": 0, "max": 200, "step": 1, "default": 12, "suffix": "px", "showIf": { "key": "backgroundImage", "value": true } }
+  ]
+}

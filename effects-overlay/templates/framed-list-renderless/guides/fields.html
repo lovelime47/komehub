@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>表示項目を増やす - framed-list-renderless</title>
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow"><a href="../structure.html">structure</a> / fields</p>
+    <h1>表示項目を増やす</h1>
+    <p class="lead">
+      コメント1件の中に何を表示するかは <code>index.html</code> の
+      <code>&lt;template id="comment-template"&gt;</code> で決めます。
+      値の差し込みには <code>data-kh</code> を使います。
+    </p>
+  </header>
+
+  <section>
+    <h2><code>data-kh</code> の考え方</h2>
+    <div class="box">
+      <p>
+        runtime はコメント1件ごとに「表示用のデータのかたまり」を作ります。
+        このページではそれを model と呼びます。model は raw comment の値と、
+        <code>beforeCommitComment()</code> が追加した値を合わせたものです。
+      </p>
+      <pre><code>{
+  "name": "fuwari-voice",
+  "comment": "👏👏👏👏👏",
+  "amount": "",
+  "display": {
+    "prefix": "",
+    "html": "&lt;span class=\"typing-char\"&gt;👏&lt;/span&gt;..."
+  }
+}</code></pre>
+      <p>
+        <code>data-kh</code> は、この model のどの場所を HTML に入れるかを指定する目印です。
+        <code>data-kh="name"</code> なら model の一番上にある <code>name</code> を読み、
+        <code>data-kh="display.html"</code> なら <code>display</code> の中の <code>html</code> を読みます。
+      </p>
+      <pre><code>&lt;span class="name" data-kh="name"&gt;&lt;/span&gt;
+<!-- "fuwari-voice" が入る -->
+
+&lt;div class="comment-text" data-kh="display.html" data-kh-mode="html"&gt;&lt;/div&gt;
+<!-- display.html の typing 用 HTML が入る --></code></pre>
+      <p>
+        点で区切った path は、入れ子の object をたどるという意味です。
+        <code>display.html</code> は <code>model.display.html</code>、
+        <code>display.prefix</code> は <code>model.display.prefix</code> です。
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2><code>data-kh-empty="hide"</code> の意味</h2>
+    <div class="box">
+      <p>
+        <code>data-kh-empty="hide"</code> は、<code>data-kh</code> で読んだ値が空のときに
+        その要素ごと隠す指定です。コメントによって有ったり無かったりする項目に付けます。
+      </p>
+      <pre><code>&lt;span class="amount" data-kh="amount" data-kh-empty="hide"&gt;&lt;/span&gt;</code></pre>
+      <p>
+        この例では、スパチャ金額があるコメントなら <code>amount</code> を表示し、
+        金額がない普通のコメントなら <code>.amount</code> 要素ごと非表示にします。
+      </p>
+      <pre><code>model.amount = "¥1,000"  -> 表示する
+model.amount = ""        -> 要素ごと隠す
+model.amount = null      -> 要素ごと隠す
+model.amount が無い      -> 要素ごと隠す</code></pre>
+      <p>
+        これを付けない場合、値が空でも要素は残ります。
+        その結果、空の余白、空のラベル枠、壊れた画像アイコンのような見た目になることがあります。
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>例: コメント時刻を追加する</h2>
+    <div class="steps">
+      <div class="step">
+        <h3>HTML に表示場所を追加する</h3>
+        <pre><code>&lt;div class="comment-meta"&gt;
+  &lt;img class="badge" data-kh="badge" data-kh-empty="hide" alt=""&gt;
+  &lt;span class="name" data-kh="name"&gt;&lt;/span&gt;
+  &lt;span class="time" data-kh="display.timeText" data-kh-empty="hide"&gt;&lt;/span&gt;
+  &lt;span class="amount" data-kh="amount" data-kh-empty="hide"&gt;&lt;/span&gt;
+&lt;/div&gt;</code></pre>
+      </div>
+      <div class="step">
+        <h3>JS で値を作る</h3>
+        <pre><code>return {
+  display: {
+    timeText: new Date(rawComment.timestamp || Date.now()).toLocaleTimeString('ja-JP', {
+      hour: '2-digit',
+      minute: '2-digit'
+    }),
+    prefix: prefix,
+    html: buildTypingHtml(rawComment, prevModel)
+  }
+};</code></pre>
+      </div>
+      <div class="step">
+        <h3>CSS で見た目を整える</h3>
+        <pre><code>.time {
+  flex: 0 0 auto;
+  color: var(--muted-color);
+  font-size: 0.66em;
+}</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>例: アバターを完全に外す</h2>
+    <p>
+      設定で非表示にするだけなら <code>showAvatar</code> が使えます。
+      テンプレートとして完全にアバターを持たない設計にするなら HTML と CSS の両方を変えます。
+    </p>
+    <div class="compare">
+      <div class="box">
+        <h3>HTML</h3>
+        <p><code>&lt;img class="avatar" ...&gt;</code> を削除します。</p>
+      </div>
+      <div class="box">
+        <h3>CSS</h3>
+        <pre><code>.comment {
+  grid-template-columns: 6px minmax(0, 1fr);
+}</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>注意点</h2>
+    <div class="box note">
+      <ul>
+        <li>HTML だけ追加しても、model に値がなければ空になります。</li>
+        <li>空のときに非表示にしたい要素には <code>data-kh-empty="hide"</code> を付けます。</li>
+        <li>HTML として差し込みたい場合だけ <code>data-kh-mode="html"</code> を使います。</li>
+      </ul>
+    </div>
+  </section>
+  <aside class="dev-guide-footer">
+    <p>
+      <strong>共通の仕組みやリファレンスを読むには:</strong>
+      こめはぶ本体の「テンプレート管理 → テンプレート開発ガイドを開く」から
+      アプリ内ヘルプを開いてください。テンプレート作成ガイド・API リファレンス・
+      わんコメ移植ガイド・チュートリアル例が読めます。
+    </p>
+  </aside>
+</div>
+</body>
+</html>

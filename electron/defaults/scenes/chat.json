@@ -1,0 +1,426 @@
+{
+  "name": "雑談",
+  "enabled": true,
+  "performancesEnabled": true,
+  "performances": [
+    {
+      "id": "heart",
+      "name": "かわいいコール",
+      "enabled": true,
+      "effect": "com.comment-hub.rise",
+      "trigger": {
+        "type": "keyword",
+        "keywords": [
+          {
+            "text": "❤",
+            "regex": false
+          },
+          {
+            "text": "♥",
+            "regex": false
+          },
+          {
+            "text": "かわいい",
+            "regex": false
+          }
+        ],
+        "regex": false,
+        "reactionTypes": [],
+        "minAmount": 0,
+        "includeMembership": true,
+        "listenerStatus": "",
+        "listenerHasPriorComment": "",
+        "listenerFirstCommentInStream": "",
+        "listenerRegular": ""
+      },
+      "cooldown": 0,
+      "assets": [],
+      "sounds": [],
+      "assetMeta": {},
+      "soundMeta": {},
+      "riseDistance": 35,
+      "originX": 85,
+      "originY": 100,
+      "spreadWidth": 30
+    },
+    {
+      "id": "praise",
+      "name": "称賛",
+      "enabled": true,
+      "effect": "com.comment-hub.rise",
+      "trigger": {
+        "type": "keyword",
+        "keywords": [
+          {
+            "text": "！",
+            "regex": false
+          },
+          {
+            "text": "!?",
+            "regex": false
+          },
+          {
+            "text": "すごい",
+            "regex": false
+          },
+          {
+            "text": "ナイス",
+            "regex": false
+          }
+        ],
+        "regex": false,
+        "reactionTypes": [],
+        "minAmount": 0,
+        "includeMembership": true,
+        "listenerStatus": "",
+        "listenerHasPriorComment": "",
+        "listenerFirstCommentInStream": "",
+        "listenerRegular": ""
+      },
+      "cooldown": 0,
+      "assets": [
+        "🌟",
+        "⭐",
+        "✨"
+      ],
+      "sounds": [],
+      "assetMeta": {},
+      "soundMeta": {},
+      "originX": 85,
+      "spreadWidth": 30,
+      "riseDistance": 35
+    },
+    {
+      "id": "laugh",
+      "name": "笑い",
+      "enabled": true,
+      "effect": "com.comment-hub.fall",
+      "trigger": {
+        "type": "keyword",
+        "keywords": [
+          {
+            "text": "ｗ",
+            "regex": false
+          },
+          {
+            "text": "草",
+            "regex": false
+          },
+          {
+            "text": "笑",
+            "regex": false
+          }
+        ],
+        "regex": false,
+        "reactionTypes": [],
+        "minAmount": 0,
+        "includeMembership": true,
+        "listenerStatus": "",
+        "listenerHasPriorComment": "",
+        "listenerFirstCommentInStream": "",
+        "listenerRegular": ""
+      },
+      "cooldown": 0,
+      "assets": [],
+      "sounds": [],
+      "assetMeta": {},
+      "soundMeta": {},
+      "confettiCount": 60
+    },
+    {
+      "id": "ponout-cracker",
+      "name": "クラッカー",
+      "enabled": true,
+      "effect": "com.comment-hub.cracker",
+      "trigger": {
+        "type": "keyword",
+        "keywords": [
+          {
+            "text": "🎉",
+            "regex": false
+          },
+          {
+            "text": "８８８８",
+            "regex": false
+          }
+        ],
+        "regex": false,
+        "reactionTypes": [],
+        "minAmount": 0,
+        "includeMembership": true,
+        "listenerStatus": "",
+        "listenerHasPriorComment": "",
+        "listenerFirstCommentInStream": "",
+        "listenerRegular": ""
+      },
+      "cooldown": 0,
+      "assets": [],
+      "sounds": [],
+      "assetMeta": {},
+      "soundMeta": {},
+      "count": 3,
+      "confettiCount": 60,
+      "launchPosition": "both",
+      "ponout": true
+    },
+    {
+      "id": "clap",
+      "name": "コメント表示（スライド）",
+      "enabled": false,
+      "effect": "com.comment-hub.slide",
+      "trigger": {
+        "type": "keyword",
+        "keywords": [],
+        "regex": false,
+        "reactionTypes": [],
+        "minAmount": 0,
+        "includeMembership": true,
+        "listenerStatus": "",
+        "listenerHasPriorComment": "",
+        "listenerFirstCommentInStream": "",
+        "listenerRegular": ""
+      },
+      "cooldown": 0,
+      "assets": [],
+      "sounds": [],
+      "assetMeta": {},
+      "soundMeta": {},
+      "count": 1,
+      "commentFontFamily": "default",
+      "duration": 1000,
+      "direction": "left",
+      "requiresContext": false,
+      "commentColor": "#ffffff",
+      "mode": "comment",
+      "originY": 95,
+      "spreadHeight": 10,
+      "speedMultiplier": 1,
+      "launchPosition": "both",
+      "scale": 100,
+      "commentStrokeWidth": 30
+    },
+    {
+      "id": "first-time-welcome",
+      "name": "初見歓迎",
+      "enabled": true,
+      "effect": "com.comment-hub.fixed",
+      "trigger": {
+        "type": "keyword",
+        "keywords": [],
+        "regex": false,
+        "reactionTypes": [],
+        "minAmount": 0,
+        "includeMembership": true,
+        "listenerStatus": "first-time",
+        "listenerHasPriorComment": "",
+        "listenerFirstCommentInStream": "",
+        "listenerRegular": ""
+      },
+      "cooldown": 0,
+      "assets": [],
+      "sounds": [],
+      "assetMeta": {},
+      "soundMeta": {},
+      "stampBackboard": true,
+      "templateStyle": "stamp",
+      "stampFlicker": true,
+      "posY": 25,
+      "stampShape": "crescent",
+      "stayDuration": 5500,
+      "bgOpacity": 90,
+      "showComment": false,
+      "displayMessage": "初見さんいらっしゃい！",
+      "requiresContext": true,
+      "scale": 100,
+      "posX": 12,
+      "brandColor": "#b788ff",
+      "enterAnim": "slide",
+      "noOverlap": true,
+      "stampReflection": true,
+      "displayWidth": 60,
+      "stampScrews": true
+    },
+    {
+      "id": "comment-display",
+      "name": "スパチャテロップ",
+      "enabled": true,
+      "effect": "com.comment-hub.sprout",
+      "trigger": {
+        "type": "superchat",
+        "keywords": [],
+        "regex": false,
+        "reactionTypes": [],
+        "minAmount": 0,
+        "includeMembership": true,
+        "listenerStatus": "",
+        "listenerHasPriorComment": "",
+        "listenerFirstCommentInStream": "",
+        "listenerRegular": ""
+      },
+      "cooldown": 0,
+      "assets": [],
+      "sounds": [],
+      "assetMeta": {},
+      "soundMeta": {},
+      "sym4Color": "#c77dff",
+      "bgOpacity": 0,
+      "scale": 100,
+      "sym3Color": "#ff4d8d",
+      "noOverlap": true,
+      "centerExclusion": 0,
+      "sym3Emoji": "💖",
+      "sym2Color": "#ffe54c",
+      "sym3Enabled": true,
+      "sym2Enabled": true,
+      "displayWidth": 100,
+      "sym5Color": "#a5f3fc",
+      "sym1Color": "#ffd700",
+      "design": "ticker",
+      "tickerWidth": 55,
+      "normalColor": "cyan",
+      "stayDuration": 2600,
+      "originX": 50,
+      "sym5Enabled": true,
+      "sym1Emoji": "🌙",
+      "sym5Emoji": "✨",
+      "sym1Enabled": true,
+      "animSpeed": 100,
+      "sym4Enabled": true,
+      "requiresContext": true,
+      "sym4Emoji": "🎵",
+      "sym2Emoji": "⭐"
+    },
+    {
+      "id": "superchat-display",
+      "name": "スパチャ宝箱",
+      "enabled": false,
+      "effect": "com.comment-hub.fixed",
+      "trigger": {
+        "type": "superchat",
+        "keywords": [],
+        "regex": false,
+        "reactionTypes": [],
+        "minAmount": 0,
+        "includeMembership": true,
+        "listenerStatus": "",
+        "listenerHasPriorComment": "",
+        "listenerFirstCommentInStream": "",
+        "listenerRegular": ""
+      },
+      "cooldown": 0,
+      "assets": [],
+      "sounds": [],
+      "assetMeta": {},
+      "soundMeta": {},
+      "noOverlap": true,
+      "stampReflection": true,
+      "displayWidth": 0,
+      "stampFlicker": false,
+      "stayDuration": 5500,
+      "enterAnim": "slide",
+      "displayMessage": "",
+      "stampBackboard": true,
+      "posY": 23,
+      "stampShape": "circle",
+      "stampScrews": true,
+      "requiresContext": true,
+      "posX": 10,
+      "templateStyle": "treasure",
+      "brandColor": "#5eead4",
+      "scale": 100
+    }
+  ],
+  "templatesEnabled": true,
+  "templates": [
+    {
+      "id": "com.comment-hub.template.chat-manga-bubble",
+      "name": "com.comment-hub.template.chat-manga-bubble",
+      "enabled": true,
+      "settings": {
+        "showBadge": false,
+        "testBackgroundColor": "#111827",
+        "nameInline": false,
+        "paddingTop": 12,
+        "nameSize": 0.7,
+        "width": 480,
+        "borderColor": "#5d3a1a",
+        "colorPreset": "retro",
+        "showAvatar": true,
+        "memberColor": false,
+        "nameColor": "#5d3a1a",
+        "paddingBottom": 12,
+        "bubbleStyle": "manga",
+        "position": "left",
+        "showName": true,
+        "maxComments": 8,
+        "commentGap": 14,
+        "memberColorValue": "#8a6a2a",
+        "nameFont": "",
+        "risoAccentPreset": "flamingo",
+        "paddingLeft": 12,
+        "fontSize": 22,
+        "tailDirection": "left",
+        "bubbleColor": "#f5e6c8",
+        "risoAccent": "#ff5d73",
+        "paddingRight": 12,
+        "textFont": "",
+        "textColor": "#3a2410",
+        "showTail": true
+      }
+    },
+    {
+      "id": "com.comment-hub.template.standard-renderless",
+      "name": "com.comment-hub.template.standard-renderless",
+      "enabled": true,
+      "settings": {
+        "paddingRight": 12,
+        "direction": "up",
+        "nameSize": 0.72,
+        "textColor": "#e0e0e0",
+        "position": "left",
+        "paddingBottom": 12,
+        "showAvatar": false,
+        "fontSize": 24,
+        "paddingLeft": 12,
+        "paddingTop": 12,
+        "width": 510,
+        "showName": true,
+        "memberColorValue": "#2ba640",
+        "memberColor": false,
+        "commentGap": 14,
+        "lineHeight": 1.5,
+        "showBadge": false,
+        "maxComments": 5,
+        "nameColor": "#8f8f8f",
+        "nameInline": true
+      }
+    },
+    {
+      "id": "com.comment-hub.template.browser-card-renderless",
+      "name": "com.comment-hub.template.browser-card-renderless",
+      "enabled": true,
+      "settings": {
+        "nameSize": 15,
+        "typingEnabled": true,
+        "position": "left",
+        "maxComments": 5,
+        "compactMode": false,
+        "themeMode": "rotate",
+        "cornerRadius": 8,
+        "showAvatar": true,
+        "width": 520,
+        "accentColor": "#2f8f83",
+        "fontSize": 18,
+        "cardGap": 12,
+        "showMetaRail": true
+      }
+    }
+  ],
+  "selectedTemplateId": "com.comment-hub.template.chat-manga-bubble",
+  "mascot": {
+    "frameInterval": 126,
+    "particles": {},
+    "patterns": {},
+    "reactDuration": 2000
+  }
+}

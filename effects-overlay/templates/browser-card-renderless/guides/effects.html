@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>一時効果を付ける - browser-card-renderless</title>
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow"><a href="../structure.html">structure</a> / effects</p>
+    <h1>一時効果を付ける</h1>
+    <p class="lead"><code>afterBindComment()</code> は DOM bind 後に一時 class や timer を扱う場所です。</p>
+  </header>
+
+  <section>
+    <h2>このサンプルで既にやっていること</h2>
+    <pre><code>afterBindComment: function (node, model, context) {
+  if (!node || !model || !model.raw || !model.raw.amountDisplay) return;
+  context.effects.addClass('paid-pulse', 'is-paid-pulse', {
+    removeOnPhases: ['leaving']
+  });
+  context.effects.setTimeout('paid-pulse-timeout', 1000, function (effectContext) {
+    if (effectContext.node && effectContext.node.classList) {
+      effectContext.node.classList.remove('is-paid-pulse');
+    }
+  });
+}</code></pre>
+    <p>CSS 側の <code>.comment.is-paid-pulse .card-shell</code> が pulse animation を再生します。</p>
+  </section>
+
+  <section>
+    <h2>例: メンバー加入も光らせる</h2>
+    <pre><code>if (model.raw.isMembership) {
+  context.effects.addClass('member-pulse', 'is-member-pulse', {
+    removeOnPhases: ['leaving']
+  });
+}</code></pre>
+    <pre><code>.comment.is-member-pulse .card-shell {
+  animation: paid-pulse 900ms ease;
+}</code></pre>
+  </section>
+
+  <section>
+    <h2>なぜ <code>context.effects</code> を使うか</h2>
+    <div class="box ok">
+      <p>コメントが削除されたときに class と timer を runtime の lifecycle に合わせて片付けられるためです。通常の <code>setTimeout()</code> だけで書くと、削除済み DOM を触る処理が残りやすくなります。</p>
+    </div>
+  </section>
+</div>
+</body>
+</html>

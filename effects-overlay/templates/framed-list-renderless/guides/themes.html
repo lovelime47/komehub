@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>色プリセットを増やす - framed-list-renderless</title>
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow"><a href="../structure.html">structure</a> / themes</p>
+    <h1>色プリセットを増やす</h1>
+    <p class="lead">
+      このテンプレートの「テーマ」は、コメントごとに変わるテーマではなく、
+      配信者が設定画面で選ぶ <code>colorPreset</code> です。
+      まずは <code>manifest.json</code> のプリセットを増やすのが一番安全です。
+    </p>
+  </header>
+
+  <section>
+    <h2>仕組み</h2>
+    <pre><code>manifest.json の colorPreset
+  -> option.applyValues
+  -> accentColor / textColor / bgColor などが更新される
+  -> index.html の cssVars
+  -> style.css の CSS 変数へ反映される</code></pre>
+  </section>
+
+  <section>
+    <h2>例: 桜プリセットを追加する</h2>
+    <div class="steps">
+      <div class="step">
+        <h3><code>manifest.json</code> の <code>colorPreset.options</code> に追加する</h3>
+        <pre><code>{
+  "value": "sakura",
+  "label": "桜",
+  "applyValues": {
+    "accentColor": "#f472b6",
+    "textColor": "#fff7fb",
+    "bgColor": "#1f0a16",
+    "highlightColor": "#fde68a",
+    "borderColor": "#ffffff"
+  }
+}</code></pre>
+      </div>
+      <div class="step">
+        <h3>必要なら既定値にする</h3>
+        <pre><code>{
+  "key": "colorPreset",
+  "type": "buttons",
+  "label": "色プリセット (選ぶと下の個別色を上書きします)",
+  "default": "sakura"
+}</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>個別色との関係</h2>
+    <div class="box">
+      <p>
+        プリセットは <code>accentColor</code>、<code>textColor</code>、<code>bgColor</code>、
+        <code>highlightColor</code>、<code>borderColor</code> をまとめて入れるショートカットです。
+        配信者はプリセットを選んだあと、個別色をさらに調整できます。
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>失敗しやすい点</h2>
+    <div class="box note">
+      <ul>
+        <li><code>value</code> は他の option と重複させません。</li>
+        <li><code>applyValues</code> の key は、既存の色設定 key と同じ名前にします。</li>
+        <li>背景色と本文色のコントラストが低いと、OBS 上で読みにくくなります。</li>
+        <li>コメントごとに色を変えたい場合は、このページの範囲を超えるため、まず <code>guides/model.html</code> で model の作り方を確認します。</li>
+      </ul>
+    </div>
+  </section>
+  <aside class="dev-guide-footer">
+    <p>
+      <strong>共通の仕組みやリファレンスを読むには:</strong>
+      こめはぶ本体の「テンプレート管理 → テンプレート開発ガイドを開く」から
+      アプリ内ヘルプを開いてください。テンプレート作成ガイド・API リファレンス・
+      わんコメ移植ガイド・チュートリアル例が読めます。
+    </p>
+  </aside>
+</div>
+</body>
+</html>

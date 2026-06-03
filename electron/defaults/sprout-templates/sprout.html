@@ -1,0 +1,32 @@
+<!-- 芽吹きテンプレート（全タイプ共通） -->
+<!-- プレースホルダー一覧:
+  {{userName}}     - ユーザー名
+  {{comment}}      - コメント本文
+  {{contentHtml}}  - 本文エリア（コメント/ステッカー画像/ギフトメッセージ、HTML）
+  {{badgeHtml}}    - メンバーバッジ（HTML、非メンバーは空）
+  {{amountHtml}}   - 金額表示（HTML、スパチャ以外は空）
+  {{iconHtml}}     - 左上アイコン（HTML、通常コメントは空）
+  {{tailHtml}}     - 吹き出しのしっぽ（HTML）
+  {{bubbleBg}}     - 背景グラデーション
+  {{bubbleBorder}} - 枠線色
+  {{bubbleShadow}} - 影色
+  {{nameColor}}    - ユーザー名の色
+-->
+<div style="
+  position: relative;
+  border-radius: 18px;
+  padding: 12px 18px;
+  max-width: 300px;
+  background: {{bubbleBg}};
+  border: 2px solid {{bubbleBorder}};
+  box-shadow: 0 4px 15px {{bubbleShadow}};
+  font-family: 'Segoe UI', 'Yu Gothic UI', sans-serif;
+">
+  {{iconHtml}}
+  <div style="font-size:11px;font-weight:bold;color:{{nameColor}};margin-bottom:4px;">
+    {{userName}}{{badgeHtml}}
+  </div>
+  {{amountHtml}}
+  {{contentHtml}}
+  {{tailHtml}}
+</div>

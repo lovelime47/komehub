@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>一時効果を付ける - framed-list-renderless</title>
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow"><a href="../structure.html">structure</a> / effects</p>
+    <h1>一時効果を付ける</h1>
+    <p class="lead">
+      コメント DOM に一時的な class や timer を付ける処理は
+      <code>afterBindComment()</code> と <code>context.effects</code> に寄せます。
+      lifecycle に合わせて cleanup できるため、退場後の timer 残りを避けやすくなります。
+    </p>
+  </header>
+
+  <section>
+    <h2>このサンプルで既にやっていること</h2>
+    <p>スパチャだけ <code>is-paid-highlight</code> を一時的に付けています。</p>
+    <pre><code>afterBindComment: function (node, model, context) {
+  if (!node || !model || !model.raw || !model.raw.amountDisplay) return;
+  context.effects.addClass('paid-highlight', 'is-paid-highlight', {
+    removeOnPhases: ['leaving']
+  });
+  context.effects.setTimeout('paid-highlight-timeout', 900, function (effectContext) {
+    if (effectContext.node && effectContext.node.classList) {
+      effectContext.node.classList.remove('is-paid-highlight');
+    }
+  });
+}</code></pre>
+  </section>
+
+  <section>
+    <h2>例: メンバー加入を一瞬強調する</h2>
+    <div class="steps">
+      <div class="step">
+        <h3>JS で class を付ける</h3>
+        <pre><code>if (model.raw.isMembership) {
+  context.effects.addClass('membership-pulse', 'is-membership-pulse', {
+    removeOnPhases: ['leaving']
+  });
+  context.effects.setTimeout('membership-pulse-timeout', 1200, function (effectContext) {
+    effectContext.node.classList.remove('is-membership-pulse');
+  });
+}</code></pre>
+      </div>
+      <div class="step">
+        <h3>CSS で見た目を作る</h3>
+        <pre><code>.comment.is-membership-pulse {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--kh-role-member) 45%, transparent);
+}</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>なぜ普通の <code>setTimeout()</code> ではなく <code>context.effects</code> を使うか</h2>
+    <div class="box">
+      <p>
+        コメントが消えたあとに timer が残ると、存在しない DOM を触ろうとしたり、
+        次のコメントに古い処理が影響したりします。
+        <code>context.effects</code> はコメント lifecycle と紐づいているので、退場時に cleanup しやすくなります。
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2>使い分け</h2>
+    <div class="grid">
+      <div class="box">
+        <h3><code>beforeCommitComment()</code></h3>
+        <p>表示用の値を作る。DOM は触らない。</p>
+      </div>
+      <div class="box">
+        <h3><code>afterBindComment()</code></h3>
+        <p>DOM に class を付ける。サイズ測定や一時効果を置く。</p>
+      </div>
+      <div class="box">
+        <h3>CSS</h3>
+        <p>付けられた class がどう見えるかを定義する。</p>
+      </div>
+    </div>
+  </section>
+  <aside class="dev-guide-footer">
+    <p>
+      <strong>共通の仕組みやリファレンスを読むには:</strong>
+      こめはぶ本体の「テンプレート管理 → テンプレート開発ガイドを開く」から
+      アプリ内ヘルプを開いてください。テンプレート作成ガイド・API リファレンス・
+      わんコメ移植ガイド・チュートリアル例が読めます。
+    </p>
+  </aside>
+</div>
+</body>
+</html>

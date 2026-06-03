@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div
+    id="comments"
+    data-kh-start="list"
+    data-kh-template="#comment-template"
+    data-kh-style-id="standard-renderless-config-style"
+    data-kh-options="#komehub-template-options"
+    data-kh-dev-preview="list-basic"></div>
+
+  <template id="comment-template">
+    <div class="comment">
+      <img class="avatar" data-kh="avatar" data-kh-empty="hide" alt="">
+      <div class="body-wrap">
+        <span class="name-wrap">
+          <img class="badge" data-kh="badge" data-kh-empty="hide" alt="">
+          <span class="name" data-kh="name"></span>
+          <span class="amount" data-kh="amount" data-kh-empty="hide"></span>
+        </span>
+        <div class="membership-header" data-kh="membershipHeader" data-kh-empty="hide"></div>
+        <span class="text" data-kh="display.html" data-kh-mode="html"></span>
+        <img class="sticker" data-kh="sticker" data-kh-empty="hide" alt="">
+      </div>
+    </div>
+  </template>
+
+  <script id="komehub-template-options" type="application/json">
+  {
+    "config": {
+      "maxComments": true,
+      "cssVars": {
+        "paddingTop": ["--padding-top", "px"],
+        "paddingBottom": ["--padding-bottom", "px"],
+        "paddingLeft": ["--padding-left", "px"],
+        "paddingRight": ["--padding-right", "px"],
+        "fontSize": ["--font-size", "px"],
+        "nameSize": ["--name-size", "em"],
+        "lineHeight": "--line-height",
+        "commentGap": ["--comment-gap", "px"],
+        "nameFont": "--name-font-family",
+        "textFont": "--text-font-family",
+        "nameColor": "--name-color",
+        "textColor": "--text-color",
+        "memberColorValue": "--member-color"
+      },
+      "toggleCssVars": {
+        "showAvatar": ["--avatar-display", "block", "none"],
+        "showBadge": ["--badge-display", "inline", "none"],
+        "showName": ["--name-display", "inline", "none"]
+      },
+      "toggleClasses": {
+        "nameInline": "name-inline",
+        "memberColor": "member-color",
+        "showName": "show-name"
+      },
+      "directionClasses": {
+        "direction": "direction-down"
+      },
+      "backgroundImages": {
+        "backgroundImage": ["body", "contain", "left bottom", "no-repeat"]
+      },
+      "customCss": true
+    },
+    "preview": {
+      "preset": "list-basic",
+      "title": "標準",
+      "applyConfig": {
+        "fontSize": 24,
+        "nameSize": 0.72,
+        "lineHeight": 1.5,
+        "commentGap": 14,
+        "showAvatar": true,
+        "showBadge": true,
+        "showName": true,
+        "nameInline": true,
+        "nameColor": "#8f8f8f",
+        "textColor": "#e0e0e0"
+      }
+    }
+  }
+  </script>
+  <script src="script.js"></script>
+</body>
+</html>

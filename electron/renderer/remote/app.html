@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' http: https: data:;">
+  <title>こめはぶ Remote</title>
+  <link rel="stylesheet" href="/remote/shared/shared.css">
+  <link rel="stylesheet" href="/remote/style.css">
+</head>
+<body>
+  <!-- shell header (= 各 view が h1 / back button を制御) -->
+  <header class="rh-header" id="rh-header">
+    <button class="rh-back" id="rh-back-btn" type="button" aria-label="前のページへ戻る" style="display:none">‹ 戻る</button>
+    <h1 id="rh-title">こめはぶ Remote</h1>
+    <div id="rh-status" class="rh-status">接続確認中</div>
+  </header>
+
+  <!-- view container (= app.js の navigate() でここに各 view DOM が置かれる) -->
+  <div id="rh-view-root" class="rh-view-root"></div>
+
+  <!-- bottom tab bar (= 全 view 共通、 active 表示は app.js が更新) -->
+  <nav class="rh-tabbar" id="rh-tabbar" aria-label="メインナビゲーション">
+    <a class="rh-tab" data-view="home" href="/remote/" aria-label="ホーム">
+      <span class="rh-tab-icon" aria-hidden="true">🏠</span>
+      <span class="rh-tab-label">ホーム</span>
+    </a>
+    <a class="rh-tab" data-view="comments" href="/remote/comments" aria-label="コメント">
+      <span class="rh-tab-icon" aria-hidden="true">💬</span>
+      <span class="rh-tab-label">コメント</span>
+      <span class="rh-tab-badge" id="rh-tab-badge-comments" hidden></span>
+    </a>
+    <a class="rh-tab" data-view="gifts" href="/remote/gifts" aria-label="ギフト">
+      <span class="rh-tab-icon" aria-hidden="true">🎁</span>
+      <span class="rh-tab-label">ギフト</span>
+      <span class="rh-tab-badge" id="rh-tab-badge-gifts" hidden></span>
+    </a>
+    <a class="rh-tab" data-view="listeners" href="/remote/listeners" aria-label="リスナー">
+      <span class="rh-tab-icon" aria-hidden="true">👥</span>
+      <span class="rh-tab-label">リスナー</span>
+      <span class="rh-tab-badge" id="rh-tab-badge-listeners" hidden></span>
+    </a>
+    <a class="rh-tab" data-view="archive" href="/remote/archive" aria-label="アーカイブ">
+      <span class="rh-tab-icon" aria-hidden="true">📚</span>
+      <span class="rh-tab-label">アーカイブ</span>
+    </a>
+  </nav>
+
+  <script src="/remote/shared/comment-sanitize.js"></script>
+  <script src="/remote/shared/comment-superchat.js"></script>
+  <script src="/remote/shared/comment-item.js"></script>
+  <script src="/remote/shared/undo-snackbar.js"></script>
+  <script src="/remote/shared/listener-badges.js"></script>
+  <script src="/remote/bottom-sheet.js"></script>
+  <script src="/remote/common.js"></script>
+  <!-- view modules (= app.js より前に load して registry に登録) -->
+  <script src="/remote/view-home.js"></script>
+  <script src="/remote/view-comments.js"></script>
+  <script src="/remote/view-gifts.js"></script>
+  <script src="/remote/view-listeners.js"></script>
+  <script src="/remote/view-listener-detail.js"></script>
+  <script src="/remote/view-search.js"></script>
+  <!-- アーカイブ: shell + 3 サブビュー + 配信詳細サブ画面 -->
+  <script src="/remote/view-archive-streams.js"></script>
+  <script src="/remote/view-archive-comment-search.js"></script>
+  <script src="/remote/view-archive-listener-search.js"></script>
+  <script src="/remote/view-archive.js"></script>
+  <script src="/remote/view-stream-detail.js"></script>
+  <script src="/remote/app.js"></script>
+</body>
+</html>

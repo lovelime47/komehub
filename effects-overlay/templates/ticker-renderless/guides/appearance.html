@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>見た目を変える - ticker-renderless</title>
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow"><a href="../structure.html">structure</a> / appearance</p>
+    <h1>見た目を変える</h1>
+    <p class="lead">横流れの見た目は <code>style.css</code> の <code>#comments</code>、<code>#track</code>、<code>.comment</code>、glow 関連 class を中心に変えます。</p>
+  </header>
+
+  <section>
+    <h2>最初に触る場所</h2>
+    <div class="grid">
+      <div class="box"><h3>縦位置</h3><p><code>#comments bottom</code> は <code>positionY</code> callback で上書きされます。</p></div>
+      <div class="box"><h3>横間隔</h3><p><code>#track gap</code> を変えるとコメント同士の距離が変わります。</p></div>
+      <div class="box"><h3>光彩</h3><p><code>--stroke-width</code>、<code>--glow-core</code>、<code>--blur-main</code> を <code>applyGlow()</code> が更新します。</p></div>
+      <div class="box"><h3>名前位置</h3><p><code>.name-bottom</code> class で名前行を本文の上/下へ切り替えます。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>例: コメント間隔を狭くする</h2>
+    <pre><code>#track {
+  gap: 24px;
+}</code></pre>
+  </section>
+
+  <section>
+    <h2>例: スパチャをさらに大きくする</h2>
+    <pre><code>.comment.is-superchat {
+  font-size: 1.25em;
+}</code></pre>
+    <p><code>.is-superchat</code> は runtime が <code>amount &gt; 0</code> のコメントに自動で付けます。</p>
+  </section>
+
+  <section>
+    <h2>例: 光を弱くする</h2>
+    <pre><code>.text, .amount, .sticker, .membership-badge {
+  filter:
+    drop-shadow(0 0 0.05em var(--glow-core))
+    drop-shadow(0 0 0.25em var(--glow-main));
+}</code></pre>
+  </section>
+</div>
+</body>
+</html>

@@ -1,0 +1,9 @@
+/* bundled-font.css
+ * assetCss の最小例です。
+ * 実運用では local(...) を、自分の同梱フォントファイルへの url(...) に置き換えてください。
+ */
+@font-face {
+  font-family: "Bundled Sample Font";
+  src: local("Noto Sans JP"), local("Yu Gothic UI");
+  font-display: swap;
+}

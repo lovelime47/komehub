@@ -1,0 +1,221 @@
+@import url('/templates/__runtime/common.css');
+
+/* Neon Cyber: マゼンタ枠 + シアン名前 + ネオングロー。
+   ゲーム配信・音楽配信・派手系演出向け。 */
+
+:root {
+  --panel-width: 460px;
+  --frame-height: 600px;
+  --frame-opacity: 0.85;
+  --accent-color: #ff00ff;
+  --secondary-color: #00ffff;
+  --text-color: #ffffff;
+  --bg-color: #0a0010;
+  --highlight-color: #ffec40;
+  /* borderColor (hex) を 30% 透明度に被せて divider 用に。
+     ユーザー直設定では opaque な hex が来るので、ここで透明化して馴染ませる。 */
+  --border-color: #ff00ff;
+  --line-color: color-mix(in srgb, var(--border-color) 30%, transparent);
+  --surface-color: color-mix(in srgb, var(--bg-color) calc(var(--frame-opacity) * 100%), transparent);
+  --muted-color: color-mix(in srgb, var(--secondary-color) 55%, transparent);
+  --avatar-display: none;
+  --kh-font-size: 18px;
+}
+
+html, body {
+  font-family: 'Orbitron', 'Noto Sans JP', sans-serif;
+  color: var(--text-color);
+}
+
+body {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 24px;
+}
+
+/* 表示位置 (左/右) は共通機構 (applyCommonLayout) が body.kh-pos-left /
+   body.kh-pos-right を付与。フレームを body flex で左右に寄せる (縦は常に下寄せ)。 */
+body.kh-pos-left { justify-content: flex-start; }
+body.kh-pos-right { justify-content: flex-end; }
+
+body.komehub-dev-preview-enabled { padding-top: 96px; }
+
+.frame-shell {
+  width: min(var(--panel-width), calc(100vw - 48px));
+  height: min(var(--frame-height), calc(100vh - 48px));
+  max-height: calc(100vh - 48px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  border: 2px solid var(--accent-color);
+  border-radius: 4px;
+  background: var(--surface-color);
+  box-shadow:
+    0 0 12px var(--accent-color),
+    inset 0 0 16px color-mix(in srgb, var(--accent-color) 25%, transparent),
+    0 0 36px color-mix(in srgb, var(--accent-color) 18%, transparent);
+}
+
+.frame-header,
+.frame-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-color: var(--line-color);
+  background: color-mix(in srgb, var(--accent-color) 6%, transparent);
+}
+
+.frame-header { border-bottom: 1px solid var(--line-color); }
+.frame-footer { border-top: 1px solid var(--line-color); color: var(--muted-color); font-size: 0.66em; white-space: nowrap; }
+
+body.hide-header .frame-header,
+body.hide-footer .frame-footer { display: none; }
+
+.frame-title-wrap { display: flex; flex-direction: column; }
+.frame-kicker {
+  margin: 0 0 2px;
+  font-size: 0.5em; line-height: 1;
+  color: var(--accent-color);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-shadow: 0 0 6px var(--accent-color);
+}
+.frame-title {
+  margin: 0;
+  font-size: 0.92em; line-height: 1.2;
+  color: var(--secondary-color);
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 8px var(--secondary-color);
+}
+.frame-status {
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  border: 1px solid var(--accent-color);
+  color: var(--accent-color);
+  font-size: 0.55em;
+  font-weight: 700;
+  text-shadow: 0 0 4px var(--accent-color);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--accent-color) 50%, transparent);
+}
+
+#comments {
+  /* position: relative は overflow 退場時の absolute containing block 固定 (必須) */
+  position: relative;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--kh-comment-gap, 8px);
+  padding: 12px;
+  overflow: hidden;
+}
+
+#comments.dense-list { --kh-comment-gap: 4px; --kh-comment-padding: 6px; }
+
+.comment {
+  position: relative;
+  display: grid;
+  /* avatar | comment-main の 2 列。左の縦棒 (theme-mark) は廃止 */
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: flex-start;
+  min-width: 0;
+  padding: var(--kh-comment-padding, 8px);
+  border: 1px solid var(--line-color);
+  background: color-mix(in srgb, var(--accent-color) 6%, transparent);
+  color: var(--text-color);
+}
+
+.comment.is-entering { opacity: 0; transform: translateY(8px); }
+.comment.is-active {
+  opacity: 1; transform: translateY(0);
+  transition: opacity var(--kh-anim-base) var(--kh-ease-out), transform var(--kh-anim-base) var(--kh-ease-out);
+}
+.comment.is-leaving {
+  opacity: 0; transform: translateY(-6px);
+  transition: opacity var(--kh-anim-fast) var(--kh-ease-in-out), transform var(--kh-anim-fast) var(--kh-ease-in-out);
+}
+
+.comment.is-paid-highlight {
+  border-color: var(--highlight-color);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--highlight-color) 60%, transparent);
+}
+
+.avatar {
+  display: var(--avatar-display);
+  width: 1.7em; height: 1.7em;
+  border: 1px solid var(--secondary-color);
+  border-radius: 0;
+  object-fit: cover;
+  box-shadow: 0 0 4px var(--secondary-color);
+  /* 1 行コメントで視覚中央。2 行以上でも flex-start で同位置キープ */
+  margin-top: calc(0.4em + 1.5px);
+}
+
+.comment-main { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.comment-meta { min-width: 0; display: flex; align-items: center; gap: 6px; }
+
+.badge {
+  display: var(--badge-display, inline);
+  width: 1em; height: 1em;
+  object-fit: contain;
+}
+
+.name {
+  min-width: 0;
+  color: var(--secondary-color);
+  font-size: 0.7em;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 5px var(--secondary-color);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.amount, .notice {
+  flex: 0 0 auto;
+  color: var(--accent-color);
+  font-size: 0.6em;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 4px var(--accent-color);
+}
+
+.notice {
+  padding: 2px 6px;
+  border: 1px solid var(--accent-color);
+  box-shadow: 0 0 4px color-mix(in srgb, var(--accent-color) 50%, transparent);
+}
+
+.membership-header { color: var(--muted-color); font-size: 0.65em; }
+
+.comment-text {
+  min-width: 0;
+  color: var(--text-color);
+  font-size: 1em;
+  line-height: 1.4;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+.comment-text img { height: 1.2em; vertical-align: -0.18em; }
+
+.sticker { max-width: min(8em, 100%); height: auto; align-self: flex-start; }
+
+/* ロール色: 役職ごとにアクセントを変える */
+.comment.is-owner .name { color: var(--highlight-color); text-shadow: 0 0 6px var(--highlight-color); }
+.comment.is-moderator .name { color: #5fff5f; text-shadow: 0 0 5px #5fff5f; }
+.comment.is-member .name { color: var(--accent-color); text-shadow: 0 0 5px var(--accent-color); }
+/* memberColor=ON でメンバー名を専用色に。text-shadow も同色で揃える */
+#comments.member-color .comment.is-member .name {
+  color: var(--member-color, var(--accent-color));
+  text-shadow: 0 0 5px var(--member-color, var(--accent-color));
+}
+.comment.is-membership { background: color-mix(in srgb, var(--accent-color) 14%, transparent); }
+.comment.is-membership-gift {
+  background: color-mix(in srgb, var(--highlight-color) 10%, transparent);
+  border-color: color-mix(in srgb, var(--highlight-color) 40%, transparent);
+}

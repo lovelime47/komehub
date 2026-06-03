@@ -1,0 +1,74 @@
+{
+  "id": "com.comment-hub.cracker",
+  "version": "1.0.0",
+  "name": "クラッカー",
+  "emoji": "🎉",
+  "entry": "cracker.js",
+  "globalName": "Cracker",
+  "interface": {
+    "methods": [
+      "fire"
+    ],
+    "hasPause": false
+  },
+  "defaultAssets": [
+    "🎉"
+  ],
+  "defaultParams": {
+    "count": 16,
+    "distance": 5,
+    "spread": 5,
+    "duration": 3000
+  },
+  "dependencies": [
+    "physics"
+  ],
+  "migrations": {},
+  "uiSchema": [
+    {
+      "key": "count",
+      "type": "slider",
+      "label": "個数",
+      "min": 0,
+      "max": 30,
+      "default": 1
+    },
+    {
+      "key": "confettiCount",
+      "type": "slider",
+      "label": "紙吹雪の量",
+      "min": 0,
+      "max": 60,
+      "default": 30
+    },
+    {
+      "key": "scale",
+      "type": "slider",
+      "label": "サイズ",
+      "min": 10,
+      "max": 300,
+      "default": 100,
+      "suffix": "%"
+    },
+    {
+      "key": "launchPosition",
+      "type": "buttons",
+      "label": "発射位置",
+      "default": "random",
+      "options": [
+        {
+          "value": "random",
+          "label": "ランダム"
+        },
+        {
+          "value": "both",
+          "label": "左右同時"
+        }
+      ]
+    }
+  ],
+  "badgeColor": {
+    "bg": "#4a1d00",
+    "fg": "#fb923c"
+  }
+}

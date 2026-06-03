@@ -1,0 +1,18 @@
+{
+  "frameInterval": 150,
+  "reactDuration": 2000,
+  "particles": {
+    "heart": [],
+    "smile": [],
+    "celebration": [],
+    "surprise": [],
+    "hundred": []
+  },
+  "patterns": {
+    "heart": "float-up",
+    "smile": "pop",
+    "celebration": "scatter",
+    "surprise": "bounce",
+    "hundred": "spiral"
+  }
+}

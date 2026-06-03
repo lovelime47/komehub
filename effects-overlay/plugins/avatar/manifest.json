@@ -1,0 +1,117 @@
+{
+  "id": "com.comment-hub.avatar",
+  "version": "1.0.0",
+  "name": "リアクション連動アバター",
+  "emoji": "🐿",
+  "entry": "avatar.js",
+  "globalName": "AvatarEffect",
+  "interface": {
+    "methods": [
+      "show"
+    ],
+    "hasPause": true
+  },
+  "defaultAssets": [],
+  "defaultParams": {
+    "frameInterval": 150,
+    "reactDuration": 2000,
+    "posX": 90,
+    "posY": 90,
+    "avatarScale": 100,
+    "showAvatar": true,
+    "showParticles": true,
+    "riseDistance": 180,
+    "spreadWidth": 120
+  },
+  "dependencies": [],
+  "migrations": {},
+  "uiSchema": [
+    {
+      "key": "posX",
+      "type": "slider",
+      "label": "表示位置 横",
+      "min": 0,
+      "max": 100,
+      "default": 90,
+      "suffix": "%"
+    },
+    {
+      "key": "posY",
+      "type": "slider",
+      "label": "表示位置 縦",
+      "min": 0,
+      "max": 100,
+      "default": 90,
+      "suffix": "%"
+    },
+    {
+      "key": "avatarScale",
+      "type": "slider",
+      "label": "サイズ",
+      "min": 10,
+      "max": 300,
+      "default": 100,
+      "suffix": "%"
+    },
+    {
+      "key": "frameInterval",
+      "type": "slider",
+      "label": "フレーム間隔",
+      "min": 16,
+      "max": 1000,
+      "step": 10,
+      "default": 150,
+      "suffix": "ms"
+    },
+    {
+      "key": "reactDuration",
+      "type": "slider",
+      "label": "リアクション持続",
+      "min": 500,
+      "max": 10000,
+      "step": 100,
+      "default": 2000,
+      "suffix": "ms"
+    },
+    {
+      "key": "showAvatar",
+      "type": "toggle",
+      "label": "アバター表示",
+      "default": true,
+      "onLabel": "ON",
+      "offLabel": "OFF"
+    },
+    {
+      "key": "showParticles",
+      "type": "toggle",
+      "label": "パーティクル表示",
+      "default": true,
+      "onLabel": "ON",
+      "offLabel": "OFF"
+    },
+    {
+      "key": "riseDistance",
+      "type": "slider",
+      "label": "パーティクル上昇距離",
+      "min": 50,
+      "max": 500,
+      "step": 10,
+      "default": 180,
+      "suffix": "px"
+    },
+    {
+      "key": "spreadWidth",
+      "type": "slider",
+      "label": "パーティクル横幅",
+      "min": 20,
+      "max": 400,
+      "step": 10,
+      "default": 120,
+      "suffix": "px"
+    }
+  ],
+  "badgeColor": {
+    "bg": "#4a1d00",
+    "fg": "#fb923c"
+  }
+}

@@ -1,0 +1,414 @@
+/* ============================================================
+   chat-manga-bubble: 漫画ふきだし風コメント表示
+   - アバターはふきだしの「外」に置き、tail がアバターを指す
+   - tailDirection (left/right) で配置を左右反転
+   - showAvatar=false (既定) でもふきだしの形は保つ
+   - rigid scroll engine (= JS が単一 scrollOffset で全カードを同期スクロール) で
+     退場アニメと FLIP 移動を実現。CSS transition は使わない。
+     詳細: docs/architecture/rigid-scroll-engine.md
+   ============================================================ */
+
+@import url('/templates/__runtime/common.css');
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
+
+body {
+  background: transparent;
+  font-size: var(--font-size, 22px);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+:root {
+  --line-height: 1.4;
+  --line-h: calc(var(--line-height) * 1em);
+  --glyph-offset: 0.05em;
+  --bubble-bg: #ffffff;
+  --border-color: #1a1a1a;
+  --name-color: #1a1a1a;
+  --text-color: #1a1a1a;
+  --avatar-display: none;
+  --badge-display: none;
+  --name-display: inline;
+  --avatar-size: 1.6em;
+  --tail-base: 0.42em;       /* tail の縦半幅 */
+  --tail-len: 0.85em;         /* tail の横方向の長さ */
+  --tail-top: 0.55em;         /* tail の縦位置 (bubble 上端から) */
+  --border-w: 2.5px;
+  --bubble-radius: 1em;
+  /* リソ/ポスター スタイルの背面板の色 (= 配色とは独立軸)。bubbleStyle=riso のときだけ効く。 */
+  --riso-accent: #ff5d73;
+  --riso-offset-x: 5px;   /* 背面板のオフセット量 (右) */
+  --riso-offset-y: 6px;   /* 背面板のオフセット量 (下) */
+}
+
+/* ── Container ──
+   rigid scroll は #comments の中でカードを position:absolute で配置する。
+   common.css の `body > #comments { position: fixed; inset: 0 }` を override し、
+   画面下端に貼り付け、高さは runtime が MAX_COMMENTS 枠分でインライン設定する。
+   `overflow: hidden` で stage 上端を超えたカードがクリップされる (= 退場演出の根幹)。
+
+   padding は使わない (rigid scroll engine が内部の paddingTop / paddingBottom で
+   スロット計算しており、CSS 側 padding と二重にかかると上端で小さなリークが出る)。
+   左右余白が必要なら body 側 / カード側で調整する。 */
+body > #comments {
+  position: fixed;
+  inset: auto;
+  /* 横幅・左右寄せは共通機構が担当 (common.css の body.kh-pos-* > #comments)。
+     ここでは縦 (bottom 固定) と pos クラス未付与時の fallback だけ持つ。 */
+  width: var(--kh-stage-width, calc(100% - var(--padding-left, 0px) - var(--padding-right, 0px)));
+  max-width: 100%;
+  bottom: var(--padding-bottom, 0px);
+  left: var(--padding-left, 0px);
+  right: auto;
+  top: auto;
+  /* height は runtime (rigid-board layout backend) がインラインでセット */
+  padding: 0;
+  overflow: hidden;
+  font-family: 'Zen Maru Gothic', 'Noto Sans JP', sans-serif;
+  font-weight: 700;
+  line-height: var(--line-height);
+}
+
+/* ── Comment row ──
+   .comment 自体は position: absolute (runtime が inline でセット)。
+   内部の avatar + bubble は引き続き flex で行配置する (runtime は外側 transform のみ管理、
+   .comment 内部の通常レイアウトには干渉しない)。
+   gap は tail (= 0.85em + 2.5px ≈ 1em) より広めに取り、tail がアバターに食い込まない
+   ようにしている。 */
+.comment {
+  display: flex;
+  align-items: flex-start;
+  gap: calc(var(--tail-len) + var(--border-w) + 6px);
+  flex-direction: row; /* default: アバター左、ふきだし右 */
+}
+/* 表示位置=右 (body.kh-pos-right) のとき、ふきだしの尻尾とアバターを右側へ反転。
+   表示位置は共通機構 (applyCommonLayout) が body class で持つので CSS だけで追従する。 */
+body.kh-pos-right > #comments .comment {
+  flex-direction: row-reverse;
+}
+
+/* ── Avatar (default hidden) ── */
+.avatar {
+  display: var(--avatar-display);
+  width: var(--avatar-size);
+  height: var(--avatar-size);
+  flex: 0 0 var(--avatar-size);
+  border-radius: 50%;
+  /* 円形アバターにハードオフセット影を敷くと三日月状にはみ出て微妙なので、枠だけにする。
+     枠色はスタイルの基調色に追従 (マンガ=--border-color の黒枠、リソ=後段で --riso-accent に上書き)。 */
+  border: var(--border-w) solid var(--border-color);
+  object-fit: cover;
+  background: #fff;
+  /* tail の縦中心と avatar 中心を一致させる:
+     bubble.border + tail-top + tail-base - avatar/2
+     ※ tail の `top` は bubble の padding edge (= 内側 border) からなので
+       border 幅ぶんを足して row top 起点に変換する */
+  margin-top: calc(var(--border-w) + var(--tail-top) + var(--tail-base) - var(--avatar-size) * 0.5);
+}
+
+/* ── Bubble ──
+   ふきだしは内容物のサイズに追従する (flex-grow しない)。
+   `min-width: 0` で長文 SC 等は flex-shrink で折返しできるよう保つ。 */
+.bubble {
+  position: relative;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  background: var(--bubble-bg);
+  border: var(--border-w) solid var(--border-color);
+  border-radius: var(--bubble-radius);
+  padding: 0.4em 0.7em;
+  box-shadow: 3px 3px 0 var(--border-color);
+}
+
+/* ── Tail (default = left): bubble 左辺から左方向に飛び出す三角 ──
+   外側 (::after) を border 色で大きく、内側 (::before) を bubble 背景色で
+   一回り小さく重ねて漫画風の輪郭付きふきだしを作る。
+
+   ポイント:
+   - 外側の base はバブルの outer-left 端 (= -border-w) に揃える
+   - 内側の base はバブル内側 (+border-w) まで「食い込ませる」 → これで
+     バブル左 border の seam (継ぎ目) が内側三角の塗りに隠れて消える
+   - 内側の tip / 上下端は外側より border-w 分内側に置き、輪郭が等幅に見える */
+.bubble::after,
+.bubble::before {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-style: solid;
+}
+.bubble::after {
+  /* 外側 (border 色)。base を bubble 内 (padding box left = x:0) まで食い込ませる
+     → tail の y 範囲では bubble の左 border が outer 三角の塗りに完全に上書きされ、
+        「tail と bubble の間に縦線」現象が消える。 */
+  left: calc(-1 * var(--tail-len));
+  top: var(--tail-top);
+  border-width: var(--tail-base) var(--tail-len) var(--tail-base) 0;
+  border-color: transparent var(--border-color) transparent transparent;
+}
+.bubble::before {
+  /* 内側 (背景色)。outer より border-w 分内側に inset。base は outer より
+     さらに border-w 内側に置いて bubble 内側との継ぎ目を消す。 */
+  left: calc(-1 * var(--tail-len) + var(--border-w));
+  top: calc(var(--tail-top) + var(--border-w));
+  border-width:
+    calc(var(--tail-base) - var(--border-w))
+    var(--tail-len)
+    calc(var(--tail-base) - var(--border-w)) 0;
+  border-color: transparent var(--bubble-bg) transparent transparent;
+  z-index: 1;
+}
+
+/* ── tail 非表示時 ──
+   showTail=false (= "show-tail" class が container に付いていない) のとき、tail の
+   ::before / ::after を消す。avatar との隙間 (gap) も詰めて、ただの角丸ふきだしカードとして見せる。 */
+#comments:not(.show-tail) .bubble::after,
+#comments:not(.show-tail) .bubble::before {
+  display: none;
+}
+#comments:not(.show-tail) .comment {
+  gap: 8px;
+}
+
+/* ── Tail right (左右ミラー) ── 表示位置=右 (body.kh-pos-right) に追従 */
+body.kh-pos-right > #comments .bubble::after {
+  left: auto;
+  right: calc(-1 * var(--tail-len));
+  top: var(--tail-top);
+  border-width: var(--tail-base) 0 var(--tail-base) var(--tail-len);
+  border-color: transparent transparent transparent var(--border-color);
+}
+body.kh-pos-right > #comments .bubble::before {
+  left: auto;
+  right: calc(-1 * var(--tail-len) + var(--border-w));
+  top: calc(var(--tail-top) + var(--border-w));
+  border-width:
+    calc(var(--tail-base) - var(--border-w)) 0
+    calc(var(--tail-base) - var(--border-w))
+    var(--tail-len);
+  border-color: transparent transparent transparent var(--bubble-bg);
+}
+
+/* ── Name wrap ── */
+.name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 0.15em;
+}
+#comments:not(.show-name) .name-wrap { display: none; }
+
+/* nameInline = 1ライン: name と text を同行 inline flow */
+.name-inline .bubble { display: block; }
+.name-inline .name-wrap {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-right: 6px;
+  margin-bottom: 0;
+  vertical-align: baseline;
+}
+.name-inline .text {
+  display: inline;
+}
+
+/* ── Badge ── */
+.badge {
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+  display: var(--badge-display);
+  margin-top: calc(var(--glyph-offset) * 2);
+}
+
+/* ── Name ── */
+.name {
+  display: var(--name-display);
+  color: var(--name-color);
+  font-family: 'Cherry Bomb One', 'Zen Maru Gothic', sans-serif;
+  font-size: var(--name-size, 0.7em);
+  font-weight: 900;
+  line-height: 1;
+}
+
+/* ── Amount (SC 額) ── */
+.amount {
+  font-size: 0.6em;
+  font-weight: 900;
+  padding: 0.15em 0.5em;
+  border: 2px solid var(--border-color);
+  border-radius: 999px;
+  background: #ffd166;
+  color: #1a1300;
+  line-height: 1.4;
+  display: inline-block;
+}
+.amount:empty { display: none; }
+
+/* SC 金額バッジを YouTube tier 色に (= 旧実装の一律 #ffd166 黄色をやめる)。
+   tier クラスは runtime が .comment に付与、色は common.css の --kh-tier-*-bg。
+   明色 tier は濃色文字、暗色 tier は白文字にして読みやすさを確保。 */
+.comment.tier-blue    .amount { background: var(--kh-tier-blue-bg);    color: #ffffff; }
+.comment.tier-teal    .amount { background: var(--kh-tier-teal-bg);    color: #06262e; }
+.comment.tier-green   .amount { background: var(--kh-tier-green-bg);   color: #053226; }
+.comment.tier-yellow  .amount { background: var(--kh-tier-yellow-bg);  color: #3a2a00; }
+.comment.tier-orange  .amount { background: var(--kh-tier-orange-bg);  color: #ffffff; }
+.comment.tier-magenta .amount { background: var(--kh-tier-magenta-bg); color: #ffffff; }
+.comment.tier-red     .amount { background: var(--kh-tier-red-bg);     color: #ffffff; }
+
+/* ── Text ── */
+.text {
+  color: var(--text-color);
+  font-family: 'Zen Maru Gothic', 'Noto Sans JP', sans-serif;
+  font-weight: 700;
+  font-size: 1em;
+  line-height: var(--line-height);
+  overflow-wrap: anywhere;
+}
+.text img {
+  height: 1.3em;
+  vertical-align: -0.2em;
+  margin: 0 1px;
+}
+.text a {
+  color: var(--text-color);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+/* ── Membership header ── */
+.membership-header {
+  display: inline-block;
+  font-size: 0.6em;
+  font-weight: 900;
+  background: #c8e6a8;
+  /* 背景 #c8e6a8 は明色固定なので、文字/枠も preset 非依存の濃緑に固定する。
+     旧実装は var(--border-color) で、暗色 preset では白系になり淡緑背景に白飛びしていた。 */
+  color: #1f4012;
+  border: 2px solid #1f4012;
+  border-radius: 999px;
+  padding: 0.15em 0.5em;
+  margin: 0 0.4em 0.3em 0;
+  line-height: 1.4;
+}
+.membership-header:empty { display: none; }
+
+/* ── Sticker ── */
+.sticker {
+  display: block;
+  max-width: 7em;
+  max-height: 7em;
+  margin-top: 0.4em;
+}
+.sticker[src=""] { display: none; }
+
+/* ── Member / Moderator / Owner / Superchat の名前色分け ── */
+#comments.member-color .comment.is-member .name { color: var(--member-color, #5e8a3a); }
+.comment.is-moderator .name { color: #2a5fbe; }
+.comment.is-owner     .name { color: #c43a3a; }
+
+/* SC 帯ごとに名前をうっすら強調 */
+.comment.is-superchat .name { font-family: 'Cherry Bomb One', 'Zen Maru Gothic', sans-serif; }
+
+/* SC 系はふきだし背景をうっすら黄色寄せ (枠と tail の白抜きは --bubble-bg-sc でリンク) */
+.comment.is-superchat .bubble {
+  --bubble-bg: #fff7d8;
+  background: #fff7d8;
+  /* SC 背景は preset 非依存で明色固定のため、名前/本文の色も濃色に固定して白飛びを防ぐ
+     (= chalk 等の暗色 preset では --name-color/--text-color が白系になり、淡黄背景に
+     白文字で読めなくなる)。 */
+  --name-color: #1a1300;
+  --text-color: #1a1300;
+}
+/* membership 系はうっすら緑 */
+.comment.is-membership .bubble {
+  --bubble-bg: #eef7df;
+  background: #eef7df;
+  /* SC と同様、明色背景固定に合わせて名前/本文を濃色固定 (暗色 preset の白飛び防止)。 */
+  --name-color: #14210a;
+  --text-color: #14210a;
+}
+/* membership gift 系も SC と同様に目立つ styled bubble に (= ユーザー要望)。SC(黄)/
+   member(緑) と区別する gift テーマの淡紫。明色背景固定なので名前/本文は濃紫固定で
+   白飛び防止。金額が入るようになれば下の tier 金額バッジ (.comment.tier-* .amount) が
+   自動で付き、SC と同じく金額帯で色が変わる。SC と gift が両方付く場合に gift を優先
+   させるため SC ルールより後に置く。 */
+.comment.is-membership-gift .bubble {
+  --bubble-bg: #f3e8ff;
+  background: #f3e8ff;
+  --name-color: #3b0764;
+  --text-color: #3b0764;
+}
+/* gift のラベルピル (membership-header「メンバーシップギフト x N」) も紫テーマに統一。 */
+.comment.is-membership-gift .membership-header {
+  background: #e9d5ff;
+  color: #3b0764;
+  border-color: #3b0764;
+}
+
+/* ============================================================
+   ふきだしスタイル: リソ / ポスター (= bubbleStyle "riso")
+   ------------------------------------------------------------
+   漫画語彙 (黒縁 + ハードオフセット黒影 + 二重三角しっぽ) を捨て、
+   奥行きを「アクセント色のフラット板を背面にオフセット」で出す版画/ポスター調。
+   - 黒影でなく box-shadow のぼかし 0 で背面に色板を敷く (= --riso-accent)
+   - 前面板の色は既存の配色 (--bubble-bg) のまま → 配色と背面色が独立して組合せ可
+   - SC / メンバー / ギフト の色分け (= --bubble-bg を上書き) もそのまま乗る
+   script.js が container に .style-riso を付与し、--riso-accent を cssVars で渡す。
+   ============================================================ */
+#comments.style-riso .bubble {
+  border: none;
+  border-radius: 7px;
+  /* 背面のアクセント色板 (ぼかし 0 のフラットなオフセット) = リソの奥行き */
+  box-shadow: var(--riso-offset-x) var(--riso-offset-y) 0 var(--riso-accent);
+}
+#comments.style-riso .avatar {
+  /* 円形アバターにオフセット色板を敷くと三日月状にはみ出て微妙なので、
+     背面色 (--riso-accent) の細い枠で囲むだけにする (= 黒枠 + ハード影は不使用)。 */
+  border: 2px solid var(--riso-accent);
+  box-shadow: none;
+}
+
+/* ── リソのしっぽ (左 = 既定) ──
+   前面の三角 (::before, --bubble-bg) と、背面にオフセットしたアクセント三角 (::after) の二枚。
+   border 依存の inset は使わず、前面 base を bubble 左端 (x:0) に合わせて継ぎ目なく接続。 */
+#comments.style-riso .bubble::before {
+  left: calc(-1 * var(--tail-len));
+  top: var(--tail-top);
+  border-width: var(--tail-base) var(--tail-len) var(--tail-base) 0;
+  border-color: transparent var(--bubble-bg) transparent transparent;
+  z-index: 1;
+}
+#comments.style-riso .bubble::after {
+  left: calc(-1 * var(--tail-len));
+  top: var(--tail-top);
+  border-width: var(--tail-base) var(--tail-len) var(--tail-base) 0;
+  border-color: transparent var(--riso-accent) transparent transparent;
+  /* 本体板と同じだけオフセットして背面に。負 z-index で bubble 背景の下に潜らせる。 */
+  transform: translate(var(--riso-offset-x), var(--riso-offset-y));
+  z-index: -1;
+}
+
+/* ── リソのしっぽ (右 = body.kh-pos-right に追従) ── */
+body.kh-pos-right > #comments.style-riso .bubble::before {
+  left: auto;
+  right: calc(-1 * var(--tail-len));
+  top: var(--tail-top);
+  border-width: var(--tail-base) 0 var(--tail-base) var(--tail-len);
+  border-color: transparent transparent transparent var(--bubble-bg);
+  z-index: 1;
+}
+body.kh-pos-right > #comments.style-riso .bubble::after {
+  left: auto;
+  right: calc(-1 * var(--tail-len));
+  top: var(--tail-top);
+  border-width: var(--tail-base) 0 var(--tail-base) var(--tail-len);
+  border-color: transparent transparent transparent var(--riso-accent);
+  transform: translate(var(--riso-offset-x), var(--riso-offset-y));
+  z-index: -1;
+}

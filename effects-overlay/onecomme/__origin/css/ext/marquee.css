@@ -1,0 +1,16 @@
+.lcv-marquee {
+  display: inline-flex;
+  min-width: 100%;
+  white-space: nowrap;
+  will-change: transform;
+  animation: lcv-marquee-scroll var(--lcv-marquee-duration, 12s) linear infinite;
+}
+
+@keyframes lcv-marquee-scroll {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(calc(-100% - var(--lcv-marquee-gap, 24px)), 0, 0);
+  }
+}

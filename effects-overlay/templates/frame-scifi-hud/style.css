@@ -1,0 +1,234 @@
+@import url('/templates/__runtime/common.css');
+
+/* Sci-Fi HUD: 角カット (clip-path) + シアン蛍光 + テクニカル細部。
+   FPS / SF ゲーム / 宇宙配信向け。 */
+
+:root {
+  --panel-width: 460px;
+  --frame-height: 600px;
+  --frame-opacity: 0.85;
+  --accent-color: #00ddff;
+  --highlight-color: #ffaa00;
+  --text-color: #ffffff;
+  --bg-color: #000f1e;
+  /* borderColor を 28% 透明度に被せて divider 用に */
+  --border-color: #00ddff;
+  --line-color: color-mix(in srgb, var(--border-color) 28%, transparent);
+  --surface-color: color-mix(in srgb, var(--bg-color) calc(var(--frame-opacity) * 100%), transparent);
+  --muted-color: color-mix(in srgb, var(--accent-color) 55%, transparent);
+  --avatar-display: block;
+  --kh-font-size: 18px;
+  --cut-size: 12px;
+}
+
+html, body {
+  font-family: 'Orbitron', 'Noto Sans JP', sans-serif;
+  color: var(--text-color);
+}
+
+body {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 24px;
+}
+
+/* 表示位置 (左/右) は共通機構 (applyCommonLayout) が body.kh-pos-left /
+   body.kh-pos-right を付与。フレームを body flex で左右に寄せる (縦は常に下寄せ)。 */
+body.kh-pos-left { justify-content: flex-start; }
+body.kh-pos-right { justify-content: flex-end; }
+
+body.komehub-dev-preview-enabled { padding-top: 96px; }
+
+.frame-shell {
+  width: min(var(--panel-width), calc(100vw - 48px));
+  height: min(var(--frame-height), calc(100vh - 48px));
+  max-height: calc(100vh - 48px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  border: 1px solid var(--accent-color);
+  border-radius: 0;
+  background: var(--surface-color);
+  /* 左上と右下を斜めにカットして HUD らしさを出す */
+  clip-path: polygon(
+    var(--cut-size) 0,
+    100% 0,
+    100% calc(100% - var(--cut-size)),
+    calc(100% - var(--cut-size)) 100%,
+    0 100%,
+    0 var(--cut-size)
+  );
+  box-shadow: 0 0 20px color-mix(in srgb, var(--accent-color) 40%, transparent), inset 0 0 16px color-mix(in srgb, var(--accent-color) 10%, transparent);
+}
+
+.frame-header,
+.frame-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-color: var(--line-color);
+  background: color-mix(in srgb, var(--accent-color) 5%, transparent);
+}
+
+.frame-header { border-bottom: 1px solid var(--line-color); }
+.frame-footer { border-top: 1px solid var(--line-color); color: var(--muted-color); font-size: 0.66em; white-space: nowrap; letter-spacing: 0.05em; }
+
+body.hide-header .frame-header,
+body.hide-footer .frame-footer { display: none; }
+
+.frame-title-wrap { display: flex; flex-direction: column; }
+.frame-kicker {
+  margin: 0 0 2px;
+  font-size: 0.5em; line-height: 1;
+  color: var(--highlight-color);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+}
+.frame-title {
+  margin: 0;
+  font-size: 0.92em; line-height: 1.2;
+  color: var(--accent-color);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-shadow: 0 0 4px var(--accent-color);
+}
+.frame-status {
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  border: 1px solid var(--accent-color);
+  color: var(--accent-color);
+  font-size: 0.55em;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  /* 小さめの角カット */
+  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+}
+
+#comments {
+  /* position: relative は overflow 退場時の absolute containing block 固定 (必須) */
+  position: relative;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--kh-comment-gap, 6px);
+  padding: 12px;
+  overflow: hidden;
+}
+
+#comments.dense-list { --kh-comment-gap: 3px; --kh-comment-padding: 6px; }
+
+.comment {
+  position: relative;
+  display: grid;
+  /* avatar | comment-main の 2 列。左の縦棒 (theme-mark) は廃止 */
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  /* align-items: flex-start で全列を上端揃え。
+     avatar は margin-top で 1 行コメント中央に視覚調整するが、
+     2 行以上でも flex-start のおかげで同じ位置に留まる (下に下がらない) */
+  align-items: flex-start;
+  min-width: 0;
+  padding: var(--kh-comment-padding, 8px) 10px;
+  border: 1px solid var(--line-color);
+  background: color-mix(in srgb, var(--accent-color) 5%, transparent);
+  color: var(--text-color);
+  /* コメントカードも左上を斜めカット */
+  clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
+}
+
+.comment.is-entering { opacity: 0; transform: translateY(8px); }
+.comment.is-active {
+  opacity: 1; transform: translateY(0);
+  transition: opacity var(--kh-anim-base) var(--kh-ease-out), transform var(--kh-anim-base) var(--kh-ease-out);
+}
+.comment.is-leaving {
+  opacity: 0; transform: translateY(-6px);
+  transition: opacity var(--kh-anim-fast) var(--kh-ease-in-out), transform var(--kh-anim-fast) var(--kh-ease-in-out);
+}
+
+.comment.is-paid-highlight {
+  border-color: var(--highlight-color);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--highlight-color) 50%, transparent);
+}
+
+.avatar {
+  display: var(--avatar-display);
+  width: 1.7em; height: 1.7em;
+  border: 1px solid var(--accent-color);
+  border-radius: 0;
+  object-fit: cover;
+  clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+  /* 1 行コメントで視覚中央に来るオフセット。
+     2 行以上でも .comment の align-items: flex-start によりこの位置に固定される。
+     計算根拠: 1 行 comment 高さ ≈ name 0.7em*1.5 + gap 3px + text 1em*1.4 ≈ 2.45em + 3px、
+     avatar 1.7em → 上下マージン (2.45em + 3px - 1.7em) / 2 ≈ 0.4em + 1.5px */
+  margin-top: calc(0.4em + 1.5px);
+}
+
+.comment-main { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.comment-meta { min-width: 0; display: flex; align-items: center; gap: 6px; }
+
+.badge {
+  display: var(--badge-display, inline);
+  width: 1em; height: 1em;
+  object-fit: contain;
+}
+
+.name {
+  min-width: 0;
+  color: var(--highlight-color);
+  font-size: 0.7em;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.amount, .notice {
+  flex: 0 0 auto;
+  color: var(--accent-color);
+  font-size: 0.6em;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.notice {
+  padding: 2px 6px;
+  border: 1px solid var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 8%, transparent);
+}
+
+.membership-header { color: var(--muted-color); font-size: 0.65em; letter-spacing: 0.05em; }
+
+.comment-text {
+  min-width: 0;
+  color: var(--text-color);
+  font-size: 1em;
+  line-height: 1.4;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+.comment-text img { height: 1.2em; vertical-align: -0.18em; }
+
+.sticker { max-width: min(8em, 100%); height: auto; align-self: flex-start; }
+
+/* ロール色 */
+.comment.is-owner .name { color: #ffec40; }
+.comment.is-moderator .name { color: #5fff5f; }
+.comment.is-member .name { color: var(--accent-color); }
+/* memberColor=ON でメンバー名を専用色に */
+#comments.member-color .comment.is-member .name { color: var(--member-color, var(--accent-color)); }
+.comment.is-membership {
+  background: color-mix(in srgb, var(--accent-color) 12%, transparent);
+  border-color: color-mix(in srgb, var(--accent-color) 50%, transparent);
+}
+.comment.is-membership-gift {
+  background: color-mix(in srgb, var(--highlight-color) 10%, transparent);
+  border-color: color-mix(in srgb, var(--highlight-color) 50%, transparent);
+}

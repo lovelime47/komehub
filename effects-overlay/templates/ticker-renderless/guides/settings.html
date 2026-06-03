@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>設定 UI を増やす - ticker-renderless</title>
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow"><a href="../structure.html">structure</a> / settings</p>
+    <h1>設定 UI を増やす</h1>
+    <p class="lead">横流れでは、設定変更がコメント幅や track 移動距離に影響するかを必ず見ます。</p>
+  </header>
+
+  <section>
+    <h2>3つのつなぎ方</h2>
+    <div class="grid">
+      <div class="box"><h3>CSS 変数</h3><p>文字色、文字サイズ、フォントなど。<code>cssVars</code> でつなぎます。</p></div>
+      <div class="box"><h3>class</h3><p>名前表示、バッジ表示、メンバー色分けなど。<code>toggleClasses</code> でつなぎます。</p></div>
+      <div class="box"><h3>callback</h3><p>縦位置、速度、光彩、再計算が必要な設定。<code>script.js</code> に処理を書きます。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>例: 名前位置を増やす</h2>
+    <pre><code>{
+  "key": "namePosition",
+  "type": "buttons",
+  "options": [
+    { "value": "top", "label": "上" },
+    { "value": "bottom", "label": "下" }
+  ]
+}</code></pre>
+    <pre><code>namePosition: function (value, _config, helpers) {
+  helpers.container.classList.toggle('name-bottom', value === 'bottom');
+  recalcTicker(helpers);
+}</code></pre>
+  </section>
+
+  <section>
+    <h2>例: 速度 preset を増やす</h2>
+    <pre><code>var ANIM_SPEEDS = { slow: 1.2, normal: 0.8, fast: 0.5, instant: 0.25 };</code></pre>
+    <pre><code>{ "value": "instant", "label": "超速" }</code></pre>
+  </section>
+
+  <section>
+    <h2>確認ポイント</h2>
+    <div class="box ok">
+      <ul>
+        <li>横幅や高さが変わる設定では <code>recalcTicker(helpers)</code> を呼ぶ。</li>
+        <li>速度変更は <code>setTravelSeconds()</code> を使う。</li>
+        <li>JSON config 内にはコメントを書かない。</li>
+      </ul>
+    </div>
+  </section>
+</div>
+</body>
+</html>

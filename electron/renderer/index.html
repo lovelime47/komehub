@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Comment Hub</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="shared/shared.css">
+  <link rel="stylesheet" href="shared/remote-opener.css">
+</head>
+<body>
+  <header>
+    <h1 class="brand-title">Live Comment Hub</h1>
+    <span id="header-sub" class="brand-sub">こめはぶ</span>
+    <span id="brand-version" class="brand-version">v0.3.1</span>
+
+    <div class="head-spacer"></div>
+
+    <div class="panel-toggle-group">
+      <button class="panel-toggle on" data-panel="conn-frame" type="button"><span class="dot"></span>接続</button>
+      <button class="panel-toggle on" data-panel="app-frame" type="button"><span class="dot"></span>演出</button>
+      <button class="panel-toggle on" data-panel="cl-frame" type="button"><span class="dot"></span>コメント・リスナー</button>
+    </div>
+
+    <div class="conn-pill" id="conn-pill" style="display:none">
+      <span class="dot"></span>接続中
+    </div>
+
+    <button id="setup-btn" class="head-btn" type="button">準備</button>
+    <button id="settings-btn" class="head-btn icon-only" type="button" title="設定">⚙</button>
+    <button id="manual-btn" class="head-btn icon-only" type="button" title="ヘルプ">?</button>
+  </header>
+
+  <main>
+
+  <!-- ====== [1] 接続パネル ====== -->
+  <section class="frame" id="conn-frame">
+    <div class="frame-head">
+      <span class="frame-eyebrow">CONNECTION</span>
+      <span class="frame-title">YouTube Live</span>
+      <span class="frame-meta" id="conn-frame-meta"></span>
+    </div>
+    <div class="frame-body">
+      <div class="conn-url">
+        <input type="text" id="url-input" placeholder="YouTube Live URL を入力">
+        <button id="connect-btn" class="conn-url-action" type="button">接続</button>
+      </div>
+      <div id="status-row">
+        <div id="status">
+          <span id="status-dot" class="dot disconnected"></span>
+          <span id="status-text">未接続</span>
+        </div>
+      </div>
+      <div id="stream-info" style="display:none">
+        <div class="stream-info-header">
+          <img id="stream-info-icon" src="" alt="" />
+          <div class="stream-info-titles">
+            <div id="stream-info-title"></div>
+            <div id="stream-info-channel">
+              <span id="stream-info-channel-name"></span>
+              <span id="stream-info-subscribers"></span>
+              <span id="stream-info-status" class="stream-info-status">
+                <span id="stream-info-status-dot" class="dot disconnected"></span>
+                <span id="stream-info-status-text">接続中</span>
+              </span>
+            </div>
+          </div>
+          <button id="stream-info-disconnect-btn" type="button">切断</button>
+        </div>
+        <div class="stream-info-stats">
+          <div class="stream-stat"><span class="key">配信時間</span><span class="val dim" id="stream-info-elapsed">--:--:--</span></div>
+          <div class="stream-stat"><span class="key">同時接続</span><span class="val cyan" id="stream-info-viewers">-</span></div>
+          <div class="stream-stat"><span class="key">維持ピーク</span><span class="val green" id="stream-info-peak">-</span></div>
+          <div class="stream-stat"><span class="key">いいね</span><span class="val pink" id="stream-info-likes">-</span></div>
+          <div class="stream-stat"><span class="key">コメント</span><span class="val cyan" id="stream-info-comments">-</span></div>
+          <div class="stream-stat"><span class="key">SC</span><span class="val amber" id="stream-info-sc">-</span></div>
+          <div class="stream-stat"><span class="key">開始</span><span class="val" id="stream-info-started">-</span></div>
+          <span id="stream-info-summary" class="stream-info-summary" role="button" tabindex="0">▶ 概要欄</span>
+        </div>
+        <div id="stream-info-description"></div>
+      </div>
+    </div>
+  </section>
+
+  <div id="update-bar" style="display:none"></div>
+  <div id="login-warning" style="display:none"></div>
+
+  <!-- ====== [2] 演出パネル ====== -->
+  <section class="frame" id="app-frame">
+    <div class="frame-head">
+      <span class="frame-eyebrow">STAGE</span>
+      <span class="frame-title">シーン × 演出 / テンプレ</span>
+      <span class="frame-meta" id="app-frame-meta"></span>
+    </div>
+    <div class="frame-body">
+      <div class="app-grid">
+        <!-- 左ペイン: シーン列 (旧 sidebar から移行) -->
+        <div class="scene-col">
+          <div class="scene-col-label">SCENES</div>
+          <div id="scene-list"></div>
+          <hr class="scene-col-divider">
+          <div class="scene-col-label">SCENE OPS</div>
+          <button id="add-scene-btn" class="scene-action add" type="button">＋ シーン追加</button>
+          <hr class="scene-col-divider">
+          <div class="scene-col-label">EFFECTS OPS</div>
+          <button id="pause-btn" class="scene-action danger" type="button">⏸ 演出全停止</button>
+          <button id="clear-performances-btn" class="scene-action danger" type="button">✕ 演出キュークリア</button>
+        </div>
+
+        <!-- 右ペイン: シーン内容 (= SCENE / GLOBAL の content-section、Phase 2-4) -->
+        <div class="scene-content">
+      <section id="apps-section">
+        <div class="content-section">
+          <div class="content-section-head">
+            <span class="content-section-eyebrow">SCENE</span>
+            <span class="content-section-title" id="apps-scene-name">--</span>
+            <span class="content-section-hint">このシーンの設定</span>
+          </div>
+          <div id="app-list"></div>
+          <div id="tmpl-body">
+            <div id="tmpl-list"></div>
+          </div>
+          <!-- ポン出しバー -->
+          <div id="ponout-bar">
+            <span class="ponout-label">ポン出し</span>
+            <div id="ponout-buttons"></div>
+          </div>
+        </div>
+        <div class="content-section global">
+          <div class="content-section-head">
+            <span class="content-section-eyebrow">GLOBAL</span>
+            <span class="content-section-title">アプリ全体</span>
+            <span class="content-section-hint">シーン共通</span>
+          </div>
+          <div id="global-list"></div>
+        </div>
+      </section>
+        </div><!-- /.scene-content -->
+      </div><!-- /.app-grid -->
+
+      <!-- Phase 7b: 全 subsection を standard 構造 (= subsection-* class) に揃え、
+           ID 別 CSS と adopt option を撤去。 framework は .subsection-back-btn /
+           .subsection-title を section 内 querySelector で取得する。 -->
+
+      <!-- 演出リスト画面 -->
+      <section id="performance-list-section" class="subsection-section" style="display:none">
+        <div id="perf-list-header" class="subsection-header">
+          <button id="perf-list-close" class="subsection-back-btn">◀ 戻る</button>
+          <span id="perf-list-title" class="subsection-title">コメント連動演出</span>
+          <button id="perf-global-settings-btn" class="subsection-back-btn" style="margin-left:auto" title="最大同時演出数・同一ユーザー間隔">⚙ 全体設定</button>
+        </div>
+        <div id="perf-list-hint">↑ 背面 ・ ↓ 前面 (= 下にある演出ほど画面で前に重なって表示)</div>
+        <div id="perf-list"></div>
+        <button id="perf-add-btn" class="perf-add-btn">+ 演出を追加</button>
+      </section>
+
+      <!-- 演出設定画面 -->
+      <section id="performance-edit-section" class="subsection-section" style="display:none">
+        <div id="perf-edit-header" class="subsection-header">
+          <button id="perf-edit-back" class="subsection-back-btn">◀ 戻る</button>
+          <span id="perf-edit-title" class="subsection-title"></span>
+        </div>
+        <div id="perf-edit-body" class="subsection-body"></div>
+      </section>
+
+      <!-- コメント連動演出の全体設定画面 -->
+      <section id="global-cooldown-edit-section" class="subsection-section" style="display:none">
+        <div id="global-cooldown-edit-header" class="subsection-header">
+          <button id="global-cooldown-edit-back" class="subsection-back-btn">◀ 戻る</button>
+          <span id="global-cooldown-edit-title" class="subsection-title">コメント連動演出の全体設定</span>
+        </div>
+        <div id="global-cooldown-edit-body" class="subsection-body"></div>
+      </section>
+
+      <!-- テンプレート設定画面 -->
+      <section id="template-edit-section" class="subsection-section" style="display:none">
+        <div id="tmpl-edit-header" class="subsection-header">
+          <button id="tmpl-edit-close" class="subsection-back-btn">◀ 戻る</button>
+          <span id="tmpl-edit-title" class="subsection-title"></span>
+        </div>
+        <div id="tmpl-edit-body" class="subsection-body"></div>
+      </section>
+
+      <!-- コメント読み上げ設定画面 -->
+      <section id="tts-edit-section" class="subsection-section" style="display:none">
+        <div id="tts-edit-header" class="subsection-header">
+          <button id="tts-edit-close" class="subsection-back-btn">◀ 戻る</button>
+          <span id="tts-edit-title" class="subsection-title">コメント読み上げ</span>
+        </div>
+        <div id="tts-edit-body" class="subsection-body"></div>
+      </section>
+
+      <!-- 読み上げソフト詳細設定画面 (Phase 2): tts-edit-section と並列の section -->
+      <section id="tts-provider-edit-section" class="subsection-section" style="display:none">
+        <div id="tts-provider-edit-header" class="subsection-header">
+          <button id="tts-provider-edit-close" class="subsection-back-btn">◀ 戻る</button>
+          <span id="tts-provider-edit-title" class="subsection-title">読み上げソフト設定</span>
+        </div>
+        <div id="tts-provider-edit-body" class="subsection-body"></div>
+      </section>
+
+      <!-- エフェクト管理画面 (Phase 5): 旧実装は openEffectManager で動的 createElement
+           していたが、 他 subsection と統一するため index.html に骨組みを置く -->
+      <section id="effect-manager-section" class="subsection-section" style="display:none">
+        <div id="effect-manager-header" class="subsection-header">
+          <button id="effect-manager-close" class="subsection-back-btn">◀ 戻る</button>
+          <span id="effect-manager-title" class="subsection-title">エフェクト管理</span>
+        </div>
+        <div id="effect-manager-body" class="subsection-body"></div>
+      </section>
+
+      <!-- コメント通知設定画面 (Phase A: UI スケルトン) -->
+      <section id="notification-edit-section" class="subsection-section" style="display:none">
+        <div id="notification-edit-header" class="subsection-header">
+          <button id="notification-edit-close" class="subsection-back-btn">◀ 戻る</button>
+          <span id="notification-edit-title" class="subsection-title">コメント通知</span>
+        </div>
+        <div id="notification-edit-body" class="subsection-body"></div>
+      </section>
+
+      <!-- 個別イベント設定画面 (Phase D) -->
+      <section id="notification-event-edit-section" class="subsection-section" style="display:none">
+        <div id="notification-event-edit-header" class="subsection-header">
+          <button id="notification-event-edit-close" class="subsection-back-btn">◀ 戻る</button>
+          <span id="notification-event-edit-title" class="subsection-title">イベント設定</span>
+        </div>
+        <div id="notification-event-edit-body" class="subsection-body"></div>
+      </section>
+
+      <!-- 読み上げソフト詳細設定画面 (Phase D-3): notification-edit-section と
+           並列の section にすることで戻るボタン階層を 1 つに保ち、 ヘッダーの
+           notification-edit-close ボタンが見えてしまう問題を回避する。 -->
+      <section id="notification-provider-edit-section" class="subsection-section" style="display:none">
+        <div id="notification-provider-edit-header" class="subsection-header">
+          <button id="notification-provider-edit-close" class="subsection-back-btn">◀ 戻る</button>
+          <span id="notification-provider-edit-title" class="subsection-title">読み上げソフト設定</span>
+        </div>
+        <div id="notification-provider-edit-body" class="subsection-body"></div>
+      </section>
+
+    </div><!-- /.frame-body -->
+  </section><!-- /#app-frame -->
+
+      <!-- ====== [3] コメント・リスナーパネル ======
+           旧 listener-manager-section を解体し、コメント流入欄 (旧 #comments-section) と
+           リスナー / 配信ログ / コメント検索 を 1 つの frame に統合 (UI 整理 Phase 1)。
+           ギフトタブは Phase 4 で実装。I/O タブは cl-tabs から外し中身は display:none で
+           退避 (Phase 3 で設定モーダルへ移行) -->
+      <section class="frame cl-frame" id="cl-frame">
+        <div id="cl-recording-status" class="cl-recording-status neutral" style="display:none"></div>
+        <div class="cl-tabs">
+          <!-- 「現在配信」グループ (= 接続中の配信に紐づく)。接続中は .connected 付与で
+               pulse 表示、切断中は .disconnected で警告色 (= JS で動的切替) -->
+          <div class="cl-tabs-group cl-tabs-live">
+            <span class="cl-tabs-group-label" title="接続中の配信に紐づくタブ (= コメント / ギフト / リスナー)">
+              <span class="cl-tabs-group-pulse"></span>
+              <span class="cl-tabs-group-label-text">未接続</span>
+            </span>
+            <button class="cl-tab active" data-cl-tab="comments" type="button">コメント<span class="ct" id="cl-tab-ct-comments"></span></button>
+            <button class="cl-tab" data-cl-tab="gifts" type="button">ギフト<span class="ct" id="cl-tab-ct-gifts"></span><span class="new-pin" id="cl-tab-unresponded-gifts" style="display:none"></span></button>
+            <button class="cl-tab" data-cl-tab="listeners" type="button">リスナー<span class="ct" id="cl-tab-ct-listeners"></span><span class="new-pin" id="cl-tab-listener-attention" style="display:none"></span></button>
+          </div>
+          <!-- グループ区切り (= 1 段内で「現在 / 過去」を視覚分離) -->
+          <span class="cl-tabs-divider" aria-hidden="true"></span>
+          <!-- 「アーカイブ」グループ (= 全期間の DB を参照、配信中でも参照可) -->
+          <div class="cl-tabs-group cl-tabs-past">
+            <span class="cl-tabs-group-label" title="全期間 DB を参照するアーカイブタブ">アーカイブ</span>
+            <button class="cl-tab" data-cl-tab="streams" type="button">配信ログ</button>
+            <button class="cl-tab" data-cl-tab="cs" type="button">コメント検索</button>
+            <button class="cl-tab" data-cl-tab="listener-search" type="button">リスナー検索</button>
+          </div>
+          <div class="cl-tools">
+            <button id="open-remote-btn" class="head-btn" type="button" title="スマホで /remote/ を開くための QR コードを表示">📱 スマホで開く</button>
+          </div>
+        </div>
+
+        <!-- owner warn (= 自チャンネル未設定の警告。タブ非依存で常時表示) -->
+        <div id="listener-mgr-owner-warn" style="display:none">
+          ⚠ 自チャンネル未設定: コメント記録が無効です。右上の <button class="inline-link" id="listener-mgr-owner-warn-link">設定</button> から登録してください。
+        </div>
+
+        <!-- コメント tab (default active): #comment-list を直配置 (Phase 3-3 で互換ラッパー解消) -->
+        <div class="cl-tab-panel cl-body active" data-cl-tab="comments">
+          <div id="comment-list"></div>
+        </div>
+
+        <!-- ギフト tab: コメ tab と同じセル + 当該枠のギフトのみ (= 配信者のお礼漏れ防止用) -->
+        <div class="cl-tab-panel cl-body" data-cl-tab="gifts" style="display:none">
+          <div id="gift-list"></div>
+        </div>
+
+        <!-- リスナー tab (= 旧 listener-mgr-tab-panel[data-tab-panel="listeners"]) -->
+        <div class="cl-tab-panel listener-mgr-tab-panel" data-cl-tab="listeners" data-tab-panel="listeners" style="display:none">
+          <div id="listener-mgr-toolbar">
+            <input id="listener-mgr-search" type="text" placeholder="表示名 / メモで検索" />
+            <select id="listener-mgr-sort">
+              <option value="streamFirstAt">この枠の参加が新しい順</option>
+              <option value="lastSeen">最終コメント順</option>
+              <option value="commentCount">この枠のコメント順</option>
+              <option value="superchatAmount">累計スパチャ順</option>
+              <option value="displayName">表示名順</option>
+            </select>
+            <!-- 表示密度切替 (大 / 中 / 小)。default は中 -->
+            <div id="listener-mgr-density-seg" role="group" aria-label="表示密度">
+              <button class="seg-btn" type="button" data-density="l" title="大">大</button>
+              <button class="seg-btn active" type="button" data-density="m" title="中">中</button>
+              <button class="seg-btn" type="button" data-density="s" title="小">小</button>
+            </div>
+            <button id="listener-mgr-refresh">更新</button>
+            <span id="listener-mgr-count"></span>
+          </div>
+          <!-- ミニタブフィルター: 接続中の枠のリスナー母集団に対する 6 タブ排他選択。
+               切断中はリスナー一覧そのものが空 (= 「接続中の枠が無い」案内表示)。
+               各タブにバッジで件数 (= streamScopedListenerCounts) を表示。 -->
+          <div id="listener-mgr-mini-tabs" role="tablist" aria-label="リスナーフィルター">
+            <button class="lm-mtab active" type="button" data-mtab="all" role="tab">全て<span class="ct"></span></button>
+            <button class="lm-mtab" type="button" data-mtab="unGreeted" role="tab">未対応<span class="ct"></span></button>
+            <button class="lm-mtab" type="button" data-mtab="firstTime" role="tab" title="この枠で初めてコメントした人 (= 全期間で初コメが当該枠中)">新規<span class="ct"></span></button>
+            <button class="lm-mtab" type="button" data-mtab="returning" role="tab">再訪<span class="ct"></span></button>
+            <button class="lm-mtab" type="button" data-mtab="comeback" role="tab" title="常連以上で直近 14 枠 (現枠除く) で未発言">復帰<span class="ct"></span></button>
+            <button class="lm-mtab" type="button" data-mtab="newMember" role="tab" title="この枠でメンバーシップに加入した人">新メンバー<span class="ct"></span></button>
+          </div>
+          <div id="listener-mgr-list"></div>
+          <div id="listener-mgr-pagination" style="display:none">
+            <button id="listener-mgr-prev">◀ 前へ</button>
+            <span id="listener-mgr-page-label"></span>
+            <button id="listener-mgr-next">次へ ▶</button>
+          </div>
+        </div>
+
+        <!-- 配信ログ tab -->
+        <div class="cl-tab-panel listener-mgr-tab-panel" data-cl-tab="streams" data-tab-panel="streams" style="display:none">
+          <div id="streams-toolbar">
+            <select id="streams-sort">
+              <option value="startedAt">開始時刻順</option>
+              <option value="commentCount">コメ数順</option>
+              <option value="superchatAmount">SC 額順</option>
+              <option value="peakConcurrentViewers">peak 視聴者順</option>
+              <option value="likes">いいね順</option>
+            </select>
+            <select id="streams-scope" title="配信ログの対象">
+              <option value="all">すべて</option>
+              <option value="own">自チャンネル</option>
+              <option value="other">他チャンネル</option>
+            </select>
+            <!-- 表示密度 (大/中/小)。default 大 -->
+            <div id="streams-density-seg" role="group" aria-label="表示密度">
+              <button class="seg-btn active" type="button" data-density="l" title="大 (Card)">大</button>
+              <button class="seg-btn" type="button" data-density="m" title="中 (Rank)">中</button>
+              <button class="seg-btn" type="button" data-density="s" title="小 (Table)">小</button>
+            </div>
+            <button id="streams-refresh">更新</button>
+            <span id="streams-count"></span>
+            <div id="streams-edit-actions">
+              <span id="streams-selection-count" style="display:none"></span>
+              <button id="streams-edit-toggle" type="button">編集</button>
+              <button id="streams-delete-selected" type="button" style="display:none" disabled>選択を削除</button>
+              <button id="streams-edit-cancel" type="button" style="display:none">キャンセル</button>
+            </div>
+          </div>
+          <div id="streams-list"></div>
+          <div id="streams-pagination" style="display:none">
+            <button id="streams-prev">◀ 前へ</button>
+            <span id="streams-page-label"></span>
+            <button id="streams-next">次へ ▶</button>
+          </div>
+        </div>
+
+        <!-- (旧 I/O tab はここから削除し、settings-frame の data-settings-panel="data" に移動) -->
+
+        <!-- コメント検索 tab (旧 data-tab-panel="comments" を data-cl-tab="cs" に rename して命名衝突回避) -->
+        <div class="cl-tab-panel listener-mgr-tab-panel cs-panel" data-cl-tab="cs" data-tab-panel="comments" style="display:none">
+          <!-- 保存検索ストリップ + 「条件を変更」/ 「条件を閉じる」ボタン -->
+          <div class="cs-saved-strip" id="cs-saved-strip">
+            <button type="button" class="cs-toggle-btn" id="cs-toggle-form-btn" style="display:none">▴ 条件を変更</button>
+            <div class="cs-saved-pins" id="cs-saved-pins"></div>
+            <button type="button" class="cs-saved-add" id="cs-save-current-btn" title="現在の条件を保存">＋ 保存</button>
+            <button type="button" class="cs-saved-add" id="cs-tag-admin-btn" title="ユーザータグの管理">タグ管理</button>
+          </div>
+
+          <!-- 保存検索ダイアログ: cs-panel が display:none の時 (= リスナー検索タブ等) でも
+               開けるように body 直下へ移動 (= </body> 直前)。 ここでは何も置かない。 -->
+
+          <!-- タグ管理 modal (F4: 全タグ一覧 + rename / delete) -->
+          <div class="cs-popover-backdrop" id="cs-tag-admin-backdrop" style="display:none">
+            <div class="cs-popover cs-tag-admin">
+              <div class="cs-popover-head">
+                <span class="cs-popover-title">タグの管理</span>
+              </div>
+              <!-- タブ: リスナータグ / 配信枠タグ -->
+              <div class="cs-tag-admin-tabs" id="cs-tag-admin-tabs">
+                <button type="button" class="cs-tag-admin-tab active" data-target="listener">リスナータグ</button>
+                <button type="button" class="cs-tag-admin-tab" data-target="stream">配信枠タグ</button>
+              </div>
+              <div class="cs-tag-admin-list" id="cs-tag-admin-list-listener"></div>
+              <div class="cs-tag-admin-list" id="cs-tag-admin-list-stream" style="display:none"></div>
+              <div class="cs-popover-footer">
+                <span class="cs-popover-count" id="cs-tag-admin-summary"></span>
+                <button type="button" id="cs-tag-admin-close">閉じる</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 検索フォーム (C1: テキスト入力 + 期間 + 種別。popover は C2 で追加) -->
+          <div class="cs-form" id="cs-form">
+            <div class="cs-form-grid">
+              <label for="cs-stream-title-q">配信枠名</label>
+              <input id="cs-stream-title-q" type="text" placeholder="例: 歌枠 / Apex (空白区切り OR)" />
+              <label for="cs-body-q">コメント本文</label>
+              <input id="cs-body-q" type="text" placeholder="コメント本文キーワード (空白区切り OR)" />
+              <label for="cs-name-q">リスナー名</label>
+              <input id="cs-name-q" type="text" placeholder="リスナー名 部分一致" />
+            </div>
+            <div class="cs-form-row">
+              <div class="cs-field cs-field-types">
+                <label>種別</label>
+                <div class="cs-type-row" id="cs-type-row">
+                  <label class="cs-type-pill"><input type="checkbox" value="chat"> チャット</label>
+                  <!-- ギフト pill は UI 上の意味 = superchat + sticker + gift の 3 種一括
+                       (sdBuildSearchQuery の「SC のみ」chip 定義と同じ)。
+                       form 読取時 readCommentTypesFromForm で展開する。 -->
+                  <label class="cs-type-pill"><input type="checkbox" value="gift"> ギフト</label>
+                  <label class="cs-type-pill"><input type="checkbox" value="membership"> メンバー加入</label>
+                </div>
+              </div>
+              <div class="cs-field cs-field-period">
+                <label>期間</label>
+                <div class="cs-picker-chips" id="cs-period-picker-chips"></div>
+              </div>
+            </div>
+            <!-- ユーザー / 配信枠 (タグ + 個別選択は popover、選択中は個別 chip 列で表示) -->
+            <div class="cs-form-row cs-form-row-stack">
+              <div class="cs-field">
+                <label>リスナー</label>
+                <div class="cs-picker-chips" id="cs-user-picker-chips"></div>
+              </div>
+            </div>
+            <div class="cs-form-row cs-form-row-stack">
+              <div class="cs-field">
+                <label>配信枠</label>
+                <div class="cs-picker-chips" id="cs-stream-picker-chips"></div>
+              </div>
+            </div>
+            <div class="cs-form-row">
+              <div class="cs-field cs-field-scope">
+                <label for="cs-scope">検索対象</label>
+                <select id="cs-scope">
+                  <option value="own">自チャンネル</option>
+                  <option value="all">すべて</option>
+                  <option value="other">他チャンネル</option>
+                </select>
+              </div>
+            </div>
+            <div class="cs-form-actions">
+              <span class="cs-form-hint">自チャンネルに記録されたコメントが対象 ・ フィールド間 AND ・ フィールド内 OR</span>
+              <button id="cs-clear-btn" type="button">クリア</button>
+              <button id="cs-collapse-form-btn" type="button" style="display:none">閉じる</button>
+              <button id="cs-run-btn" type="button" class="primary">検索</button>
+            </div>
+          </div>
+
+          <!-- 共通 popover host (User picker / Stream picker で再利用) -->
+          <div class="cs-popover-backdrop" id="cs-popover-backdrop" style="display:none">
+            <div class="cs-popover" id="cs-popover">
+              <div class="cs-popover-head">
+                <span class="cs-popover-title" id="cs-popover-title">選択</span>
+                <input type="text" class="cs-popover-search" id="cs-popover-search" placeholder="検索..." />
+              </div>
+              <div class="cs-popover-list" id="cs-popover-list"></div>
+              <div class="cs-popover-footer">
+                <span class="cs-popover-count" id="cs-popover-count"></span>
+                <button type="button" id="cs-popover-clear">クリア</button>
+                <button type="button" id="cs-popover-apply" class="primary">確定</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 配信枠 popover (タグ strip + bulk-row + 個別チェック) -->
+          <div class="cs-popover-backdrop" id="cs-stream-popover-backdrop" style="display:none">
+            <div class="cs-popover cs-stream-popover">
+              <div class="cs-popover-head">
+                <span class="cs-popover-title">配信枠を選択</span>
+                <input type="text" class="cs-popover-search" id="cs-stream-popover-search" placeholder="タイトル / 日付で検索" />
+              </div>
+              <div class="cs-tag-strip-group cs-stream-tags-group">
+                <span class="cs-tag-strip-label">タグ</span>
+                <div class="cs-tag-strip-tags" id="cs-stream-popover-tags"></div>
+              </div>
+              <div class="cs-tag-bulk-row" id="cs-stream-popover-bulk-row" style="display:none">
+                <span class="cs-tag-bulk-info" id="cs-stream-popover-bulk-info"></span>
+                <button type="button" id="cs-stream-popover-bulk-select-tag">このタグを全選択</button>
+                <button type="button" id="cs-stream-popover-bulk-select-unselected">未選択を全選択</button>
+              </div>
+              <div class="cs-popover-list" id="cs-stream-popover-list"></div>
+              <div class="cs-popover-footer">
+                <span class="cs-popover-count" id="cs-stream-popover-count"></span>
+                <button type="button" id="cs-stream-popover-clear">クリア</button>
+                <button type="button" id="cs-stream-popover-cancel">キャンセル</button>
+                <button type="button" id="cs-stream-popover-apply" class="primary">確定</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ユーザー popover (タグ strip 2 系統 + bulk-row + 個別チェック) -->
+          <div class="cs-popover-backdrop" id="cs-user-popover-backdrop" style="display:none">
+            <div class="cs-popover cs-user-popover">
+              <div class="cs-popover-head">
+                <span class="cs-popover-title">リスナーを選択</span>
+                <input type="text" class="cs-popover-search" id="cs-user-popover-search" placeholder="リスナー名 / @ハンドルで検索" />
+              </div>
+              <div class="cs-tag-strip-group">
+                <span class="cs-tag-strip-label">システム</span>
+                <div class="cs-tag-strip-tags" id="cs-user-popover-system-tags"></div>
+              </div>
+              <div class="cs-tag-strip-group cs-user-tags-group">
+                <span class="cs-tag-strip-label">ユーザー</span>
+                <div class="cs-tag-strip-tags" id="cs-user-popover-user-tags"></div>
+              </div>
+              <div class="cs-tag-bulk-row" id="cs-user-popover-bulk-row" style="display:none">
+                <span class="cs-tag-bulk-info" id="cs-user-popover-bulk-info"></span>
+                <button type="button" id="cs-user-popover-bulk-select-tag">このタグを全選択</button>
+                <button type="button" id="cs-user-popover-bulk-select-unselected">未選択を全選択</button>
+              </div>
+              <div class="cs-popover-list" id="cs-user-popover-list"></div>
+              <div class="cs-popover-footer">
+                <span class="cs-popover-count" id="cs-user-popover-count"></span>
+                <button type="button" id="cs-user-popover-clear">クリア</button>
+                <button type="button" id="cs-user-popover-cancel">キャンセル</button>
+                <button type="button" id="cs-user-popover-apply" class="primary">確定</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 期間 popover (preset + range + 2ヶ月カレンダー + 月年ピッカー) -->
+          <div class="cs-popover-backdrop" id="cs-period-backdrop" style="display:none">
+            <div class="cs-period-popover">
+              <div class="cs-popover-head">
+                <span class="cs-popover-title">期間を選択</span>
+              </div>
+              <div class="cs-period-presets" id="cs-period-presets">
+                <button type="button" data-preset="today">今日</button>
+                <button type="button" data-preset="yesterday">昨日</button>
+                <button type="button" data-preset="thisWeek">今週</button>
+                <button type="button" data-preset="thisMonth">今月</button>
+                <button type="button" data-preset="lastMonth">先月</button>
+                <button type="button" data-preset="last30">過去30日</button>
+                <button type="button" data-preset="all">全期間</button>
+              </div>
+              <div class="cs-period-fields">
+                <label>開始 <input type="date" id="cs-period-input-from" /></label>
+                <span class="cs-period-sep">〜</span>
+                <label>終了 <input type="date" id="cs-period-input-to" /></label>
+              </div>
+              <div class="cs-period-cals" id="cs-period-cals">
+                <!-- 月カレンダー 2 つを JS で生成 -->
+              </div>
+              <div class="cs-period-ym-picker" id="cs-period-ym-picker" style="display:none">
+                <!-- 年月ピッカー (月名クリックで表示) -->
+              </div>
+              <div class="cs-popover-footer">
+                <span class="cs-popover-count" id="cs-period-summary"></span>
+                <button type="button" id="cs-period-clear">クリア</button>
+                <button type="button" id="cs-period-cancel">キャンセル</button>
+                <button type="button" id="cs-period-apply" class="primary">確定</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- KPI サマリーカード (6 項目: 総 + 平均 / 枠) -->
+          <div class="cs-summary-card" id="cs-summary-card" style="display:none">
+            <div class="cs-stat">
+              <div class="cs-stat-label">コメント</div>
+              <div class="cs-stat-v" id="cs-kpi-count">—</div>
+              <div class="cs-stat-avg" id="cs-kpi-count-avg"></div>
+            </div>
+            <div class="cs-stat">
+              <div class="cs-stat-label">金額</div>
+              <div class="cs-stat-v amber" id="cs-kpi-amount">—</div>
+              <div class="cs-stat-avg" id="cs-kpi-amount-avg"></div>
+            </div>
+            <div class="cs-stat">
+              <div class="cs-stat-label">コメントリスナー数</div>
+              <div class="cs-stat-v" id="cs-kpi-listeners">—</div>
+              <div class="cs-stat-avg" id="cs-kpi-listeners-avg"></div>
+            </div>
+            <div class="cs-stat">
+              <div class="cs-stat-label">いいね</div>
+              <div class="cs-stat-v pink" id="cs-kpi-likes">—</div>
+              <div class="cs-stat-avg" id="cs-kpi-likes-avg"></div>
+            </div>
+            <div class="cs-stat">
+              <div class="cs-stat-label">ピーク同接</div>
+              <div class="cs-stat-v green" id="cs-kpi-peak">—</div>
+              <div class="cs-stat-avg" id="cs-kpi-peak-avg"></div>
+            </div>
+            <div class="cs-stat">
+              <div class="cs-stat-label">配信</div>
+              <div class="cs-stat-v" id="cs-kpi-streams">—</div>
+              <div class="cs-stat-avg" id="cs-kpi-period-range"></div>
+            </div>
+          </div>
+
+          <!-- 適用中の条件 chips (collapsed 時のみ表示。mock 仕様で summary card の下) -->
+          <div class="cs-applied-chips" id="cs-applied-chips" style="display:none"></div>
+
+          <!-- 配信単位アコーディオン -->
+          <div id="cs-stream-list"></div>
+          <!-- 状態表示: 0 件 / エラー / 読み込み中 (検索結果領域用) -->
+          <div id="cs-empty-state" class="cs-state cs-state-empty" style="display:none">
+            <div class="cs-state-icon">⌕</div>
+            <div class="cs-state-title">該当するコメントが見つかりませんでした</div>
+            <div class="cs-state-hint">自チャンネルの記録済みコメント内で、条件を緩めるか別のキーワードを試してください</div>
+            <div class="cs-state-actions">
+              <button type="button" id="cs-state-clear-btn">条件をクリア</button>
+              <button type="button" id="cs-state-edit-btn">条件を変更</button>
+            </div>
+          </div>
+          <div id="cs-error-state" class="cs-state cs-state-error" style="display:none">
+            <div class="cs-state-icon">!</div>
+            <div class="cs-state-title">検索に失敗しました</div>
+            <div class="cs-state-hint" id="cs-error-detail"></div>
+            <div class="cs-state-actions">
+              <button type="button" id="cs-state-retry-btn">再試行</button>
+            </div>
+          </div>
+          <div id="cs-loading-state" class="cs-state cs-state-loading" style="display:none">
+            <div class="cs-state-icon cs-state-spinner">◐</div>
+            <div class="cs-state-title">検索中…</div>
+          </div>
+          <div id="cs-initial-state" class="cs-state cs-state-initial">
+            <div class="cs-state-icon">⌕</div>
+            <div class="cs-state-title">条件を入力して検索してください</div>
+            <div class="cs-state-hint">対象は自チャンネルに記録されたコメントです。空欄で「検索」を押すと全件 (上限 500 件) 取得します</div>
+          </div>
+        </div>
+
+        <!-- リスナー検索 tab (Phase 2a: 名前 + ソート + 結果一覧 + 詳細遷移) -->
+        <div class="cl-tab-panel listener-mgr-tab-panel listener-search-panel" data-cl-tab="listener-search" style="display:none">
+          <div class="listener-search-toolbar">
+            <input type="text" id="listener-search-q" class="listener-search-input"
+                   placeholder="名前で検索 (display_name / nickname / username)" autocomplete="off" />
+            <select id="listener-search-sort" class="listener-search-sort">
+              <option value="lastSeen">最終コメ降順</option>
+              <option value="commentCount">コメ数降順</option>
+              <option value="superchatAmount">SC 累計降順</option>
+              <option value="displayName">表示名昇順</option>
+            </select>
+            <button id="listener-search-go" type="button" class="listener-search-go">検索</button>
+            <span id="listener-search-count" class="listener-search-count"></span>
+          </div>
+          <div class="listener-search-chips-row">
+            <span class="listener-search-chips-label">ランク</span>
+            <div id="listener-search-sys-chips" class="listener-search-chips"></div>
+          </div>
+          <div class="listener-search-chips-row">
+            <span class="listener-search-chips-label">タグ</span>
+            <div id="listener-search-user-chips" class="listener-search-chips"></div>
+          </div>
+          <!-- Phase 2c: 保存検索ストリップ (= cs-saved-strip 流用、 scope='listener-search') -->
+          <div class="cs-saved-strip" id="ls-saved-strip">
+            <div class="cs-saved-pins" id="ls-saved-pins"></div>
+            <button type="button" class="cs-saved-add" id="ls-save-current-btn" title="現在の条件を保存">＋ 保存</button>
+          </div>
+          <div id="listener-search-list" class="listener-search-list"></div>
+          <div id="listener-search-pagination" class="listener-search-pagination" style="display:none">
+            <button id="listener-search-prev" type="button">← 前</button>
+            <span id="listener-search-page-label"></span>
+            <button id="listener-search-next" type="button">次 →</button>
+          </div>
+        </div>
+
+        <!-- 「↓ 最新へ戻る」浮遊ボタン (= モバイル rh-jump-latest と同等)。
+             active な list (comment / gift) が末尾以外にスクロールされている時だけ表示。 -->
+        <button id="cl-jump-latest" type="button" class="cl-jump-latest" style="display:none">↓ 最新へ戻る</button>
+      </section>
+
+      <!-- リスナー詳細モーダル
+           構造: サマリ (常時表示) + 下線タブ (直近のコメント / ユーザー詳細) +
+                Tab A (チップ + 配信単位グループ) / Tab B (ラベル付き section)
+           tab-area 内では Tab B (ユーザー詳細) を常に layout に残し、
+           Tab A (直近コメント) は absolute overlay にして Tab A が長くても modal が
+           伸びないようにする。これにより:
+             - modal の高さ ≒ Tab B の自然高 (= タブ切替で揺れない)
+             - Tab B はスクロール無し
+             - Tab A は modal 内でスクロール -->
+      <div id="listener-detail-modal" style="display:none">
+        <div id="listener-detail-modal-content">
+          <button id="listener-detail-close" type="button">✕</button>
+          <div id="listener-detail-summary"></div>
+          <div id="listener-detail-tabs"></div>
+          <div id="listener-detail-tab-area">
+            <div id="listener-detail-tab-comments" class="ld-tab-body">
+              <div id="listener-detail-chips"></div>
+              <div id="listener-detail-comments"></div>
+            </div>
+            <div id="listener-detail-tab-profile" class="ld-tab-body inactive"></div>
+            <!-- 全コメタブ: 当該リスナーの全期間コメを chunked lazy load + 仮想スクロール
+                 で閲覧する。数十万件 OK。 -->
+            <div id="listener-detail-tab-full" class="ld-tab-body inactive">
+              <div id="listener-detail-full-toolbar">
+                <div id="listener-detail-full-chips"></div>
+                <div id="listener-detail-full-search-row">
+                  <input id="listener-detail-full-search" type="text"
+                         placeholder="本文検索 (300ms 後に検索開始)"
+                         autocomplete="off" />
+                </div>
+              </div>
+              <div id="listener-detail-full-status"></div>
+              <!-- list (= 外側): scrollContainer。仮想スクロールが scroll 位置を読む。
+                   list-inner (= 内側): bodyEl。仮想スクロールが行 / spacer を追加。
+                   2 階層に分けないと getBoundingClientRect の差分が常に 0 になり
+                   スクロールしても表示範囲が更新されない (= 2026-05-13)。 -->
+              <div id="listener-detail-full-list">
+                <div id="listener-detail-full-list-inner"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 配信詳細モーダル (Hero + 6 KPI + Tags + Tabs 構造、test/probe/stream-detail-final.html) -->
+      <div id="stream-detail-modal" style="display:none">
+        <div id="stream-detail-modal-content">
+          <!-- Hero: thumbnail + title + 状態 + actions -->
+          <div class="sd-hero">
+            <div class="sd-thumb" id="sd-thumb" title="クリックで YouTube で開く">
+              <div class="sd-thumb-placeholder">▶</div>
+            </div>
+            <div class="sd-meta">
+              <div class="sd-meta-row1">
+                <span class="sd-status-badge" id="sd-status-badge"></span>
+                <span class="sd-meta-date" id="sd-date"></span>
+                <span class="sep">·</span>
+                <span class="sd-meta-date" id="sd-duration"></span>
+              </div>
+              <div class="sd-title" id="sd-title"></div>
+              <div class="sd-channel" id="sd-channel"></div>
+            </div>
+            <div class="sd-actions">
+              <button class="sd-action-btn" id="sd-open-yt" type="button" title="YouTube で開く">▶ 開く</button>
+              <button class="sd-action-btn" id="sd-search-this" type="button" title="この配信のコメントを検索">🔍 検索</button>
+              <button class="sd-action-btn danger" id="sd-delete-stream" type="button" title="この配信ログを削除">削除</button>
+              <button class="sd-close-btn" id="stream-detail-close" type="button" title="閉じる">✕</button>
+            </div>
+          </div>
+
+          <!-- KPI 6 タイル -->
+          <div class="sd-kpi-grid" id="sd-kpi-grid"></div>
+
+          <!-- タグ chip 行 (attachStreamTagEditor で動的に埋まる) -->
+          <div class="sd-tags-row" id="sd-tags-row">
+            <span class="label">タグ</span>
+            <span id="stream-detail-tags" class="sd-tag-host" data-video-id=""></span>
+            <datalist id="stream-detail-tag-suggest"></datalist>
+          </div>
+
+          <!-- タブ -->
+          <div class="sd-tabs" id="sd-tabs">
+            <button class="sd-tab active" type="button" data-tab="comments">コメント<span class="ct" id="sd-tab-ct-comments"></span></button>
+            <button class="sd-tab" type="button" data-tab="listeners">リスナー<span class="ct" id="sd-tab-ct-listeners"></span></button>
+            <button class="sd-tab" type="button" data-tab="stats">統計</button>
+          </div>
+
+          <!-- タブ body -->
+          <div class="sd-tab-body">
+            <!-- コメント tab -->
+            <div class="sd-tab-pane active" data-tab-pane="comments">
+              <div class="sd-filter-chips" id="sd-comment-filter-chips"></div>
+              <div class="sd-comment-search-row" id="sd-comment-search-row" style="display:none">
+                <input type="text" id="sd-comment-search-input" placeholder="本文で絞り込み...">
+              </div>
+              <div class="sd-comment-list" id="sd-comment-list"></div>
+            </div>
+            <!-- リスナー tab (lazy load: タブ初表示時に streamListeners を fetch) -->
+            <div class="sd-tab-pane" data-tab-pane="listeners">
+              <div class="sd-stats-loading" id="sd-listeners-loading" style="display:none">
+                <div class="sd-stats-loading-spinner"></div>
+                <div class="sd-stats-loading-msg">リスナー一覧を読み込み中…</div>
+                <div class="sd-stats-loading-hint">
+                  この配信でコメントしたリスナーを集計しています。
+                  リスナー数とコメント数が多いほど時間がかかります (通常 0.3–1 秒)。
+                </div>
+              </div>
+              <div class="sd-stats-error" id="sd-listeners-error" style="display:none"></div>
+              <div id="sd-listeners-content" style="display:none">
+                <div class="sd-listener-filter">
+                  <div class="sd-listener-filter-row">
+                    <span class="label">検索</span>
+                    <input type="text" id="sd-listener-search" placeholder="リスナー名 / コメント本文 (空白区切り OR)">
+                  </div>
+                  <div class="sd-listener-filter-row">
+                    <span class="label">システム</span>
+                    <span id="sd-listener-system-tags"></span>
+                  </div>
+                  <div class="sd-listener-filter-row">
+                    <span class="label">ユーザー</span>
+                    <span id="sd-listener-user-tags"></span>
+                  </div>
+                </div>
+                <div class="sd-listener-summary" id="sd-listener-summary"></div>
+                <div class="sd-listener-list" id="sd-listener-list"></div>
+              </div>
+            </div>
+            <!-- 統計 tab -->
+            <div class="sd-tab-pane" data-tab-pane="stats">
+              <div class="sd-stats-loading" id="sd-stats-loading" style="display:none">
+                <div class="sd-stats-loading-spinner"></div>
+                <div class="sd-stats-loading-msg">統計情報を集計中…</div>
+                <div class="sd-stats-loading-hint">
+                  配信内のコメント本文をトークン化して頻出語を抽出しています。
+                  コメント数が多いほど時間がかかります (通常 0.5–2 秒)。
+                </div>
+              </div>
+              <div class="sd-stats-error" id="sd-stats-error" style="display:none"></div>
+              <div class="sd-stats-sections" id="sd-stats-sections" style="display:none">
+              <div class="sd-stats-section" id="sd-stats-freq">
+                <h3 id="sd-stats-freq-title">コメント頻度</h3>
+                <div class="sd-timeline" id="sd-stats-freq-bars"></div>
+                <div class="sd-timeline-axis" id="sd-stats-freq-axis"></div>
+                <div class="sd-stats-summary" id="sd-stats-freq-summary"></div>
+              </div>
+              <div class="sd-stats-section" id="sd-stats-cumulative">
+                <h3>ユニークリスナー累積流入 (時間とともに何人増えたか)</h3>
+                <div class="sd-timeline-wrap">
+                  <div class="sd-timeline" id="sd-stats-cumulative-bars"></div>
+                  <span class="sd-timeline-total" id="sd-stats-cumulative-total"></span>
+                </div>
+                <div class="sd-timeline-axis" id="sd-stats-cumulative-axis"></div>
+                <div class="sd-stats-summary" id="sd-stats-cumulative-summary"></div>
+              </div>
+              <div class="sd-stats-section">
+                <h3>リスナー構成 (システムタグ別)</h3>
+                <div class="sd-composition" id="sd-stats-composition"></div>
+              </div>
+              <div class="sd-stats-section">
+                <h3>頻出語 (top 10)</h3>
+                <div class="sd-top-words" id="sd-stats-top-words"></div>
+                <div class="sd-stats-summary">
+                  <b>絵文字 / カスタムスタンプは除外</b> (= テキスト本文のみ集計)。
+                  助詞 / 短語 / 一文字記号も stopword で除外。形態素解析簡易版 (n-gram + stopword)
+                </div>
+              </div>
+              <div class="sd-stats-section">
+                <h3>その他</h3>
+                <div class="sd-stats-grid" id="sd-stats-misc"></div>
+              </div>
+              </div><!-- /.sd-stats-sections -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 配信ログ削除確認モーダル -->
+      <div id="stream-delete-confirm-modal" class="stream-delete-confirm-modal" style="display:none">
+        <div class="sdc-dialog" role="dialog" aria-modal="true" aria-labelledby="sdc-title">
+          <div class="sdc-head">
+            <div>
+              <div class="sdc-kicker">配信ログの削除</div>
+              <div class="sdc-title" id="sdc-title">削除対象を確認してください</div>
+            </div>
+            <button class="sdc-close" id="sdc-close" type="button" title="閉じる">✕</button>
+          </div>
+          <div class="sdc-summary" id="sdc-summary"></div>
+          <div class="sdc-section">
+            <div class="sdc-section-title">削除される配信</div>
+            <div class="sdc-list" id="sdc-list"></div>
+          </div>
+          <div class="sdc-warning">
+            <strong>この操作で削除されるもの</strong>
+            <ul>
+              <li>選択した配信ログ</li>
+              <li>その配信のコメント、配信タグ、リスナー対応済み状態</li>
+              <li>選択配信にしか紐付いていないリスナー情報</li>
+            </ul>
+            <p>わんコメ側のデータには影響しません。接続中の配信は削除できません。</p>
+          </div>
+          <div class="sdc-actions">
+            <button id="sdc-cancel" type="button">キャンセル</button>
+            <button id="sdc-confirm" class="danger" type="button">削除する</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====== 設定 frame (= 開いている間は他 frame を hide してウィンドウを占有) ======
+           sidebar (.settings-nav) + content (.settings-content) の 2 カラム。
+           panel 切替は data-settings-section / data-settings-panel の対応で行う。
+           中身の wiring は renderer.js の openSettings / 各 init*Settings 関数で行う。
+      -->
+      <section class="frame settings-frame" id="settings-frame" hidden>
+        <div class="frame-head">
+          <span class="frame-eyebrow">SETTINGS</span>
+          <span class="frame-title">設定</span>
+          <span class="frame-meta" id="settings-frame-meta"></span>
+          <button id="settings-close-btn" class="settings-close-btn" type="button" title="閉じる (Esc)" aria-label="閉じる">✕</button>
+        </div>
+        <div class="frame-body settings-layout">
+          <nav class="settings-nav" id="settings-nav" aria-label="設定セクション">
+            <button class="settings-nav-item active" type="button" data-settings-section="youtube">
+              <span class="settings-nav-icon">▶</span><span>YouTube 接続</span>
+            </button>
+            <button class="settings-nav-item" type="button" data-settings-section="listener">
+              <span class="settings-nav-icon">▶</span><span>リスナー管理</span>
+            </button>
+            <button class="settings-nav-item" type="button" data-settings-section="display">
+              <span class="settings-nav-icon">▶</span><span>表示 / 言語</span>
+            </button>
+            <button class="settings-nav-item" type="button" data-settings-section="scene">
+              <span class="settings-nav-icon">▶</span><span>シーン・エフェクト</span>
+            </button>
+            <button class="settings-nav-item" type="button" data-settings-section="data">
+              <span class="settings-nav-icon">▶</span><span>データ・バックアップ</span>
+            </button>
+            <button class="settings-nav-item" type="button" data-settings-section="debug">
+              <span class="settings-nav-icon">▶</span><span>デバッグ・サポート</span>
+            </button>
+            <button class="settings-nav-item settings-nav-item-danger" type="button" data-settings-section="advanced">
+              <span class="settings-nav-icon">▶</span><span>高度な設定</span>
+            </button>
+          </nav>
+
+          <div class="settings-content" id="settings-content">
+
+            <!-- ===== YouTube 接続 ===== -->
+            <section class="settings-panel" data-settings-panel="youtube">
+              <h2 class="settings-panel-title">YouTube 接続</h2>
+              <div class="settings-section">
+                <div class="settings-section-head">
+                  <h3 class="settings-section-title">YouTube アカウント</h3>
+                </div>
+                <p class="settings-section-desc">
+                  リアクション (❤😄🎉など) の取得には YouTube へのログインが必要です。
+                  リアクション連動演出を使用しない場合はログイン不要です。
+                </p>
+                <div class="settings-status-badge" id="settings-yt-status">確認中...</div>
+                <!-- ログイン中のアカウント情報 (= ログイン状態時のみ表示)。
+                     getCurrentChannel() の結果を表示する。 -->
+                <div class="settings-yt-account" id="settings-yt-account" style="display:none">
+                  <div class="settings-yt-account-avatar" id="settings-yt-account-avatar"></div>
+                  <div class="settings-yt-account-body">
+                    <div class="settings-yt-account-name" id="settings-yt-account-name"></div>
+                    <div class="settings-yt-account-handle" id="settings-yt-account-handle"></div>
+                  </div>
+                </div>
+                <div class="settings-button-row">
+                  <button class="settings-btn settings-btn-primary" id="settings-yt-login" type="button">ログイン</button>
+                  <button class="settings-btn settings-btn-secondary" id="settings-yt-logout" type="button">ログアウト</button>
+                </div>
+              </div>
+            </section>
+
+            <!-- ===== リスナー管理 ===== -->
+            <section class="settings-panel" data-settings-panel="listener" hidden>
+              <h2 class="settings-panel-title">リスナー管理</h2>
+
+              <div class="settings-section">
+                <div class="settings-section-head">
+                  <h3 class="settings-section-title">自チャンネル</h3>
+                  <span class="settings-section-meta">リスナー記録の対象、複数登録可</span>
+                </div>
+
+                <!-- 既登録チャンネルのカード一覧 (= renderer.js が動的に組む) -->
+                <div id="settings-owner-cards" class="settings-owner-cards"></div>
+
+                <!-- 「YouTube ログイン中のチャンネルを追加」ショートカット
+                     常時表示 (= 機能の存在を周知) し、未ログイン時は disabled で
+                     「(YouTube ログインが必要)」と表示する -->
+                <button id="settings-owner-add-self" type="button"
+                  class="settings-btn settings-btn-primary settings-btn-block settings-owner-add-self"
+                  disabled>
+                  <span class="settings-owner-add-self-icon">＋</span>
+                  <span class="settings-owner-add-self-text">YouTube ログイン中のチャンネルを追加</span>
+                </button>
+
+                <!-- 手動入力 -->
+                <div class="settings-input-row">
+                  <input id="settings-owner-input" type="text" maxlength="64"
+                    placeholder="@handle または UCxxxxxxxxxxxxxxxxxxxxxx"
+                    class="settings-text-input settings-text-input-mono" />
+                  <button id="settings-owner-add" type="button" class="settings-btn settings-btn-primary">追加</button>
+                </div>
+                <div class="settings-row-meta">
+                  <span class="settings-row-meta-text">@ハンドル / UC ID 双方向解決</span>
+                  <span id="settings-owner-status"></span>
+                </div>
+                <div class="settings-row-left">
+                  <button id="settings-owner-clear" type="button" class="settings-btn settings-btn-danger settings-btn-sm">全クリア</button>
+                </div>
+              </div>
+
+              <!-- メンバーシップギフトの推定単価 (= 自チャンネルごと、既定 ¥490)。
+                   YouTube はギフト購入アナウンスに金額を載せないため、gift_count × 単価で
+                   スパチャ総額に推定反映する。renderer.js refreshGiftPricingSection が動的に組む。 -->
+              <div class="settings-section">
+                <div class="settings-section-head">
+                  <h3 class="settings-section-title">メンバーシップギフト単価</h3>
+                  <span class="settings-section-meta">自チャンネルごと・推定値</span>
+                </div>
+                <p class="settings-section-desc">
+                  YouTube はギフトの金額を配信データに含めません。ギフト 1 個あたりの推定単価を
+                  設定すると、贈り主のコメントに「¥◯◯ (推定)」を付与してスパチャ総額・KPI・
+                  わんコメ書き戻しに反映します。自チャンネルの配信のみが対象です
+                  (= 他チャンネルは集計外)。ギフトを受け取った人は ¥0 のままです。
+                </p>
+                <div id="settings-gift-pricing-list" class="settings-gift-pricing-list"></div>
+              </div>
+
+              <div class="settings-section">
+                <div class="settings-section-head">
+                  <h3 class="settings-section-title">リスナー判定</h3>
+                  <span class="settings-section-meta">経過日数 + 最近の活動 で 6 ランクに分類</span>
+                </div>
+
+                <!-- プリセット (= 配信スタイル別おすすめ値) -->
+                <div class="settings-rank-presets">
+                  <span class="settings-rank-presets-label">プリセット:</span>
+                  <button type="button" class="settings-rank-preset-btn" data-preset="loose" data-x="30" data-y="365" data-n="10" data-m="3">
+                    ゆるめ
+                    <span class="settings-rank-preset-hint">X=30 / Y=365 / N=10 / M=3</span>
+                  </button>
+                  <button type="button" class="settings-rank-preset-btn" data-preset="standard" data-x="14" data-y="180" data-n="7" data-m="3">
+                    標準
+                    <span class="settings-rank-preset-hint">X=14 / Y=180 / N=7 / M=3</span>
+                  </button>
+                  <button type="button" class="settings-rank-preset-btn" data-preset="strict" data-x="7" data-y="60" data-n="5" data-m="4">
+                    厳しめ
+                    <span class="settings-rank-preset-hint">X=7 / Y=60 / N=5 / M=4</span>
+                  </button>
+                </div>
+
+                <!-- ① 経過日数の境界 (= 時間軸を先に決める) -->
+                <h4 class="settings-subsection-title">① 経過日数の境界</h4>
+                <p class="settings-section-desc settings-section-desc-tight">
+                  各リスナーの「初コメから今までの日数」でランクを決めます。
+                </p>
+                <div class="settings-grid-2">
+                  <label class="settings-field">
+                    <span class="settings-field-label">新参境界 (X 日)</span>
+                    <input id="settings-newcomer-days" type="number" min="1" max="3650" class="settings-text-input" />
+                    <span class="settings-field-hint">初コメから X 日以内 = <strong>新参</strong></span>
+                  </label>
+                  <label class="settings-field">
+                    <span class="settings-field-label">古参境界 (Y 日)</span>
+                    <input id="settings-veteran-days" type="number" min="7" max="3650" class="settings-text-input" />
+                    <span class="settings-field-hint">初コメから Y 日以上 = <strong>古参候補</strong></span>
+                  </label>
+                </div>
+                <p class="settings-section-desc settings-section-desc-tight">
+                  X 日 〜 Y 日 = <strong>常連候補</strong>。 X &lt; Y で設定 (= 自動補正あり)。
+                </p>
+
+                <!-- ② 活動チェック (= 「常連/古参 候補」のうち最近来てる人だけを認める) -->
+                <h4 class="settings-subsection-title">② 活動中の判定</h4>
+                <p class="settings-section-desc settings-section-desc-tight">
+                  「常連 / 古参 候補」のうち、 実際に <strong>常連 / 古参</strong> と認めるかは
+                  「最近来てるか」で判定します。
+                </p>
+                <div class="settings-grid-2">
+                  <label class="settings-field">
+                    <span class="settings-field-label">直近配信数 (N)</span>
+                    <input id="settings-regular-window" type="number" min="1" max="100" class="settings-text-input" />
+                    <span class="settings-field-hint">直近 N 枠を活動チェック対象に</span>
+                  </label>
+                  <label class="settings-field">
+                    <span class="settings-field-label">必要枠数 (M)</span>
+                    <input id="settings-regular-min" type="number" min="1" max="100" class="settings-text-input" />
+                    <span class="settings-field-hint">N 枠中 M 枠以上で発言 = <strong>活動中</strong></span>
+                  </label>
+                </div>
+                <p class="settings-section-desc settings-section-desc-tight">
+                  活動中の条件を <strong>満たす</strong> → 期間に応じて <strong>常連 / 古参</strong>。<br>
+                  活動中の条件を <strong>満たさない</strong> + 直近 N+1 枠 (= 過去 N 枠 + 最終枠) のどこかで発言あり → <strong>復帰</strong>。<br>
+                  活動中の条件を <strong>満たさない</strong> + 直近 N+1 枠で発言ゼロ → <strong>離脱</strong>。
+                </p>
+
+                <!-- 視覚タイムライン: 初コメ時刻の軸でランクのゾーンを可視化 -->
+                <div class="settings-rank-timeline">
+                  <div class="settings-rank-timeline-head">
+                    <span class="settings-rank-timeline-title">タイムライン</span>
+                    <span class="settings-rank-timeline-meta">初コメ時刻 (左 = 古い、 右 = 最終枠 / 現在)</span>
+                  </div>
+                  <div class="settings-rank-timeline-track" id="settings-rank-timeline-track">
+                    <!-- 3 ゾーン (古参 / 常連 / 新参) を JS で width % 計算 -->
+                    <div class="settings-rank-timeline-zone zone-veteran" id="tl-zone-veteran">
+                      <span class="zone-label">古参候補</span>
+                    </div>
+                    <div class="settings-rank-timeline-zone zone-regular" id="tl-zone-regular">
+                      <span class="zone-label">常連候補</span>
+                    </div>
+                    <div class="settings-rank-timeline-zone zone-returning" id="tl-zone-returning">
+                      <span class="zone-label">新参</span>
+                    </div>
+                    <!-- 境界マーカー: Y 日 / X 日 / 最終枠 -->
+                    <div class="settings-rank-timeline-marker marker-y" id="tl-marker-y">
+                      <span class="settings-rank-timeline-marker-label" id="tl-marker-y-label">Y</span>
+                    </div>
+                    <div class="settings-rank-timeline-marker marker-x" id="tl-marker-x">
+                      <span class="settings-rank-timeline-marker-label" id="tl-marker-x-label">X</span>
+                    </div>
+                    <div class="settings-rank-timeline-marker marker-now">
+                      <span class="settings-rank-timeline-marker-label">最終枠</span>
+                    </div>
+                  </div>
+                  <p class="settings-section-desc settings-section-desc-tight">
+                    <strong>常連 / 古参 候補</strong> のうち <em>活動中</em> な人だけ実際に 常連 / 古参 になります。
+                    活動中ではない人は <em>復帰</em> または <em>離脱</em> (= 直近 N+1 枠の発言有無で分岐)。
+                  </p>
+                </div>
+
+                <!-- ライブプレビュー: 現在のしきい値で各ランクが何人になるか -->
+                <div class="settings-rank-preview" id="settings-rank-preview" style="display:none">
+                  <div class="settings-rank-preview-head">
+                    <span class="settings-rank-preview-title">プレビュー</span>
+                    <span class="settings-rank-preview-meta" id="settings-rank-preview-meta">—</span>
+                  </div>
+                  <div class="settings-rank-preview-counts" id="settings-rank-preview-counts">
+                    <!-- JS で 6 ランク × 件数 chip を埋める -->
+                  </div>
+                </div>
+              </div>
+
+              <div class="settings-section">
+                <div class="settings-section-head">
+                  <h3 class="settings-section-title">リスナーランク一覧</h3>
+                  <span class="settings-section-meta">配信詳細・コメント検索の chip で使われる 6 分類 (= per-listener、 静的)</span>
+                </div>
+                <ul class="settings-rank-list">
+                  <li class="settings-rank-item">
+                    <span class="settings-rank-badge label-first">新規</span>
+                    <span class="settings-rank-desc">この配信で初めてコメントした人 (連投も含む)</span>
+                  </li>
+                  <li class="settings-rank-item">
+                    <span class="settings-rank-badge label-returning">新参</span>
+                    <span class="settings-rank-desc">過去枠で初コメ済 + 初コメから <span class="rank-var rank-var-x" data-rank-var="x">X</span> 日以内</span>
+                  </li>
+                  <li class="settings-rank-item">
+                    <span class="settings-rank-badge label-regular">常連</span>
+                    <span class="settings-rank-desc">初コメから <span class="rank-var rank-var-x" data-rank-var="x">X</span> 日以上 〜 <span class="rank-var rank-var-y" data-rank-var="y">Y</span> 日未満 + 活動中 (= 直近 <span class="rank-var rank-var-n" data-rank-var="n">N</span> 枠中 <span class="rank-var rank-var-m" data-rank-var="m">M</span> 枠以上)</span>
+                  </li>
+                  <li class="settings-rank-item">
+                    <span class="settings-rank-badge label-veteran">古参</span>
+                    <span class="settings-rank-desc">初コメから <span class="rank-var rank-var-y" data-rank-var="y">Y</span> 日以上 + 活動中 (= 直近 <span class="rank-var rank-var-n" data-rank-var="n">N</span> 枠中 <span class="rank-var rank-var-m" data-rank-var="m">M</span> 枠以上)</span>
+                  </li>
+                  <li class="settings-rank-item">
+                    <span class="settings-rank-badge label-comeback">復帰</span>
+                    <span class="settings-rank-desc">初コメから <span class="rank-var rank-var-x" data-rank-var="x">X</span> 日以上 + 活動中ではない + 直近 <span class="rank-var rank-var-n" data-rank-var="n">N</span>+1 枠 (= 過去 <span class="rank-var rank-var-n" data-rank-var="n">N</span> 枠 + 最終枠) のどこかで発言あり</span>
+                  </li>
+                  <li class="settings-rank-item">
+                    <span class="settings-rank-badge label-abandoned">離脱</span>
+                    <span class="settings-rank-desc">初コメから <span class="rank-var rank-var-x" data-rank-var="x">X</span> 日以上 + 直近 <span class="rank-var rank-var-n" data-rank-var="n">N</span>+1 枠で発言ゼロ (= 完全に来なくなった)</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="settings-section">
+                <div class="settings-section-head">
+                  <h3 class="settings-section-title">コメントタグ一覧</h3>
+                  <span class="settings-section-meta">チャット欄に出る 4 種のタグ (= per-comment、 配信初発言で 1 度だけ付く)</span>
+                </div>
+                <p class="settings-section-desc settings-section-desc-tight">
+                  ランクは <em>その人がどんなリスナーか</em> を表すのに対し、 タグは
+                  <em>この発言がこの配信での何回目か / どんな登場か</em> を表します。
+                  タグは各リスナーの「この配信での初発言」に 1 度だけ付き、 2 回目以降のコメには付きません。
+                </p>
+                <ul class="settings-rank-list">
+                  <li class="settings-rank-item">
+                    <span class="settings-comment-tag comment-listener-tag-first-time">初見</span>
+                    <span class="settings-rank-desc">全期間で初めてコメントした人 (= ハブが初めて観測)</span>
+                  </li>
+                  <li class="settings-rank-item">
+                    <span class="settings-comment-tag comment-listener-tag-returning">再訪</span>
+                    <span class="settings-rank-desc">過去枠で初コメ済 + 初コメから <span class="rank-var rank-var-x" data-rank-var="x">X</span> 日以内 (= 新参の人がまた来てくれた)</span>
+                  </li>
+                  <li class="settings-rank-item">
+                    <span class="settings-comment-tag comment-listener-tag-regular-arrival">今北</span>
+                    <span class="settings-rank-desc">過去枠で初コメ済 + 活動中 (= 直近 <span class="rank-var rank-var-n" data-rank-var="n">N</span> 枠中 <span class="rank-var rank-var-m" data-rank-var="m">M</span> 枠以上) — 常連 / 古参 が顔出し</span>
+                  </li>
+                  <li class="settings-rank-item">
+                    <span class="settings-comment-tag comment-listener-tag-long-absence">帰還</span>
+                    <span class="settings-rank-desc">過去枠で初コメ済 + 初コメから <span class="rank-var rank-var-x" data-rank-var="x">X</span> 日以上 + 直近 <span class="rank-var rank-var-n" data-rank-var="n">N</span> 枠で発言ゼロ (= 一旦離脱した人が久々登場)</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div class="settings-section">
+                <div class="settings-section-head">
+                  <h3 class="settings-section-title">自動同期</h3>
+                </div>
+                <label class="settings-checkbox-row">
+                  <input id="settings-auto-import" type="checkbox" />
+                  <span>起動時にわんコメから自動でインポートする</span>
+                </label>
+                <label class="settings-checkbox-row">
+                  <input id="settings-auto-export" type="checkbox" />
+                  <span>わんコメへ自動で書き戻す (起動時 + 終了時)</span>
+                </label>
+                <p class="settings-section-desc settings-section-desc-tight">
+                  終了時の書き戻し中は、完了するまでアプリは閉じません。
+                </p>
+              </div>
+
+              <div class="settings-section">
+                <div class="settings-section-head">
+                  <h3 class="settings-section-title">非表示にしたリスナー</h3>
+                </div>
+                <p class="settings-section-desc">
+                  配信者の管理 UI 上だけで非表示にしたリスナーを一覧 / 解除します。
+                  演出 / OBS / テンプレートには影響しません (= 相手に気付かれません)。
+                </p>
+                <button id="settings-ban-open" type="button" class="settings-btn settings-btn-secondary settings-btn-block">非表示リストを開く</button>
+              </div>
+            </section>
+
+            <!-- ===== 表示 / 言語 ===== -->
+            <section class="settings-panel" data-settings-panel="display" hidden>
+              <h2 class="settings-panel-title">表示 / 言語</h2>
+              <div class="settings-section">
+                <div class="settings-section-head">
+                  <h3 class="settings-section-title">言語 / Language</h3>
+                </div>
+                <select id="settings-lang-select" class="settings-text-input"></select>
+              </div>
+            </section>
+
+            <!-- ===== シーン・エフェクト ===== -->
+            <section class="settings-panel" data-settings-panel="scene" hidden>
+              <h2 class="settings-panel-title">シーン・エフェクト</h2>
+
+              <div class="settings-section">
+                <div class="settings-section-head">
+                  <h3 class="settings-section-title">シーン管理</h3>
+                </div>
+                <p class="settings-section-desc">
+                  シーンを ZIP 形式でやり取りします。エクスポートは現選択シーンが対象。
+                  シーン個別のエクスポートはシーン名右クリックからも可能。
+                </p>
+                <div class="settings-button-row">
+                  <button id="settings-scene-import" type="button" class="settings-btn settings-btn-primary">📥 インポート</button>
+                  <button id="settings-scene-export" type="button" class="settings-btn settings-btn-secondary">📤 現シーンをエクスポート</button>
+                </div>
+              </div>
+
+              <div class="settings-section">
+                <div class="settings-section-head">
+                  <h3 class="settings-section-title">エフェクト一覧</h3>
+                </div>
+                <div id="settings-eff-list" class="settings-list"></div>
+                <div id="settings-eff-detail" class="settings-detail" hidden></div>
+                <button id="settings-eff-import" type="button" class="settings-btn settings-btn-secondary settings-btn-block">📥 エフェクトをインポート</button>
+              </div>
+            </section>
+
+            <!-- ===== データ・バックアップ ===== -->
+            <section class="settings-panel" data-settings-panel="data" hidden>
+              <h2 class="settings-panel-title">データ・バックアップ</h2>
+
+              <div class="settings-section">
+                <div class="settings-section-head">
+                  <h3 class="settings-section-title">データ管理 (インポート / エクスポート)</h3>
+                </div>
+                <p class="settings-section-desc">
+                  リスナー / コメントの JSONL 入出力、わんコメ DB との連携、双方向同期。
+                </p>
+                <div id="io-section">
+                  <div class="io-card">
+                    <h3>こめはぶ形式 (JSON Lines) エクスポート</h3>
+                    <p class="io-card-desc">バックアップ用にすべてのリスナー / 配信 / コメントを 1 ファイルに書き出します (1 行 = 1 レコード)。<br>
+                      ファイルが大きくなる場合があります。</p>
+                    <button id="io-export-btn">エクスポート…</button>
+                    <div id="io-export-result" class="io-result"></div>
+                  </div>
+                  <div class="io-card">
+                    <h3>こめはぶ形式 (JSON Lines) インポート</h3>
+                    <p class="io-card-desc">他環境のエクスポートファイルを取り込みます。<br>
+                      同じファイルを複数回読み込んでも結果は変わりません (冪等)。</p>
+                    <button id="io-import-btn">インポート…</button>
+                    <div id="io-import-result" class="io-result"></div>
+                  </div>
+                  <div class="io-card">
+                    <h3>わんコメからインポート</h3>
+                    <p class="io-card-desc">わんコメのデータフォルダ (<code>%APPDATA%\onecomme\</code> など) を選択して、
+                      <code>comments.db</code> と <code>onecomme.db</code> から取り込みます。<br>
+                      <strong>自チャンネル設定が必要</strong>。自チャンネル外の配信のコメントは自動で除外されます。<br>
+                      <span style="color:#ffb74d">⚠ わんコメを終了してから実行してください (起動中だと取得結果が不安定になります)。</span></p>
+                    <button id="io-onecomme-import-btn">わんコメフォルダを選択…</button>
+                    <div id="io-onecomme-import-result" class="io-result"></div>
+                  </div>
+                  <div class="io-card">
+                    <h3>わんコメへ書き戻し (Plan A)</h3>
+                    <p class="io-card-desc">こめはぶで蓄積したリスナー / コメントをわんコメ DB に書き戻します。<br>
+                      書き戻し前に自動で <code>data/onecomme-backups/</code> へバックアップを取ります。<br>
+                      <span style="color:#ffb74d">⚠ わんコメ起動中・配信中は実行できません。先に「わんコメからインポート」を 1 度実行してスキーマハッシュを記録しておいてください。</span></p>
+                    <button id="io-onecomme-export-btn">わんコメへ書き戻し…</button>
+                    <div id="io-onecomme-export-result" class="io-result"></div>
+                  </div>
+                  <div class="io-card">
+                    <h3>今すぐ同期 (双方向)</h3>
+                    <p class="io-card-desc">わんコメ → こめはぶ → わんコメ を一気通貫で実行します (F-21)。<br>
+                      配信中・わんコメ起動中・自チャンネル未設定はスキップされます。<br>
+                      こめはぶ起動時にも自動でこの同期が走ります (F-20)。</p>
+                    <button id="io-onecomme-sync-btn">今すぐ同期</button>
+                    <div id="io-onecomme-sync-result" class="io-result"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="settings-section">
+                <div class="settings-section-head">
+                  <h3 class="settings-section-title">バックアップ管理</h3>
+                </div>
+                <div class="settings-row-line">
+                  <span class="settings-row-meta-text">保存先:</span>
+                  <span id="settings-bk-dir-path" class="settings-row-mono settings-row-flex"></span>
+                  <button id="settings-bk-dir-change" type="button" class="settings-btn settings-btn-ghost settings-btn-sm">変更</button>
+                  <button id="settings-bk-dir-reset" type="button" class="settings-btn settings-btn-ghost settings-btn-sm" hidden>リセット</button>
+                </div>
+                <button id="settings-bk-create" type="button" class="settings-btn settings-btn-secondary settings-btn-block">フルバックアップを作成</button>
+                <div id="settings-bk-list" class="settings-list settings-list-scroll"></div>
+              </div>
+            </section>
+
+            <!-- ===== デバッグ・サポート (= デバッグログ ON/OFF 等、 詳細: docs/logging.md) ===== -->
+            <section class="settings-panel" data-settings-panel="debug" hidden>
+              <h2 class="settings-panel-title">デバッグ・サポート</h2>
+              <div class="settings-section">
+                <div class="settings-section-head">
+                  <h3 class="settings-section-title">ログ出力</h3>
+                </div>
+                <p class="settings-section-desc">
+                  不具合の調査時に、 trace / debug レベルのログを app.log / core.log に記録します。
+                  ログ量が大幅に増えるため、 サポート対応の時のみ ON にしてください。 設定の反映には再起動が必要です。
+                </p>
+                <div class="settings-row-line">
+                  <span class="settings-row-meta-text settings-row-flex">デバッグログを記録する</span>
+                  <button id="settings-debug-toggle" type="button" class="u-btn" disabled>...</button>
+                </div>
+              </div>
+            </section>
+
+            <!-- ===== 高度な設定 ===== -->
+            <section class="settings-panel" data-settings-panel="advanced" hidden>
+              <h2 class="settings-panel-title">高度な設定</h2>
+              <div class="settings-section settings-section-danger">
+                <div class="settings-section-head">
+                  <h3 class="settings-section-title">リセット</h3>
+                </div>
+                <p class="settings-section-desc">
+                  いずれも実行前にローカル退避（Documents）を作成し、再起動直後に初期化します。
+                </p>
+
+                <p class="settings-section-desc">
+                  <b>設定のリセット</b> — 設定・シーン・演出・テンプレートを初期状態に戻します。
+                  リスナー履歴・バックアップ・ログインは保持します。
+                </p>
+                <button id="settings-reset-settings" type="button" class="settings-btn settings-btn-danger settings-btn-block">設定をリセット...</button>
+
+                <p class="settings-section-desc">
+                  <b>データのリセット</b> — リスナー履歴・コメント・タグ・キャッシュ画像を削除します。
+                  設定・バックアップ・ログインは保持します。
+                </p>
+                <button id="settings-reset-data" type="button" class="settings-btn settings-btn-danger settings-btn-block">データをリセット...</button>
+
+                <p class="settings-section-desc">
+                  <b>完全初期化</b> — 上記すべてに加え、バックアップとログイン状態も含めて工場出荷状態に戻します。
+                </p>
+                <button id="settings-reset-all" type="button" class="settings-btn settings-btn-danger settings-btn-block">完全に初期化...</button>
+              </div>
+            </section>
+
+          </div>
+        </div>
+      </section>
+
+  </main>
+
+  <footer>
+    <div id="reaction-counter">リアクション: --</div>
+    <div id="api-status">SSE: http://localhost:11280/api/stream</div>
+  </footer>
+
+  <!-- 共通 UI モジュール (本体 + remote 共有). 設計: docs/architecture/remote-viewing-redesign.md §6 -->
+  <script src="shared/comment-sanitize.js"></script>
+  <script src="shared/comment-superchat.js"></script>
+  <script src="shared/comment-item.js"></script>
+  <script src="shared/undo-snackbar.js"></script>
+  <script src="shared/remote-opener.js"></script>
+  <script src="subsection-nav.js"></script>
+  <script src="renderer.js"></script>
+  <!-- panel-toggle: ヘッダの 3 ボタンで各 frame を hide/show + localStorage 永続化 (Phase 3-1) -->
+  <script>
+    (function () {
+      var STORAGE_KEY = 'kh-panel-visibility';
+      var btns = document.querySelectorAll('.panel-toggle');
+
+      function loadState() {
+        try {
+          var raw = localStorage.getItem(STORAGE_KEY);
+          return raw ? JSON.parse(raw) : null;
+        } catch (e) { return null; }
+      }
+      function saveState() {
+        var state = {};
+        btns.forEach(function (b) { state[b.dataset.panel] = b.classList.contains('on'); });
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* intentional: localStorage 容量超過 / プライベートモード救済。 設定が保存できなくても UI は機能する */ }
+      }
+
+      // 起動時復元 (= state に false が居たら panel hide + button off)
+      var saved = loadState();
+      if (saved) {
+        btns.forEach(function (b) {
+          if (saved[b.dataset.panel] === false) {
+            b.classList.remove('on');
+            var fr = document.getElementById(b.dataset.panel);
+            if (fr) fr.classList.add('hidden');
+          }
+        });
+      }
+
+      btns.forEach(function (b) {
+        b.addEventListener('click', function () {
+          b.classList.toggle('on');
+          var fr = document.getElementById(b.dataset.panel);
+          if (fr) fr.classList.toggle('hidden');
+          saveState();
+        });
+      });
+    })();
+  </script>
+
+  <!-- 保存検索ダイアログ (F4: 名前入力 + 適用条件プレビュー)。
+       body 直下に置くことで、 どのタブパネルが display:none でも常に開ける。
+       cs-panel / listener-search タブ両方から openSaveSearchDialog(ctx) で開く。 -->
+  <div class="cs-popover-backdrop" id="cs-save-dialog-backdrop" style="display:none">
+    <div class="cs-popover cs-save-dialog">
+      <div class="cs-popover-head">
+        <span class="cs-popover-title">検索条件を保存</span>
+      </div>
+      <div class="cs-save-dialog-body">
+        <label class="ld-form-label">名前</label>
+        <input type="text" id="cs-save-name-input" class="ld-form-input" placeholder="例: 初見ありがとう" />
+        <div class="ld-form-label" style="margin-top:8px">適用条件のプレビュー</div>
+        <div id="cs-save-preview" class="cs-applied-chips" style="display:flex;padding:0"></div>
+      </div>
+      <div class="cs-popover-footer">
+        <span class="cs-popover-count" id="cs-save-error" style="color:#ef9a9a"></span>
+        <button type="button" id="cs-save-cancel">キャンセル</button>
+        <button type="button" id="cs-save-confirm" class="primary">保存</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

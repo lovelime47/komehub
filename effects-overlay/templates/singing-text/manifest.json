@@ -1,0 +1,21 @@
+{
+  "id": "com.comment-hub.template.singing-text",
+  "name": "singing-text",
+  "displayName": "本文のみ",
+  "version": "1.0.0",
+  "obsHint": "OBS幅 480px 推奨 / 高さは任意",
+  "fonts": ["Noto Sans JP"],
+  "uiSchema": [
+    { "key": "maxComments", "type": "slider", "label": "最大表示数", "min": 3, "max": 20, "step": 1, "default": 8 },
+    { "key": "fontSize", "type": "slider", "label": "文字サイズ", "min": 12, "max": 60, "default": 30, "suffix": "px" },
+    { "key": "showName", "type": "toggle", "label": "名前表示", "default": false, "onLabel": "表示", "offLabel": "非表示" },
+    { "key": "nameInline", "type": "toggle", "label": "名前を本文と同じ行に", "default": false, "onLabel": "同じ行", "offLabel": "2行", "showIf": { "key": "showName", "value": true } },
+    { "key": "showAvatar", "type": "toggle", "label": "アバター表示", "default": false, "onLabel": "表示", "offLabel": "非表示" },
+    { "key": "showBadge", "type": "toggle", "label": "バッジ表示", "default": false, "onLabel": "表示", "offLabel": "非表示", "showIf": { "key": "showName", "value": true } },
+    { "key": "direction", "type": "buttons", "label": "流れる方向", "options": [{ "value": "up", "label": "↑ 上へ" }, { "value": "down", "label": "↓ 下へ" }], "default": "up" },
+    { "key": "nameColor", "type": "color", "label": "名前の色", "default": "#ffffff" },
+    { "key": "textColor", "type": "color", "label": "コメントの色", "default": "rgba(255,255,255,0.92)" },
+    { "key": "memberColor", "type": "toggle", "label": "メンバーシップ色分け", "default": false, "onLabel": "ON", "offLabel": "OFF" },
+    { "key": "memberColorValue", "type": "color", "label": "メンバーの名前色", "default": "#2ba640", "showIf": { "key": "memberColor", "value": true } }
+  ]
+}

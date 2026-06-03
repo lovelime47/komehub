@@ -1,0 +1,28 @@
+{
+  "id": "com.comment-hub.template.game-rainbow",
+  "name": "game-rainbow",
+  "displayName": "レインボー",
+  "version": "1.0.0",
+  "obsHint": "ゲーム配信向けのカラフル表示。OBS幅 480px 推奨 / 高さは任意",
+  "fonts": ["Noto Sans JP"],
+  "uiSchema": [
+    { "key": "maxComments", "type": "slider", "label": "最大表示数", "min": 3, "max": 30, "step": 1, "default": 10 },
+    { "key": "fontSize", "type": "slider", "label": "文字サイズ", "min": 10, "max": 60, "default": 26, "suffix": "px" },
+    { "key": "showName", "type": "toggle", "label": "名前表示", "default": true, "onLabel": "表示", "offLabel": "非表示" },
+    { "key": "nameInline", "type": "toggle", "label": "名前を本文と同じ行に", "default": true, "onLabel": "1ライン", "offLabel": "2ライン" },
+    { "key": "showAvatar", "type": "toggle", "label": "アバター表示", "default": false, "onLabel": "表示", "offLabel": "非表示" },
+    { "key": "showBadge", "type": "toggle", "label": "バッジ表示", "default": false, "onLabel": "表示", "offLabel": "非表示" },
+    { "key": "direction", "type": "buttons", "label": "流れる方向", "options": [{ "value": "up", "label": "↑ 上へ" }, { "value": "down", "label": "↓ 下へ" }], "default": "up" },
+    { "key": "nameColor", "type": "color", "label": "名前の色" },
+    { "key": "color1", "type": "color", "label": "カラー 1", "default": "#e8a87c" },
+    { "key": "color2", "type": "color", "label": "カラー 2", "default": "#7eb8da" },
+    { "key": "color3", "type": "color", "label": "カラー 3", "default": "#c9b1ff" },
+    { "key": "color4", "type": "color", "label": "カラー 4", "default": "#82d882" },
+    { "key": "color5", "type": "color", "label": "カラー 5", "default": "#f472b6" },
+    { "key": "color6", "type": "color", "label": "カラー 6", "default": "#fbbf24" },
+    { "key": "color7", "type": "color", "label": "カラー 7", "default": "#67e8f9" },
+    { "key": "textColor", "type": "color", "label": "コメントの色", "default": "rgba(255,255,255,0.88)" },
+    { "key": "memberColor", "type": "toggle", "label": "メンバーシップ色分け", "default": false, "onLabel": "ON", "offLabel": "OFF" },
+    { "key": "memberColorValue", "type": "color", "label": "メンバーの名前色", "default": "#2ba640", "showIf": { "key": "memberColor", "value": true } }
+  ]
+}

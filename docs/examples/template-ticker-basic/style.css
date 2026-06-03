@@ -1,0 +1,91 @@
+:root {
+  --font-size: 28px;
+  --name-color: #fde68a;
+  --text-color: #ffffff;
+  --anim-duration: 8s;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  color: var(--text-color);
+  font-family: "Noto Sans JP", sans-serif;
+}
+
+#comments {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+#track {
+  display: inline-flex;
+  gap: 1.2em;
+  align-items: center;
+  white-space: nowrap;
+  transform: translateX(100vw);
+  transition: transform var(--anim-duration) linear;
+  will-change: transform;
+}
+
+.comment {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55em;
+  padding: 0.35em 0.8em;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.82);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.22);
+  font-size: var(--font-size);
+  line-height: 1.2;
+}
+
+.comment.is-superchat {
+  background: rgba(29, 78, 216, 0.92);
+}
+
+.comment.is-membership,
+.comment.is-membership-gift {
+  background: rgba(22, 101, 52, 0.92);
+}
+
+.badge {
+  display: none;
+  width: 1em;
+  height: 1em;
+  object-fit: contain;
+}
+
+#comments.show-badge .badge {
+  display: inline-block;
+}
+
+.name {
+  color: var(--name-color);
+  font-weight: 700;
+}
+
+.amount {
+  font-size: 0.74em;
+  padding: 0.16em 0.48em;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.text {
+  color: var(--text-color);
+}
+
+.sticker {
+  height: 1.6em;
+  width: auto;
+  object-fit: contain;
+}

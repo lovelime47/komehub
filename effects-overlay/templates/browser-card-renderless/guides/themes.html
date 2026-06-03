@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>テーマを増やす - browser-card-renderless</title>
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow"><a href="../structure.html">structure</a> / themes</p>
+    <h1>テーマを増やす</h1>
+    <p class="lead">テーマは <code>script.js</code>、<code>style.css</code>、<code>assets/</code>、<code>manifest.json</code> の4か所を同じ key で揃えます。</p>
+  </header>
+
+  <section>
+    <h2>テーマのつながり</h2>
+    <pre><code>THEME_LABELS['theme-sunset']
+  -> display.themeKey
+  -> data-kh-theme="theme-sunset"
+  -> .comment[data-kh-theme="theme-sunset"]
+  -> themeAssets['theme-sunset']</code></pre>
+  </section>
+
+  <section>
+    <h2>例: blue テーマを追加する</h2>
+    <div class="steps">
+      <div class="step">
+        <h3>JS の label に追加</h3>
+        <pre><code>var THEME_LABELS = {
+  'theme-teal': 'MINT',
+  'theme-violet': 'VIOLET',
+  'theme-sunset': 'SUNSET',
+  'theme-blue': 'BLUE'
+};</code></pre>
+      </div>
+      <div class="step">
+        <h3>themeAssets に追加</h3>
+        <pre><code>'theme-blue': {
+  '--theme-icon-image': 'assets/icon-blue.svg'
+}</code></pre>
+      </div>
+      <div class="step">
+        <h3>CSS に追加</h3>
+        <pre><code>.comment[data-kh-theme="theme-blue"] {
+  --theme-a: #2563eb;
+  --theme-b: #93c5fd;
+  --theme-c: #eff6ff;
+}</code></pre>
+      </div>
+      <div class="step">
+        <h3>manifest に選択肢を追加</h3>
+        <pre><code>{ "value": "blue", "label": "ブルー" }</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>同じテーマを維持する理由</h2>
+    <div class="box ok">
+      <p><code>assignThemeKey()</code> は <code>prevModel</code> があるとき前回 theme を維持します。同じコメントが更新されても色が変わらず、カードがちらつきにくくなります。</p>
+    </div>
+  </section>
+</div>
+</body>
+</html>

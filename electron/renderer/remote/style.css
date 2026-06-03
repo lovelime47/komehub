@@ -1,0 +1,3354 @@
+/* === remote shell スタイル === */
+/* 設計正本: docs/architecture/remote-viewing-redesign.md */
+/* 本体 (electron/renderer/style.css) と色・余白を揃える。スマホ縦持ちが主用途 */
+/* 色 / 余白 / radius は shared/shared.css の :root に定義された --kh-* 変数を参照。
+   shared.css を必ず先に読み込む必要がある (= 各 remote/*.html で link 順を担保) */
+
+:root {
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--kh-bg);
+  color: var(--kh-text);
+  font-family: var(--kh-font-family);
+  font-size: var(--kh-font-size-lg);
+  -webkit-text-size-adjust: 100%;
+}
+
+/*
+ * body は viewport 高に固定 + overflow:hidden。リスト領域の listWrap だけを内部
+ * スクロールさせる。これをやらないと body 全体がスクロールしてしまい、
+ * listWrap.scrollTop が機能しない (= 追従モード / 「最新へ戻る」が効かない)。
+ * dvh は iOS Safari の動的アドレスバーに対応。
+ */
+body {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+a { color: var(--kh-accent); text-decoration: none; }
+a:hover { color: var(--kh-accent-tinted-link); }
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+/* ───────── ヘッダ ───────── */
+.rh-header {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--kh-space-5);
+  padding: var(--kh-space-4) var(--kh-space-6) calc(var(--kh-space-4) + env(safe-area-inset-top)) var(--kh-space-6);
+  padding-top: max(var(--kh-space-4), env(safe-area-inset-top));
+  background: var(--kh-bg-overlay-strong);
+  border-bottom: 1px solid var(--kh-border);
+  backdrop-filter: blur(12px);
+}
+.rh-header h1 {
+  margin: 0;
+  font-size: var(--kh-font-size-xl);
+  font-weight: 700;
+  color: var(--kh-text);
+}
+.rh-back {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kh-space-1);
+  padding: var(--kh-space-2) var(--kh-space-5);
+  margin: 0;
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-pill);
+  background: transparent;
+  color: var(--kh-text-muted);
+  font: inherit;
+  font-size: var(--kh-font-size-base);
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  text-decoration: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.rh-back:hover, .rh-back:active, .rh-back:focus {
+  color: var(--kh-accent);
+  border-color: var(--kh-accent);
+  outline: none;
+}
+.rh-status {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kh-space-1);
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-text-muted);
+  white-space: nowrap;
+}
+.rh-status.live::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  /* LIVE インジケータはアプリ標準の成功色 (= 対応済みと同じ緑) に統一。
+     YouTube 慣例の赤 (--kh-live) はハブ全体のトーンと馴染まないため緑へ。 */
+  background: var(--kh-success);
+  box-shadow: 0 0 8px var(--kh-success-soft);
+}
+.rh-status.disconnected::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--kh-text-faint);
+}
+
+/* ───────── ホーム ───────── */
+.rh-main {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--kh-space-4);
+  padding: var(--kh-space-6)
+           calc(var(--kh-space-6) + env(safe-area-inset-right))
+           calc(80px + env(safe-area-inset-bottom))
+           calc(var(--kh-space-6) + env(safe-area-inset-left));
+}
+.rh-card {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  align-items: center;
+  gap: var(--kh-space-6);
+  padding: var(--kh-space-7) 18px;
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-xl);
+  background: var(--kh-bg-frame);
+  text-decoration: none;
+  color: var(--kh-text);
+}
+.rh-card:hover, .rh-card:active {
+  border-color: var(--kh-accent);
+  background: var(--kh-accent-soft);
+}
+.rh-card-icon {
+  font-size: 32px;
+  line-height: 1;
+  text-align: center;
+}
+.rh-card-label {
+  font-size: var(--kh-font-size-2xl);
+  font-weight: 700;
+}
+.rh-card-meta {
+  font-size: var(--kh-font-size-base);
+  color: var(--kh-text-muted);
+  white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  Home view (= B-2 強化版): 配信情報ダッシュボード + アクション 4 カード
+ * ═══════════════════════════════════════════════════════════════════════════ */
+.rh-view-home {
+  /* main の override (= 既存 .rh-main は flex column。 view-root > * で flex 1 になる) */
+  gap: var(--kh-space-5);
+}
+
+/* ── 配信情報パネル ── */
+.rh-home-status-panel {
+  display: block;
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-xl);
+  background: var(--kh-bg-frame);
+  padding: var(--kh-space-6);
+}
+.rh-home-status-panel:empty {
+  display: none;
+}
+
+/* オフライン表示 */
+.rh-home-offline {
+  display: flex;
+  align-items: center;
+  gap: var(--kh-space-4);
+}
+.rh-home-offline-icon {
+  font-size: 24px;
+  opacity: 0.5;
+}
+.rh-home-offline-title {
+  font-size: var(--kh-font-size-xl);
+  font-weight: 700;
+  color: var(--kh-text);
+}
+.rh-home-offline-sub {
+  font-size: var(--kh-font-size-base);
+  color: var(--kh-text-muted);
+  margin-top: 2px;
+}
+
+/* LIVE 表示 */
+.rh-home-live-hero {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: var(--kh-space-5);
+  align-items: center;
+}
+.rh-home-channel-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--kh-bg-input);
+}
+.rh-home-channel-icon.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--kh-accent);
+}
+.rh-home-live-meta { min-width: 0; }
+.rh-home-live-row1 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--kh-space-2);
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-text-muted);
+  margin-bottom: var(--kh-space-1);
+}
+/* LIVE pulse / label の色は本体 .cl-tabs-live.connected と同じ緑 (= #22c55e)。
+   var(--kh-live) は赤 (= 未対応 / 通知バッジ用) なので home の LIVE 表現とは
+   意味付けが違う */
+.rh-home-live-pulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  animation: rh-home-live-pulse 1.4s ease-out infinite;
+}
+@keyframes rh-home-live-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+  70% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+.rh-home-live-label {
+  font-weight: 800;
+  color: #22c55e;
+  letter-spacing: 0.06em;
+  font-size: var(--kh-font-size-base);
+}
+.rh-home-own-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px var(--kh-space-2);
+  border: 1px solid var(--kh-accent);
+  border-radius: var(--kh-radius-sm);
+  background: var(--kh-accent-soft);
+  color: var(--kh-accent);
+  font-size: var(--kh-font-size-xs);
+  font-weight: 700;
+}
+.rh-home-own-badge.other {
+  border-color: var(--kh-text-faint);
+  background: rgba(74, 106, 122, 0.12);
+  color: var(--kh-text-muted);
+}
+.rh-home-live-elapsed {
+  margin-left: auto;
+  font-family: ui-monospace, Consolas, monospace;
+  color: var(--kh-text);
+}
+.rh-home-live-title {
+  font-size: var(--kh-font-size-xl);
+  font-weight: 700;
+  color: var(--kh-text);
+  line-height: 1.3;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.rh-home-live-channel {
+  margin-top: 4px;
+  font-size: var(--kh-font-size-base);
+  color: var(--kh-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── KPI grid (= 同接 / いいね / 累計コメ / 累計 SC) ── */
+.rh-home-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--kh-space-2);
+  margin-top: var(--kh-space-5);
+}
+.rh-home-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: var(--kh-space-3);
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-md);
+  background: var(--kh-bg-input);
+  min-width: 0;
+}
+.rh-home-kpi-value {
+  font-size: var(--kh-font-size-lg);
+  font-weight: 800;
+  color: var(--kh-accent);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rh-home-kpi-label {
+  font-size: var(--kh-font-size-xs);
+  color: var(--kh-text-muted);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.rh-home-kpi-sub {
+  font-size: var(--kh-font-size-xs);
+  color: var(--kh-text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── アクション 4 カード ── */
+.rh-home-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kh-space-3);
+}
+.rh-home-action-card {
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  padding: var(--kh-space-5) var(--kh-space-6);
+}
+.rh-home-action-card .rh-card-body { min-width: 0; }
+.rh-home-action-card .rh-card-label {
+  font-size: var(--kh-font-size-xl);
+  font-weight: 700;
+  color: var(--kh-text);
+}
+.rh-home-action-card .rh-card-meta {
+  margin-top: 2px;
+  color: var(--kh-text-muted);
+}
+.rh-home-action-card .rh-card-icon {
+  font-size: 24px;
+}
+.rh-home-action-card .rh-card-arrow {
+  color: var(--kh-text-faint);
+  font-size: 24px;
+  line-height: 1;
+}
+.rh-home-action-card.subtle {
+  background: var(--kh-bg);
+  opacity: 0.85;
+}
+.rh-home-action-card.subtle:hover,
+.rh-home-action-card.subtle:active {
+  opacity: 1;
+  background: var(--kh-accent-soft);
+}
+
+/* ── フッター文言 ── */
+.rh-home-footer {
+  margin-top: var(--kh-space-3);
+  padding: var(--kh-space-3) var(--kh-space-4);
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-text-faint);
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* search 画面 (= /remote/search) の配信枠 section ヘッダ。
+   コメリストを stream_id でグルーピングし、 各グループの先頭に表示。
+   sticky で常に画面上部に「いま見てる配信枠」を出し、 同枠の連続コメで
+   配信枠 chip が重複表示される冗長性を解消する */
+.rh-s-stream-header {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: var(--kh-space-2);
+  padding: var(--kh-space-3) var(--kh-space-5);
+  /* 不透明 background (= 半透明だと sticky が次の section に押し上げられる
+     瞬間、 前後のヘッダが重なって色が累積して濃くなって見える)。
+     accent 色寄りの濃色で「いま見てる枠」感を出す。 backdrop-filter も
+     stacking context を作って sticky 押し上げを壊しがちなので使わない */
+  background: #0c2a35;
+  border-top: 2px solid var(--kh-accent);
+  border-bottom: 1px solid var(--kh-accent);
+  color: var(--kh-accent);
+  font-weight: 700;
+  font-size: var(--kh-font-size-md);
+}
+.rh-s-stream-icon {
+  font-size: var(--kh-font-size-lg);
+  line-height: 1;
+  flex-shrink: 0;
+}
+.rh-s-stream-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rh-s-stream-date {
+  color: var(--kh-text-muted);
+  font-size: var(--kh-font-size-base);
+  font-weight: 600;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.rh-s-stream-count {
+  color: var(--kh-text-muted);
+  font-size: var(--kh-font-size-xs);
+  font-weight: 700;
+  flex-shrink: 0;
+  padding: 0 var(--kh-space-2);
+  border: 1px solid var(--kh-text-faint);
+  border-radius: var(--kh-radius-sm);
+  background: var(--kh-bg-input);
+}
+
+/* ───────── コメ画面フィルタ chip (= B-3、 全部 / 未対応 / スパチャ / メンバー) ───────── */
+/* listeners のミニタブと同じデザイン言語 (= 横スクロール + active アンダーライン) */
+.rh-c-filter-chips {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  gap: 0;
+  padding: 0 var(--kh-space-2);
+  border-bottom: 1px solid var(--kh-border);
+  background: var(--kh-bg-overlay-weak);
+}
+.rh-c-chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kh-space-1);
+  margin: 0;
+  padding: var(--kh-space-3) var(--kh-space-4);
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--kh-text-muted);
+  font: inherit;
+  font-size: var(--kh-font-size-md);
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.rh-c-chip:hover, .rh-c-chip:focus { color: var(--kh-accent); outline: none; }
+.rh-c-chip.active {
+  color: var(--kh-accent);
+  border-bottom-color: var(--kh-accent);
+}
+.rh-c-chip.disabled, .rh-c-chip[disabled] {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.rh-c-chip.disabled:hover, .rh-c-chip[disabled]:hover { color: var(--kh-text-muted); }
+.rh-c-chip-count {
+  display: inline-flex;
+  align-items: center;
+  min-width: 18px;
+  height: 16px;
+  padding: 0 var(--kh-space-1);
+  border-radius: 8px;
+  background: var(--kh-bg-input);
+  color: var(--kh-text-muted);
+  font-size: var(--kh-font-size-xs);
+  font-weight: 700;
+  justify-content: center;
+}
+.rh-c-chip.active .rh-c-chip-count {
+  background: var(--kh-accent-soft-strong);
+  color: var(--kh-accent);
+}
+
+/* ───────── ミニタブ (= リスナー画面の cl-tab ミニタブ移植、 Y-1) ───────── */
+/* 横スクロール可能で、 スマホ縦でも 6 タブを全部参照できる。 active は accent 色強調 +
+   底辺アンダーライン。 各タブには件数バッジ。 */
+.rh-mini-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  gap: 0;
+  padding: 0 var(--kh-space-2);
+  border-bottom: 1px solid var(--kh-border);
+  background: var(--kh-bg-overlay-weak);
+}
+.rh-mini-tab {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kh-space-1);
+  margin: 0;
+  padding: var(--kh-space-3) var(--kh-space-4);
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--kh-text-muted);
+  font: inherit;
+  font-size: var(--kh-font-size-md);
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.rh-mini-tab:hover, .rh-mini-tab:focus { color: var(--kh-accent); outline: none; }
+.rh-mini-tab.active {
+  color: var(--kh-accent);
+  border-bottom-color: var(--kh-accent);
+}
+.rh-mini-tab.disabled, .rh-mini-tab[disabled] {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.rh-mini-tab.disabled:hover, .rh-mini-tab[disabled]:hover { color: var(--kh-text-muted); }
+.rh-mini-tab-count {
+  display: inline-flex;
+  align-items: center;
+  min-width: 18px;
+  height: 16px;
+  padding: 0 var(--kh-space-1);
+  border-radius: 8px;
+  background: var(--kh-bg-input);
+  color: var(--kh-text-muted);
+  font-size: var(--kh-font-size-xs);
+  font-weight: 700;
+  justify-content: center;
+}
+.rh-mini-tab.active .rh-mini-tab-count {
+  background: var(--kh-accent-soft-strong);
+  color: var(--kh-accent);
+}
+
+/* ───────── ツールバー (検索 + チェック) ───────── */
+.rh-toolbar {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--kh-space-3);
+  padding: var(--kh-space-4) var(--kh-space-6);
+  border-bottom: 1px solid var(--kh-border);
+  background: var(--kh-bg-overlay-weak);
+}
+.rh-toolbar input[type="search"],
+.rh-toolbar select {
+  width: 100%;
+  min-width: 0;
+  padding: 9px var(--kh-space-5);
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-md);
+  background: var(--kh-bg-input);
+  color: var(--kh-text);
+  font-size: var(--kh-font-size-lg);
+}
+.rh-toolbar label.rh-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kh-space-1);
+  font-size: var(--kh-font-size-base);
+  color: var(--kh-text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  padding: 0 var(--kh-space-1);
+}
+.rh-toolbar label.rh-checkbox input { margin: 0; }
+
+/* ───────── リスト共通 ───────── */
+/*
+ * flex 子要素は min-height: 0 を明示しないと shrink できず、内容に応じて高さを
+ * 取ろうとして overflow:auto が機能しない (= scrollHeight = clientHeight)。
+ * これが「追従モードが効かない」根本原因だった。
+ */
+.rh-list-wrap {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--kh-space-3) var(--kh-space-5) calc(80px + env(safe-area-inset-bottom));
+}
+.rh-empty {
+  margin: var(--kh-space-10) var(--kh-space-5);
+  padding: var(--kh-space-9) var(--kh-space-5);
+  border: 1px dashed var(--kh-border);
+  border-radius: var(--kh-radius-lg);
+  color: var(--kh-text-faint);
+  text-align: center;
+}
+
+/* ───────── リスナー一覧 ───────── */
+.rh-listener-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kh-space-2);
+}
+/* row 構造: avatar / main / [対応済みボタン]
+   本体 sd-listener-row-mgr (commit 58ffaa4) に準拠。 対応済みボタンはコメ側
+   .kh-toggle-responded と同じ右端配置で、 自枠 LIVE 中の時のみ
+   .has-response-check class で末尾列が確保される。 */
+.rh-listener-row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: var(--kh-space-4);
+  align-items: center;
+  padding: var(--kh-space-4) var(--kh-space-5);
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-lg);
+  background: var(--kh-bg-frame);
+  text-decoration: none;
+  color: inherit;
+}
+/* 自枠 LIVE 中: 末尾に対応済みボタン用 44px 列 (= スマホタップ領域 44x44) */
+.rh-listener-row.has-response-check {
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+}
+/* 対応済み済リスナーは左ボーダー緑強調 (= 本体 .sd-listener-row-mgr.listener-responded と同じ) */
+.rh-listener-row.listener-responded {
+  border-left: 3px solid rgba(52, 211, 153, 0.7);
+  padding-left: calc(var(--kh-space-5) - 2px);
+}
+.rh-listener-row:hover, .rh-listener-row:active {
+  border-color: var(--kh-accent);
+  background: var(--kh-accent-soft);
+}
+.rh-listener-avatar-wrap {
+  position: relative;
+  width: 44px;
+  height: 44px;
+}
+.rh-listener-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--kh-border);
+  display: block;
+}
+/* 画像なし時の initial 文字 placeholder (= 本体 sd-listener-row-mgr の lst-av textContent と同等) */
+.rh-listener-avatar.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--kh-bg-input);
+  color: var(--kh-accent);
+  font-size: 18px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+/* 未対応バッジ (= アバター右下の小さな赤丸、§5.4) */
+.rh-listener-ungreeted-dot {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--kh-live);
+  border: 2px solid var(--kh-bg-frame);
+  box-shadow: 0 0 6px var(--kh-live-glow);
+}
+/* 対応済みリスナーは行全体を 1 段ミュート (= 視覚差分、§5.4) */
+.rh-listener-row[data-greeted="1"] {
+  opacity: 0.7;
+}
+.rh-listener-row[data-greeted="1"]:hover {
+  opacity: 1;
+}
+.rh-listener-main {
+  min-width: 0;
+}
+.rh-listener-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--kh-space-2);
+  font-size: var(--kh-font-size-lg);
+  font-weight: 700;
+  color: var(--kh-text);
+}
+/* 名前行内: primary (= nickname) と secondary (= @username) を分けて、 secondary を control 色に */
+.rh-listener-name-primary {
+  color: var(--kh-text);
+  font-weight: 700;
+}
+/* メンバー視聴者の primary 名は緑強調 (= リスト一覧では 👑 バッジを出さず色で識別。
+   shared.css の comment-item-member と同じ --kh-member-green 統一トーン) */
+.rh-listener-row.is-member .rh-listener-name-primary {
+  color: var(--kh-member-green);
+}
+.rh-listener-name-secondary {
+  color: var(--kh-text-muted);
+  font-size: var(--kh-font-size-base);
+  font-weight: 400;
+}
+.rh-listener-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 17px;
+  padding: 0 var(--kh-space-2);
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-sm);
+  background: #102b36;
+  color: var(--kh-text-muted);
+  font-size: var(--kh-font-size-xs);
+  font-weight: 700;
+}
+.rh-listener-badge.member {
+  color: var(--kh-warning);
+  border-color: var(--kh-warning-soft);
+}
+.rh-listener-badge.greeted {
+  color: var(--kh-success);
+  border-color: var(--kh-success-soft);
+}
+.rh-listener-last {
+  margin-top: 3px;
+  font-size: var(--kh-font-size-md);
+  line-height: 1.35;
+  color: var(--kh-text);
+  word-break: break-word;
+  max-height: 2.7em;
+  overflow: hidden;
+}
+/* YouTube カスタム絵文字 (= <img class="emoji">) は本体 .listener-item .last-cmt img.emoji と
+   同じ 14x14 縮小で行の line-height に合わせる (= 本体 style.css 2659-2663) */
+.rh-listener-last img.emoji {
+  width: 14px;
+  height: 14px;
+  vertical-align: -2px;
+}
+.rh-listener-meta {
+  margin-top: 3px;
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-text-muted);
+}
+
+/* ───────── リスナー詳細 ───────── */
+.rh-detail-main {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--kh-space-6);
+  padding: var(--kh-space-6) var(--kh-space-6) calc(80px + env(safe-area-inset-bottom));
+}
+.rh-detail-hero {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: var(--kh-space-6);
+  padding: var(--kh-space-6);
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-xl);
+  background: var(--kh-bg-frame);
+}
+.rh-detail-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--kh-border);
+}
+.rh-detail-avatar.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--kh-accent);
+}
+.rh-detail-hero-meta { min-width: 0; }
+/* hero 内の名前行。 primary + secondary は inline で並べ、 オーバーフローは
+   secondary 側を ellipsis でカット (= 改行しない、 縦サイズ固定)。 */
+.rh-detail-name {
+  display: flex;
+  align-items: baseline;
+  gap: var(--kh-space-2);
+  min-width: 0;
+}
+.rh-detail-name .primary {
+  font-size: var(--kh-font-size-2xl);
+  font-weight: 700;
+  color: var(--kh-text);
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rh-detail-name .secondary {
+  font-size: var(--kh-font-size-base);
+  font-weight: 400;
+  color: var(--kh-text-muted);
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 旧 selector との後方互換 (= profile タブ等で参照していたら) */
+.rh-detail-handle,
+.rh-detail-nick {
+  margin-top: 2px;
+  font-size: var(--kh-font-size-base);
+  color: var(--kh-text-muted);
+}
+.rh-detail-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kh-space-1);
+  margin-top: var(--kh-space-2);
+}
+/* hero stat 1 行 (= 本体 .ld-stat-line 相当): 総コメ N · SC ¥X · 歴 X · 最終 X */
+.rh-detail-stat-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;  /* 太字 .v の baseline をラベルテキストと揃える (= 数字が上にずれない) */
+  gap: var(--kh-space-1) var(--kh-space-3);
+  margin-top: var(--kh-space-2);
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-text-muted);
+}
+.rh-detail-stat-line .v {
+  color: var(--kh-text);
+  font-weight: 700;
+  margin-left: 2px;
+}
+.rh-detail-stat-line .v.cyan { color: var(--kh-accent); }
+.rh-detail-stat-line .v.amber { color: #fbbf24; }
+/* hero メッセージ (= 「自枠外のため最低限...」「他枠視聴中...」) */
+.rh-detail-note {
+  margin-top: var(--kh-space-2);
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-text-faint);
+}
+/* profile 内 key:value 行 (= 本体 .listener-detail-row 相当) */
+.rh-detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--kh-space-3);
+  padding: 4px 0;
+  font-size: var(--kh-font-size-base);
+}
+.rh-detail-row .key {
+  color: var(--kh-text-muted);
+  flex: 0 0 auto;
+}
+.rh-detail-row .v {
+  color: var(--kh-text);
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  text-align: right;
+  word-break: break-all;
+  min-width: 0;
+}
+.rh-detail-row .v.cyan { color: var(--kh-accent); }
+.rh-detail-row .v.amber { color: #fbbf24; }
+/* userTags chip 並び (= profile タブ内) */
+.rh-detail-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kh-space-1);
+}
+/* 非表示ボタン 2 つ横並び (= profile タブ末尾の表示設定 section) */
+.rh-detail-hide-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--kh-space-2);
+}
+.rh-detail-kpi {
+  display: grid;
+  gap: var(--kh-space-2);
+  margin-top: var(--kh-space-3);
+}
+/* 累計 KPI は 3 セル固定 1 行 (= 累計コメ / 累計SC / 最大メンバ月) */
+.rh-detail-kpi-total {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+/* 現枠 KPI は 2 セル固定 1 行 (= この枠コメ / この枠SC、 別行) */
+.rh-detail-kpi-current {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.rh-detail-kpi > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: var(--kh-space-2) var(--kh-space-3);
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-md);
+  background: var(--kh-bg-input);
+}
+/* 現枠セル (= per-stream) は accent ボーダーで強調 */
+.rh-detail-kpi > div.kpi-per-stream {
+  border-color: var(--kh-accent);
+  background: rgba(0, 188, 212, 0.08);
+}
+.rh-detail-kpi b {
+  font-size: var(--kh-font-size-lg);
+  color: var(--kh-accent);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.rh-detail-kpi span {
+  font-size: var(--kh-font-size-xs);
+  color: var(--kh-text-muted);
+  margin-top: 2px;
+}
+.rh-detail-timeline {
+  margin-top: var(--kh-space-3);
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-text-muted);
+}
+/* リスナーメモ (= listeners.notes、 本体側で配信者が書いたメモ) */
+.rh-detail-notes {
+  margin-top: var(--kh-space-3);
+  padding: var(--kh-space-3) var(--kh-space-4);
+  border: 1px dashed var(--kh-text-faint);
+  border-radius: var(--kh-radius-md);
+  background: rgba(74, 106, 122, 0.06);
+  color: var(--kh-text);
+  font-size: var(--kh-font-size-base);
+  line-height: 1.5;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+/* heatmap (= 直近 14 枠の活動量、 本体 .lst-heatmap 移植) */
+.rh-detail-heatmap {
+  display: grid;
+  grid-template-columns: repeat(14, 1fr);
+  gap: 3px;
+  padding: var(--kh-space-3);
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-lg);
+  background: var(--kh-bg-frame);
+}
+.rh-d-heatmap-cell {
+  aspect-ratio: 1 / 1;
+  border-radius: 3px;
+  background: rgba(100, 116, 139, 0.1);
+  cursor: help;
+  min-width: 12px;
+  min-height: 12px;
+}
+.rh-d-heatmap-cell.l1 { background: rgba(0, 188, 212, 0.35); }
+.rh-d-heatmap-cell.l2 { background: rgba(0, 188, 212, 0.65); }
+.rh-d-heatmap-cell.l3 { background: rgba(0, 188, 212, 0.95); }
+.rh-d-heatmap-cell.sc {
+  background: #f59e0b;
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.6);
+}
+/* タップで選択中のセル (= スマホ向け、 PC は title 属性のホバーで読める) */
+.rh-d-heatmap-cell.active {
+  outline: 2px solid var(--kh-accent);
+  outline-offset: 2px;
+}
+
+/* セルタップ時に表示する詳細 box (= heatmap の下) */
+.rh-detail-heatmap-tip {
+  margin-top: var(--kh-space-2);
+  padding: var(--kh-space-3) var(--kh-space-4);
+  border: 1px solid var(--kh-accent);
+  border-radius: var(--kh-radius-md);
+  background: rgba(0, 188, 212, 0.08);
+  color: var(--kh-text);
+  font-size: var(--kh-font-size-md);
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* 対応済み + 注意 note + 非表示 2 ボタンを 2 列 grid で配置。
+   全幅にしたい要素は .rh-detail-action-wide で grid-column: 1 / -1 */
+.rh-detail-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--kh-space-3);
+  align-items: stretch;
+}
+.rh-detail-action-wide {
+  grid-column: 1 / -1;
+}
+/* remote 専用: 対応済みボタンを全幅 + 主アクション size に。 shared base は
+   PC モーダル想定で inline-flex / fit-content 寄りだが、 リモートでは押しやすさ
+   を優先して全幅化 */
+.rh-detail-actions .ld-greeted-toggle.rh-detail-action-wide {
+  display: flex;
+  width: 100%;
+  padding: 12px 18px;
+  font-size: var(--kh-font-size-lg);
+}
+.rh-detail-ban,
+.rh-detail-hide {
+  padding: var(--kh-space-3) var(--kh-space-5);
+  border: 1px solid var(--kh-live);
+  border-radius: var(--kh-radius-pill);
+  background: transparent;
+  color: var(--kh-live);
+  font-size: var(--kh-font-size-md);
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 120ms, color 120ms;
+}
+.rh-detail-ban:hover,
+.rh-detail-hide:hover {
+  background: rgba(239, 68, 68, 0.08);
+}
+.rh-detail-ban:disabled,
+.rh-detail-hide:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+/* active 状態は塗りつぶし + 白文字で「非表示中」を明確に */
+.rh-detail-ban.banned,
+.rh-detail-hide.active {
+  background: var(--kh-live);
+  border-color: var(--kh-live);
+  color: #ffffff;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.4);
+}
+.rh-detail-note {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--kh-space-1) var(--kh-space-4);
+  border: 1px dashed var(--kh-text-faint);
+  border-radius: var(--kh-radius-md);
+  background: rgba(74, 106, 122, 0.08);
+  color: var(--kh-text-muted);
+  font-size: var(--kh-font-size-sm);
+}
+
+/* リスナー詳細のタブバー (= 本体 .ld-tab と同 3 タブ構成)。 hero + actions の直下に置く。
+   sticky:top で hero を超えてもタブだけ画面上端に張り付く想定。
+   下方 box-shadow で scroll 時にタブ下を通過する panel コンテンツとの境界を明示
+   (= 「ボタン上端がタブと干渉して見える」 防止)。 */
+.rh-detail-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  background: var(--kh-bg-frame);
+  border-bottom: 1px solid var(--kh-border);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+.rh-detail-tab {
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--kh-text-muted);
+  font-size: var(--kh-font-size-base);
+  font-weight: 600;
+  padding: var(--kh-space-3) var(--kh-space-2);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--kh-space-1);
+  min-height: 44px;
+}
+.rh-detail-tab.active {
+  color: var(--kh-accent);
+  border-bottom-color: var(--kh-accent);
+}
+.rh-detail-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 9px;
+  background: var(--kh-bg-input);
+  color: var(--kh-text-faint);
+  font-size: var(--kh-font-size-xs);
+  font-weight: 700;
+}
+.rh-detail-tab.active .rh-detail-tab-count {
+  background: var(--kh-accent-soft);
+  color: var(--kh-accent);
+}
+.rh-detail-tab-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kh-space-4);
+  /* panel 末尾の section (= 表示設定 ボタン等) が rh-detail-main scroll bottom edge に
+     接触して bottom tab bar と干渉して見えるのを防ぐ余白 */
+  padding-bottom: var(--kh-space-6);
+}
+.rh-detail-tab-panel.inactive {
+  display: none;
+}
+
+.rh-detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kh-space-2);
+}
+.rh-detail-h {
+  font-size: var(--kh-font-size-base);
+  font-weight: 700;
+  color: var(--kh-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.rh-detail-h-count {
+  margin-left: var(--kh-space-2);
+  font-weight: 400;
+  color: var(--kh-text-faint);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.rh-detail-recent {
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-lg);
+  background: var(--kh-bg-frame);
+  overflow: hidden;
+}
+.rh-detail-recent .comment-item {
+  border-bottom: 1px solid var(--kh-bg-input);
+  border-radius: 0;
+  margin: 0;
+}
+.rh-detail-recent .comment-item:last-child {
+  border-bottom: none;
+}
+/* 枠ヘッダー (= 本体 .ld-stream-h 相当)。 直近コメ list の各 streamId group の先頭に置く。
+   後で hydrateStreamTitles 相当で配信タイトルを差し替える想定。 */
+.rh-detail-recent-group {
+  display: flex;
+  flex-direction: column;
+}
+.rh-detail-recent-stream-h {
+  display: flex;
+  align-items: center;
+  gap: var(--kh-space-2);
+  padding: var(--kh-space-2) var(--kh-space-3);
+  background: var(--kh-bg-input);
+  color: var(--kh-text-muted);
+  font-size: var(--kh-font-size-sm);
+  border-top: 1px solid var(--kh-border);
+}
+.rh-detail-recent-group:first-child .rh-detail-recent-stream-h {
+  border-top: 0;
+}
+.rh-detail-recent-stream-icon {
+  flex: 0 0 auto;
+}
+.rh-detail-recent-stream-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--kh-text);
+}
+.rh-detail-recent-stream-stamp {
+  flex: 0 0 auto;
+  color: var(--kh-text-faint);
+}
+.rh-detail-recent-stream-count {
+  flex: 0 0 auto;
+  color: var(--kh-text-faint);
+  font-size: var(--kh-font-size-xs);
+}
+.rh-detail-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kh-space-2);
+  padding: var(--kh-space-4) var(--kh-space-6);
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-lg);
+  background: var(--kh-bg-frame);
+  color: var(--kh-accent);
+  font-size: var(--kh-font-size-md);
+  font-weight: 700;
+  text-decoration: none;
+}
+.rh-detail-link:hover {
+  border-color: var(--kh-accent);
+  background: var(--kh-accent-soft);
+}
+
+/* 全コメタブ: lazy load 状況表示 (= 「N / M 件」 / 「全 N 件」)。
+   scroll container は .rh-detail-main を共用 (= 独自 overflow なし) */
+.rh-detail-full-status {
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-text-muted);
+  padding: var(--kh-space-2) var(--kh-space-1);
+}
+
+/* リスナー編集 section (= ニックネーム / ラベル / タグ / メモ + 保存ボタン) */
+.rh-d-edit-label {
+  display: block;
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-text-muted);
+  margin-top: var(--kh-space-2);
+  margin-bottom: var(--kh-space-1);
+}
+.rh-d-edit-input {
+  width: 100%;
+  padding: var(--kh-space-2) var(--kh-space-3);
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-sm);
+  background: var(--kh-bg-input);
+  color: var(--kh-text);
+  font-size: var(--kh-font-size-base);
+  box-sizing: border-box;
+  font-family: inherit;
+}
+.rh-d-edit-input:focus {
+  outline: none;
+  border-color: var(--kh-accent);
+}
+.rh-d-edit-textarea {
+  resize: vertical;
+  min-height: 64px;
+}
+.rh-d-edit-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kh-space-1);
+  margin-bottom: var(--kh-space-1);
+  min-height: 22px;
+}
+.rh-d-edit-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px var(--kh-space-2);
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-sm);
+  background: var(--kh-bg-input);
+  color: var(--kh-text);
+  font-size: var(--kh-font-size-sm);
+}
+.rh-d-edit-tag-chip-x {
+  background: transparent;
+  border: 0;
+  color: var(--kh-text-muted);
+  font-size: var(--kh-font-size-base);
+  cursor: pointer;
+  padding: 0 2px;
+  line-height: 1;
+}
+.rh-d-edit-tag-chip-x:hover {
+  color: var(--kh-danger, #ef4444);
+}
+.rh-d-edit-save-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--kh-space-3);
+  margin-top: var(--kh-space-3);
+}
+.rh-d-edit-status {
+  flex: 1 1 auto;
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-text-muted);
+}
+.rh-d-edit-save-btn {
+  flex: 0 0 auto;
+  /* スマホタップ向けに 44x44 以上、 横は余裕を持って広めに (= 「保存」 を読みやすく) */
+  min-height: 44px;
+  min-width: 96px;
+  padding: var(--kh-space-3) var(--kh-space-6);
+  border: 1px solid var(--kh-accent);
+  border-radius: var(--kh-radius-sm);
+  background: var(--kh-accent-soft);
+  color: var(--kh-accent);
+  font-weight: 700;
+  cursor: pointer;
+  font-size: var(--kh-font-size-md);
+}
+/* hover メディアクエリで PC マウス操作のみ適用。 スマホ touch では :hover が
+   タップ後も残り「ボタンの色が戻らない」 quirk を起こすため除外。 */
+@media (hover: hover) and (pointer: fine) {
+  .rh-d-edit-save-btn:hover:not(:disabled) {
+    background: var(--kh-accent);
+    color: var(--kh-bg);
+  }
+}
+/* :active はスマホでも tap 中の一瞬だけ適用され、 離すと自動で戻るので押下感を
+   付けつつ「色残り」問題は起こさない。 transform で軽く縮小して触感を強める。 */
+.rh-d-edit-save-btn:active:not(:disabled) {
+  background: var(--kh-accent);
+  color: var(--kh-bg);
+  transform: scale(0.98);
+}
+.rh-d-edit-save-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ───────── 「最新へ戻る」ボタン ───────── */
+/* 追従モードが切れた時に画面右下に出る浮遊ボタン */
+.rh-jump-latest {
+  position: fixed;
+  right: var(--kh-space-7);
+  bottom: calc(48px + env(safe-area-inset-bottom));
+  z-index: 6;
+  padding: var(--kh-space-4) var(--kh-space-6);
+  border: 1px solid var(--kh-accent);
+  border-radius: var(--kh-radius-pill);
+  background: var(--kh-bg-frame);
+  color: var(--kh-accent);
+  font-size: var(--kh-font-size-md);
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--kh-shadow-float);
+}
+.rh-jump-latest:hover, .rh-jump-latest:active {
+  background: var(--kh-accent-soft-strong);
+}
+
+/* ───────── フッター ───────── */
+.rh-footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--kh-space-3) var(--kh-space-5) calc(var(--kh-space-3) + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--kh-border);
+  background: var(--kh-bg-overlay-footer);
+  color: var(--kh-text-faint);
+  font-size: var(--kh-font-size-sm);
+  text-align: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  SPA shell (= app.html / app.js)
+ *
+ *  - .rh-view-root: 各 view DOM を flex 1 で内包するコンテナ
+ *  - .rh-tabbar: 画面下部の固定 tab bar (= ホーム / コメ / リスナー / ポン出し)
+ *  - .rh-tab.active: 現在 view に対応する tab のアクセント色強調
+ *  - .rh-tab-badge: 各 tab に重ねる未対応 / +N 通知バッジ
+ * ═══════════════════════════════════════════════════════════════════════════ */
+.rh-view-root {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  /* bottom tab bar (= 56px) + safe-area 分の余白を確保し、 内部 content が
+     tab bar 裏に隠れないようにする。 view-root 自体が viewport の残りすべて
+     を占めるので、 末尾の rh-footer はこの padding 内に収まる */
+  padding-bottom: calc(56px + env(safe-area-inset-bottom));
+}
+/* 各 view の wrapper を flex column 化して、 内部の .rh-list-wrap / .rh-main の
+   flex:1 + overflow-y:auto が正しく機能するようにする。 */
+.rh-view-root > * {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.rh-tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  padding-bottom: env(safe-area-inset-bottom);
+  border-top: 1px solid var(--kh-border);
+  background: var(--kh-bg-overlay-footer);
+  backdrop-filter: blur(12px);
+}
+.rh-tab {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 56px;
+  padding: var(--kh-space-2) 2px;
+  text-decoration: none;
+  color: var(--kh-text-muted);
+  font: inherit;
+}
+.rh-tab:hover, .rh-tab:active { color: var(--kh-accent); }
+.rh-tab.active {
+  color: var(--kh-accent);
+}
+.rh-tab.active::before {
+  /* active な tab を細いアクセント線で示す */
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 25%;
+  right: 25%;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: var(--kh-accent);
+}
+.rh-tab-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+.rh-tab-label {
+  font-size: var(--kh-font-size-xs);
+  font-weight: 700;
+}
+/* 本体 .cl-tab .new-pin (= style.css:434) と同等デザイン:
+   cyan 背景 + ダーク文字 + 小さい角丸 pill。 赤丸は派手過ぎたので刷新 */
+.rh-tab-badge {
+  position: absolute;
+  top: 6px;
+  right: calc(50% - 26px);
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--kh-accent);
+  color: var(--kh-bg);
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
+  white-space: nowrap;
+  display: block;
+  box-shadow: 0 0 0 1.5px var(--kh-bg-overlay-footer);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* SPA 内では .rh-list-wrap / .rh-main の padding-bottom は不要。
+   view-root の padding-bottom で tab bar 分を吸収済み (= flex 1 計算は
+   padding 込みの content area で動く) */
+.rh-view-root .rh-main,
+.rh-view-root .rh-list-wrap,
+.rh-view-root .rh-detail-main {
+  padding-bottom: 0;
+}
+/* SPA 内では rh-footer は fixed 配置 (= 旧 5 HTML 時代) を撤回し、 flex 末尾
+   要素として通常 flow に置く。 これで rh-list-wrap と footer が縦並び、
+   footer は tab bar の真上に重ならず配置される (= セルと被っていた問題の
+   根本対応) */
+.rh-view-root .rh-footer {
+  position: static;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  flex: 0 0 auto;
+  padding: var(--kh-space-3) var(--kh-space-5);
+}
+/* 「最新へ戻る」浮遊ボタンも tab bar の上に上げる (= 旧 48px + safe-area は
+   tab bar 56px と被る) */
+.rh-view-root .rh-jump-latest {
+  bottom: calc(56px + env(safe-area-inset-bottom) + var(--kh-space-3));
+}
+
+/* ───────── 本体 .comment-item を remote 文脈で軽く調整 ===
+   shared/comment-item.js が生成する .comment-item は本体側 CSS (style.css) に
+   依存しているため、remote では似たスタイルを別途定義する。
+   本体スタイルを丸ごと duplicates すると保守コストが増えるので、最低限の見栄え
+   だけ確保し、Phase 6 の視覚差分で調整する */
+.comment-item {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--kh-space-3);
+  padding: var(--kh-space-4) var(--kh-space-5);
+  border-bottom: 1px solid var(--kh-bg-frame);
+  cursor: pointer;
+  /* スマホ Chrome / Safari の暗いタップハイライトを抑制 (= スパチャ amber の
+     上にダーク overlay が乗って文字が見えなくなる現象を防ぐ) */
+  -webkit-tap-highlight-color: transparent;
+}
+.comment-item:hover, .comment-item:active {
+  background: rgba(0, 188, 212, 0.05);
+}
+/* スパチャ / ステッカー / メンバーシップギフト cell は tier 固有の背景色
+   (= var(--comment-superchat-bg)) を保つ。 hover/active で透明 cyan に上書き
+   されると暗色文字が読めなくなる (= amber bg が消えて dark body が透ける) */
+.comment-item-superchat:hover,
+.comment-item-superchat:active {
+  background: var(--comment-superchat-bg);
+  filter: brightness(1.08);
+}
+.comment-item img,
+.comment-item .kh-comment-avatar-placeholder {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.comment-item .kh-comment-avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--kh-bg-input);
+  color: var(--kh-accent);
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.comment-content {
+  min-width: 0;
+}
+.comment-name {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kh-space-2);
+  align-items: center;
+  font-size: var(--kh-font-size-md);
+  font-weight: 700;
+  color: var(--kh-accent-name);
+}
+.comment-text {
+  margin-top: 2px;
+  font-size: var(--kh-font-size-lg);
+  line-height: var(--kh-line-height-normal);
+  color: var(--kh-text);
+  word-break: break-word;
+}
+.comment-emoji {
+  width: 1.25em;
+  height: 1.25em;
+  vertical-align: -0.22em;
+  object-fit: contain;
+}
+.comment-listener-tag {
+  display: inline-flex;
+  height: 17px;
+  padding: 0 var(--kh-space-2);
+  align-items: center;
+  border: 1px solid var(--kh-border-strong);
+  border-radius: var(--kh-radius-sm);
+  background: #102b36;
+  color: #d7f9ff;
+  font-size: var(--kh-font-size-xs);
+  font-weight: 700;
+}
+.comment-listener-tag-first-time { color: #f87171; border-color: rgba(239, 68, 68, 0.4); }
+.comment-listener-tag-returning { color: var(--kh-warning); border-color: rgba(251, 191, 36, 0.4); }
+.comment-listener-tag-regular-arrival { color: var(--kh-success); border-color: rgba(52, 211, 153, 0.4); }
+.comment-superchat-amount {
+  display: inline-flex;
+  height: 17px;
+  padding: 0 var(--kh-space-2);
+  align-items: center;
+  border-radius: var(--kh-radius-sm);
+  background: rgba(0, 0, 0, 0.18);
+  color: inherit;
+  font-size: var(--kh-font-size-sm);
+  font-weight: 700;
+}
+.comment-listener-meta {
+  margin-top: 2px;
+  /* 1 行固定 + はみ出し ellipsis。 旧 flex-wrap: wrap だと長い chip が折り返して
+     border が上下に重なり、 影風ノイズ + 高さブレ + コメ本文との衝突を起こす */
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--kh-space-1);
+  color: var(--kh-text-muted);
+  font-size: var(--kh-font-size-sm);
+  overflow: hidden;
+  max-height: 18px;
+}
+.comment-listener-meta span {
+  display: inline-flex;
+  height: 16px;
+  padding: 0 5px;
+  align-items: center;
+  border: 1px solid var(--kh-border);
+  border-radius: 3px;
+  /* 個別 chip も 1 行に押し込め、 長すぎたら ellipsis */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex-shrink: 1;
+  max-width: 100%;
+}
+.comment-listener-count {
+  align-self: center;
+  min-width: 26px;
+  font-size: var(--kh-font-size-lg);
+  font-weight: 800;
+  color: var(--kh-accent);
+  text-align: right;
+}
+.comment-item-superchat {
+  --comment-superchat-bg: #ffb74d;
+  --comment-superchat-fg: var(--kh-bg-input);
+  --comment-superchat-muted-fg: rgba(6, 17, 26, 0.82);
+  background: var(--comment-superchat-bg);
+  color: var(--comment-superchat-fg);
+  border-bottom-color: rgba(0, 0, 0, 0.18);
+  margin: var(--kh-space-1) 0;
+  border-radius: var(--kh-radius-md);
+}
+.comment-item-superchat .comment-name,
+.comment-item-superchat .comment-text,
+.comment-item-superchat .comment-listener-count {
+  color: var(--comment-superchat-fg);
+}
+.comment-item-superchat .comment-listener-meta { color: var(--comment-superchat-muted-fg); }
+.comment-item-superchat .comment-listener-meta span,
+.comment-item-superchat .comment-listener-tag {
+  border-color: rgba(0, 0, 0, 0.18);
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--comment-superchat-fg);
+}
+.comment-item-member .comment-name { color: var(--kh-member-green); }
+/* SC かつメンバーの場合は member 緑より SC tier fg を優先する。
+   .comment-item-superchat.comment-item-member (= chained class) で specificity を
+   member 単体より高く (0,3,0) し、 黄色 / 緑系 tier 背景での「緑文字が読めない」
+   問題を解消 (= 2026-05-14 ユーザ報告)。 本体 style.css:1036-1037 と同パターン。 */
+.comment-item-superchat.comment-item-member .comment-name {
+  color: var(--comment-superchat-fg);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  レスポンシブ 4 段階 (Phase A-3 で scaffold、 個別画面調整は Phase C)
+ *
+ *  | breakpoint        | width            | 想定デバイス              |
+ *  | ----------------- | ---------------- | ------------------------- |
+ *  | base (= mobile)   | < 480px          | スマホ縦                  |
+ *  | sm                | 480px-767px      | スマホ横 / 小型タブレット |
+ *  | md                | 768px-1023px     | タブレット縦              |
+ *  | lg                | >= 1024px        | タブレット横 / PC ブラウザ |
+ *
+ *  base が default = mobile-first。 各 breakpoint で:
+ *  - sm: toolbar 縦積み → 横並び、 header sticky 高さやや圧縮
+ *  - md: content max-width centered、 padding 拡大、 font やや大きく
+ *  - lg: content max-width 720px、 余白さらに拡大、 PC ブラウザでも破綻しない
+ *
+ *  併用する orientation query:
+ *  - landscape + short height (= スマホ横): header sticky をさらに薄く
+ *
+ *  個別画面の grid / toolbar / row 構成は Phase C-1 / C-2 で詰める。
+ *  ここでは scaffold + 全画面共通の base ルールだけ。
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ───── スマホ全般 (= base + sm): タップ領域 44x44、 文字最小化抑制 ───── */
+.kh-toggle-responded {
+  width: var(--kh-touch-target);
+  height: var(--kh-touch-target);
+  font-size: 18px;
+}
+
+/* base = mobile (< 480px) は default ルールがそのまま適用される */
+
+/* ───── sm: スマホ横 / 小型タブレット (480-767px) ───── */
+@media (min-width: 480px) {
+  .rh-header {
+    padding-left: var(--kh-space-7);
+    padding-right: var(--kh-space-7);
+  }
+  .rh-toolbar {
+    padding-left: var(--kh-space-7);
+    padding-right: var(--kh-space-7);
+  }
+  .rh-list-wrap {
+    padding-left: var(--kh-space-6);
+    padding-right: var(--kh-space-6);
+  }
+  .rh-main {
+    padding-left: calc(var(--kh-space-7) + env(safe-area-inset-left));
+    padding-right: calc(var(--kh-space-7) + env(safe-area-inset-right));
+  }
+}
+
+/* ───── md: タブレット縦 (768-1023px) ───── */
+/* 画面が広くなるので content を max-width centered にして読みやすさ確保。
+   余白を増やし、 font も僅かに大きく。 list の 1 行が広がり過ぎないように両端 padding を厚く */
+@media (min-width: 768px) {
+  html, body { font-size: var(--kh-font-size-xl); }
+  .rh-header,
+  .rh-toolbar,
+  .rh-footer {
+    padding-left: max(var(--kh-space-8), calc(50% - 360px));
+    padding-right: max(var(--kh-space-8), calc(50% - 360px));
+  }
+  .rh-main,
+  .rh-list-wrap,
+  .rh-detail-main {
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+  }
+  .rh-header h1 { font-size: var(--kh-font-size-2xl); }
+  .rh-listener-row { padding: var(--kh-space-5) var(--kh-space-6); }
+}
+
+/* ───── lg: PC ブラウザ / タブレット横 (>= 1024px) ───── */
+/* スマホ向け設計のため、 ここでは「破綻しないこと」が目標。
+   2 ペイン化はしない (= 用途は手元の手帳)。 max-width をやや広く取って、
+   余白を増やすだけ */
+@media (min-width: 1024px) {
+  .rh-main,
+  .rh-list-wrap,
+  .rh-detail-main {
+    max-width: 760px;
+  }
+  .rh-header,
+  .rh-toolbar,
+  .rh-footer {
+    padding-left: max(var(--kh-space-9), calc(50% - 380px));
+    padding-right: max(var(--kh-space-9), calc(50% - 380px));
+  }
+}
+
+/* ───── orientation: スマホ横で sticky header をさらに薄く ───── */
+/* 高さが詰まる端末で header / footer に画面占有されすぎないように */
+@media (orientation: landscape) and (max-height: 480px) {
+  .rh-header { padding-top: max(var(--kh-space-2), env(safe-area-inset-top)); }
+  .rh-header { padding-bottom: var(--kh-space-2); }
+  .rh-footer { padding-top: var(--kh-space-2); }
+}
+
+/* ═════════════════ アーカイブ view ═════════════════
+ * - 上部: 3 サブタブ (配信ログ / コメ検索 / リスナー検索) を sticky で表示
+ * - 下: サブタブごとの panel を切替。 各 panel は flex: 1 で領域を占有しつつ
+ *   内部スクロール
+ */
+.rh-archive-shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+}
+.rh-archive-subtabs {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  gap: var(--kh-space-2);
+  padding: var(--kh-space-3) var(--kh-space-4) var(--kh-space-2);
+  background: var(--kh-bg-overlay-footer);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--kh-border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.rh-archive-subtabs::-webkit-scrollbar { display: none; }
+.rh-archive-subtab {
+  flex-shrink: 0;
+  padding: var(--kh-space-2) var(--kh-space-4);
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-pill);
+  background: transparent;
+  color: var(--kh-text-muted);
+  font-size: var(--kh-font-size-md);
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 120ms, color 120ms, border-color 120ms;
+}
+@media (hover: hover) and (pointer: fine) {
+  .rh-archive-subtab:hover {
+    color: var(--kh-text);
+    border-color: var(--kh-accent-soft, var(--kh-accent));
+  }
+}
+.rh-archive-subtab:active { background: rgba(0, 188, 212, 0.10); }
+.rh-archive-subtab.active {
+  background: var(--kh-accent);
+  border-color: var(--kh-accent);
+  color: var(--kh-bg);
+}
+.rh-archive-panels {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+.rh-archive-panel {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.rh-archive-panel.inactive { display: none; }
+
+/* アーカイブ サブビュー: panel の中身は flex column で領域を占有 */
+.rh-arch-streams,
+.rh-arch-cs,
+.rh-arch-ls {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+/* ═════════════════ アーカイブ共通: toolbar / pagination ═════════════════ */
+.rh-arch-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kh-space-2);
+  padding: var(--kh-space-3) var(--kh-space-4);
+  background: var(--kh-bg);
+  border-bottom: 1px solid var(--kh-border);
+}
+.rh-arch-select {
+  flex: 1 1 auto;
+  min-width: 110px;
+  padding: var(--kh-space-2) var(--kh-space-3);
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-pill);
+  background: var(--kh-bg-input);
+  color: var(--kh-text);
+  font: inherit;
+  font-size: var(--kh-font-size-md);
+}
+.rh-arch-density-seg {
+  display: inline-flex;
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-pill);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.rh-arch-seg-btn {
+  padding: var(--kh-space-2) var(--kh-space-4);
+  background: transparent;
+  border: none;
+  color: var(--kh-text-muted);
+  font: inherit;
+  font-size: var(--kh-font-size-md);
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.rh-arch-seg-btn.active {
+  background: var(--kh-accent);
+  color: var(--kh-bg);
+}
+.rh-arch-count {
+  padding: var(--kh-space-2) var(--kh-space-4);
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-text-muted);
+}
+.rh-arch-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--kh-space-4);
+  padding: var(--kh-space-3) var(--kh-space-4);
+  border-top: 1px solid var(--kh-border);
+  background: var(--kh-bg-overlay-footer);
+}
+.rh-arch-pagination button {
+  padding: var(--kh-space-2) var(--kh-space-5);
+  background: transparent;
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-pill);
+  color: var(--kh-text);
+  font: inherit;
+  font-size: var(--kh-font-size-md);
+  cursor: pointer;
+}
+.rh-arch-pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ═════════════════ アーカイブ 配信ログ ═════════════════ */
+.rh-arch-streams-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kh-space-2);
+  padding: var(--kh-space-3) var(--kh-space-4) var(--kh-space-8);
+}
+.rh-arch-stream-cell {
+  /* 中 (m) のレイアウト基底: 16:9 サムネ (= 60×34) + meta + KPI */
+  display: grid;
+  grid-template-columns: 60px 1fr auto;
+  gap: var(--kh-space-3);
+  align-items: center;
+  padding: var(--kh-space-2) var(--kh-space-3);
+  background: var(--kh-bg-frame);
+  border: 1px solid var(--kh-border);
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--kh-text);
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 120ms, background 120ms;
+}
+.rh-arch-stream-cell:active {
+  background: rgba(0, 188, 212, 0.06);
+  border-color: var(--kh-accent);
+}
+/* 大: より大きいサムネ (= 100×56)、 全 KPI 表示 */
+.rh-arch-stream-cell.density-l {
+  grid-template-columns: 100px 1fr auto;
+  padding: var(--kh-space-3);
+}
+/* 小: サムネ + タイトル 1 行のみ (= 50×28) */
+.rh-arch-stream-cell.density-s {
+  grid-template-columns: 50px 1fr;
+  padding: var(--kh-space-2) var(--kh-space-3);
+}
+/* サムネ (= 16:9 比率を密度ごとに切替) */
+.rh-as-thumb {
+  width: 60px;
+  height: 34px;
+  background-color: var(--kh-bg-input);
+  background-size: cover;
+  background-position: center;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.rh-arch-stream-cell.density-l .rh-as-thumb {
+  width: 100px;
+  height: 56px;
+  border-radius: 6px;
+}
+.rh-arch-stream-cell.density-s .rh-as-thumb {
+  width: 50px;
+  height: 28px;
+  border-radius: 3px;
+}
+.rh-as-meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.rh-as-title {
+  font-size: var(--kh-font-size-md);
+  font-weight: 700;
+  color: var(--kh-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rh-arch-stream-cell.density-l .rh-as-title {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.3;
+}
+.rh-as-subline {
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rh-as-desc {
+  margin-top: 2px;
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rh-as-kpi-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-size: var(--kh-font-size-sm);
+  flex-shrink: 0;
+}
+.rh-as-kpi {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.rh-as-kpi-label {
+  color: var(--kh-text-faint);
+  font-size: var(--kh-font-size-xs);
+}
+.rh-as-kpi-value {
+  color: var(--kh-text);
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  font-weight: 700;
+}
+.rh-as-kpi.tone-cyan .rh-as-kpi-value { color: var(--kh-accent-strong); }
+.rh-as-kpi.tone-amber .rh-as-kpi-value { color: #fbbf24; }
+/* 小: サムネ + タイトル のみ (= grid-template-columns: 50px 1fr) */
+.rh-arch-stream-cell.density-s .rh-as-title {
+  font-size: var(--kh-font-size-md);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* ═════════════════ アーカイブ コメ検索 (cs) ═════════════════ */
+.rh-arch-cs {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.rh-cs-saved-strip {
+  display: flex;
+  gap: var(--kh-space-2);
+  padding: var(--kh-space-3) var(--kh-space-4);
+  border-bottom: 1px solid var(--kh-border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  background: var(--kh-bg-frame);
+}
+.rh-cs-saved-strip::-webkit-scrollbar { display: none; }
+.rh-cs-saved-pins {
+  display: flex;
+  gap: var(--kh-space-2);
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.rh-cs-saved-pins::-webkit-scrollbar { display: none; }
+.rh-cs-saved-pin {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: var(--kh-space-1) var(--kh-space-3);
+  background: var(--kh-accent-soft-strong);
+  border: 1px solid var(--kh-accent);
+  border-radius: var(--kh-radius-pill);
+  color: var(--kh-accent);
+  font: inherit;
+  font-size: var(--kh-font-size-sm);
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.rh-cs-saved-x {
+  font-size: 11px;
+  opacity: 0.6;
+  cursor: pointer;
+  padding: 0 2px;
+}
+.rh-cs-saved-x:hover { opacity: 1; }
+.rh-cs-saved-add {
+  flex-shrink: 0;
+  padding: var(--kh-space-1) var(--kh-space-3);
+  background: transparent;
+  border: 1px dashed var(--kh-border);
+  border-radius: var(--kh-radius-pill);
+  color: var(--kh-text-muted);
+  font: inherit;
+  font-size: var(--kh-font-size-sm);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.rh-cs-saved-hint {
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-text-faint);
+  padding: var(--kh-space-1) var(--kh-space-2);
+}
+
+.rh-cs-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kh-space-3);
+  padding: var(--kh-space-4);
+  border-bottom: 1px solid var(--kh-border);
+}
+.rh-cs-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kh-space-1);
+}
+.rh-cs-label {
+  font-size: var(--kh-font-size-xs);
+  color: var(--kh-text-faint);
+  font-weight: 700;
+}
+.rh-cs-form input[type="text"],
+.rh-cs-form select {
+  padding: var(--kh-space-2) var(--kh-space-3);
+  background: var(--kh-bg-input);
+  border: 1px solid var(--kh-border);
+  border-radius: 8px;
+  color: var(--kh-text);
+  font: inherit;
+  font-size: var(--kh-font-size-md);
+}
+.rh-cs-form input[type="text"]:focus,
+.rh-cs-form select:focus {
+  outline: none;
+  border-color: var(--kh-accent);
+  box-shadow: var(--kh-shadow-focus-ring);
+}
+.rh-cs-type-row {
+  display: flex;
+  gap: var(--kh-space-2);
+  flex-wrap: wrap;
+}
+.rh-cs-type-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: var(--kh-space-1) var(--kh-space-3);
+  background: var(--kh-bg-frame);
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-pill);
+  font-size: var(--kh-font-size-sm);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.rh-cs-type-pill input { margin: 0; }
+.rh-cs-picker-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--kh-space-2) var(--kh-space-3);
+  background: var(--kh-bg-input);
+  border: 1px solid var(--kh-border);
+  border-radius: 8px;
+  color: var(--kh-text);
+  font: inherit;
+  font-size: var(--kh-font-size-md);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  text-align: left;
+}
+.rh-cs-picker-btn:active { background: var(--kh-accent-soft); }
+.rh-cs-picker-arrow {
+  color: var(--kh-text-faint);
+  font-size: 16px;
+}
+.rh-cs-form-actions {
+  display: flex;
+  gap: var(--kh-space-3);
+  padding-top: var(--kh-space-3);
+}
+.rh-cs-clear-btn,
+.rh-cs-run-btn {
+  padding: var(--kh-space-4) var(--kh-space-6);
+  min-height: 44px;             /* タッチ最低サイズ確保 (= iOS HIG 44pt 基準) */
+  border-radius: 10px;
+  font: inherit;
+  font-size: var(--kh-font-size-lg);
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 120ms, transform 80ms;
+}
+.rh-cs-clear-btn {
+  flex: 0 0 auto;
+  min-width: 90px;
+  background: transparent;
+  border: 1px solid var(--kh-border);
+  color: var(--kh-text-muted);
+}
+.rh-cs-run-btn {
+  flex: 1 1 auto;               /* 検索ボタンは余白を埋めて大きく */
+  background: var(--kh-accent);
+  border: 1px solid var(--kh-accent);
+  color: var(--kh-bg);
+  box-shadow: 0 2px 6px rgba(0, 188, 212, 0.25);
+}
+.rh-cs-clear-btn:active { background: rgba(255, 255, 255, 0.04); transform: scale(0.98); }
+.rh-cs-run-btn:active { background: var(--kh-accent-hover); transform: scale(0.98); }
+
+.rh-cs-result-area {
+  display: flex;
+  flex-direction: column;
+}
+.rh-cs-result-summary {
+  padding: var(--kh-space-2) var(--kh-space-4);
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-text-muted);
+  background: var(--kh-bg-frame);
+  border-bottom: 1px solid var(--kh-border);
+}
+/* ───── 結果 KPI summary カード (= 全マッチ枠の集計) ───── */
+.rh-cs-kpi-card {
+  margin: var(--kh-space-3) var(--kh-space-4);
+  padding: var(--kh-space-3);
+  background: linear-gradient(135deg, rgba(0, 188, 212, 0.05) 0%, rgba(0, 188, 212, 0.02) 100%);
+  border: 1px solid rgba(0, 188, 212, 0.25);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+.rh-cs-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--kh-space-2);
+}
+.rh-cs-kpi-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--kh-space-2);
+  background: var(--kh-bg-frame);
+  border: 1px solid var(--kh-border);
+  border-radius: 8px;
+}
+.rh-cs-kpi-label {
+  font-size: var(--kh-font-size-xs);
+  color: var(--kh-text-faint);
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.rh-cs-kpi-value {
+  font-size: var(--kh-font-size-lg);
+  color: var(--kh-text);
+  font-weight: 700;
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  line-height: 1.1;
+}
+.rh-cs-kpi-value .unit {
+  font-size: var(--kh-font-size-xs);
+  color: var(--kh-text-faint);
+  margin-left: 2px;
+  font-weight: 400;
+}
+.rh-cs-kpi-avg {
+  margin-top: 2px;
+  font-size: var(--kh-font-size-xs);
+  color: var(--kh-text-faint);
+}
+.rh-cs-kpi-cell.tone-amber .rh-cs-kpi-value { color: #fbbf24; }
+.rh-cs-kpi-cell.tone-pink .rh-cs-kpi-value { color: #f472b6; }
+.rh-cs-kpi-cell.tone-green .rh-cs-kpi-value { color: #4ade80; }
+.rh-cs-kpi-range {
+  margin-top: var(--kh-space-2);
+  padding-top: var(--kh-space-2);
+  border-top: 1px dashed var(--kh-border);
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-text-muted);
+  text-align: center;
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+}
+.rh-cs-kpi-range-label {
+  color: var(--kh-text-faint);
+  font-size: var(--kh-font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-right: 4px;
+}
+
+/* ───── 配信枠カード (= 1 配信 = 1 カード、 ヘッダ + KPI + コメ) ───── */
+.rh-cs-stream-card {
+  margin: var(--kh-space-3) var(--kh-space-4);
+  background: var(--kh-bg-frame);
+  border: 1px solid var(--kh-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.rh-cs-stream-card-head {
+  padding: var(--kh-space-3);
+  background: linear-gradient(180deg, rgba(0, 188, 212, 0.04) 0%, transparent 100%);
+  border-bottom: 1px solid var(--kh-border);
+  -webkit-tap-highlight-color: transparent;
+  transition: background 120ms;
+}
+.rh-cs-stream-card-head:active {
+  background: linear-gradient(180deg, rgba(0, 188, 212, 0.10) 0%, rgba(0, 188, 212, 0.02) 100%);
+}
+/* 折りたたみ時はヘッダの border-bottom を消して body を隠す */
+.rh-cs-stream-card.collapsed .rh-cs-stream-card-head {
+  border-bottom: none;
+}
+.rh-cs-stream-card.collapsed .rh-cs-stream-card-body { display: none; }
+/* 折りたたみ時の chevron は ▶ 相当に回転 */
+.rh-cs-stream-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--kh-text-muted);
+  font-size: 12px;
+  transition: transform 160ms ease;
+}
+.rh-cs-stream-card.collapsed .rh-cs-stream-arrow {
+  transform: rotate(-90deg);
+}
+.rh-cs-stream-card-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--kh-space-2);
+  margin-bottom: 4px;
+}
+.rh-cs-stream-card-title {
+  flex: 1;
+  min-width: 0;
+  color: var(--kh-text);
+  font-weight: 700;
+  font-size: var(--kh-font-size-md);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.rh-cs-stream-card-detail-btn {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  background: transparent;
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-pill);
+  color: var(--kh-text-muted);
+  font-size: var(--kh-font-size-xs);
+  font-weight: 700;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.rh-cs-stream-card-detail-btn:active {
+  background: var(--kh-accent-soft-strong);
+  color: var(--kh-accent);
+  border-color: var(--kh-accent);
+}
+.rh-cs-stream-card-sub {
+  font-size: var(--kh-font-size-xs);
+  color: var(--kh-text-faint);
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  margin-bottom: 6px;
+}
+.rh-cs-stream-card-kpi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kh-space-2);
+  font-size: var(--kh-font-size-sm);
+}
+.rh-cs-stream-kpi {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  padding: 2px 8px;
+  background: var(--kh-bg-input);
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-pill);
+}
+.rh-cs-stream-kpi .k {
+  font-size: var(--kh-font-size-xs);
+  color: var(--kh-text-faint);
+}
+.rh-cs-stream-kpi .v {
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  font-weight: 700;
+  color: var(--kh-text);
+}
+.rh-cs-stream-kpi.tone-amber .v { color: #fbbf24; }
+.rh-cs-stream-kpi.tone-pink .v { color: #f472b6; }
+.rh-cs-stream-kpi.tone-green .v { color: #4ade80; }
+.rh-cs-stream-kpi.tone-accent {
+  background: rgba(0, 188, 212, 0.12);
+  border-color: rgba(0, 188, 212, 0.5);
+}
+.rh-cs-stream-kpi.tone-accent .k,
+.rh-cs-stream-kpi.tone-accent .v { color: var(--kh-accent); }
+
+.rh-cs-stream-card-body {
+  padding: 4px 0;
+}
+.rh-cs-stream-card-empty {
+  padding: var(--kh-space-4);
+  text-align: center;
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-text-faint);
+  font-style: italic;
+}
+/* チャンク取得の進捗 placeholder。 card 内 body 下に表示 */
+.rh-cs-stream-card-placeholder {
+  padding: var(--kh-space-3);
+  text-align: center;
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-text-muted);
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  border-top: 1px dashed var(--kh-border);
+  background: rgba(0, 188, 212, 0.03);
+}
+/* 折り畳み時は placeholder も隠す */
+.rh-cs-stream-card.collapsed .rh-cs-stream-card-placeholder { display: none; }
+
+/* 仮想化用 spacer (= 上下に空 div で総高を確保) */
+.rh-cs-virt-spacer {
+  flex-shrink: 0;
+  width: 100%;
+}
+
+/* ───── 期間ボトムシート 中身 ───── */
+/* 本体 cs-period popover (= style.css 周辺) と同等機能をスマホ縦に再構成:
+ *   - preset (4 列 × 2 行 ≒ 8 枠に 7 個)
+ *   - summary (1 行)
+ *   - 1 ヶ月カレンダー (= 7 列、 行は最大 6)
+ *   - 月名タップで年月 picker (= カレンダーの上に被さる)
+ */
+.rh-cs-period-presets {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--kh-space-2);
+  margin-bottom: var(--kh-space-3);
+}
+.rh-cs-period-presets button {
+  padding: var(--kh-space-2);
+  background: var(--kh-bg-frame);
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-pill);
+  color: var(--kh-text);
+  font: inherit;
+  font-size: var(--kh-font-size-sm);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.rh-cs-period-presets button:active { background: var(--kh-accent-soft-strong); }
+.rh-cs-period-presets button.active {
+  background: var(--kh-accent);
+  border-color: var(--kh-accent);
+  color: var(--kh-bg);
+}
+/* hint = 「次に何をすべきか」 案内 (info/warn/ok の 3 段) */
+.rh-cs-pp-hint {
+  margin-bottom: var(--kh-space-2);
+  padding: var(--kh-space-2) var(--kh-space-3);
+  border-radius: 8px;
+  font-size: var(--kh-font-size-sm);
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.4;
+}
+.rh-cs-pp-hint.info {
+  background: rgba(96, 165, 250, 0.12);
+  color: #93c5fd;
+  border: 1px solid rgba(96, 165, 250, 0.35);
+}
+.rh-cs-pp-hint.warn {
+  background: rgba(251, 191, 36, 0.12);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.45);
+}
+.rh-cs-pp-hint.ok {
+  background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+.rh-cs-pp-summary {
+  margin-bottom: var(--kh-space-3);
+  padding: var(--kh-space-2) var(--kh-space-3);
+  background: var(--kh-bg-input);
+  border: 1px solid var(--kh-border);
+  border-radius: 8px;
+  font-size: var(--kh-font-size-md);
+  color: var(--kh-text);
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  text-align: center;
+}
+/* legend (= 凡例。 カレンダー下に小さく) */
+.rh-cs-pp-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--kh-space-2);
+  align-items: center;
+  justify-content: center;
+  margin-top: var(--kh-space-3);
+  font-size: var(--kh-font-size-xs);
+  color: var(--kh-text-muted);
+}
+.rh-cs-pp-legend > span[class^="lg-"] {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  vertical-align: middle;
+  margin-right: 2px;
+}
+.rh-cs-pp-legend .lg-today {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--kh-accent);
+}
+.rh-cs-pp-legend .lg-from,
+.rh-cs-pp-legend .lg-to { background: var(--kh-accent); }
+.rh-cs-pp-legend .lg-range { background: rgba(0, 188, 212, 0.15); }
+.rh-cs-pp-cal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kh-space-2);
+}
+.rh-cs-pp-cal-h {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--kh-space-3);
+}
+.rh-cs-pp-nav {
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: 1px solid var(--kh-border);
+  border-radius: 50%;
+  color: var(--kh-text);
+  font: inherit;
+  font-size: var(--kh-font-size-md);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.rh-cs-pp-cal-name {
+  flex: 1;
+  max-width: 200px;
+  padding: var(--kh-space-2) var(--kh-space-3);
+  background: var(--kh-bg-frame);
+  border: 1px solid var(--kh-border);
+  border-radius: 8px;
+  color: var(--kh-text);
+  font: inherit;
+  font-size: var(--kh-font-size-md);
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.rh-cs-pp-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.rh-cs-pp-dow {
+  text-align: center;
+  font-size: var(--kh-font-size-xs);
+  color: var(--kh-text-faint);
+  padding: var(--kh-space-1) 0;
+}
+.rh-cs-pp-dow.sun { color: #ef4444; }
+.rh-cs-pp-dow.sat { color: #60a5fa; }
+.rh-cs-pp-day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  font-size: var(--kh-font-size-md);
+  color: var(--kh-text);
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.rh-cs-pp-day.other-month { color: var(--kh-text-faint); opacity: 0.5; }
+.rh-cs-pp-day.today { box-shadow: inset 0 0 0 1px var(--kh-accent); }
+.rh-cs-pp-day:active { background: var(--kh-accent-soft-strong); }
+.rh-cs-pp-day.in-range {
+  background: rgba(0, 188, 212, 0.15);
+  border-radius: 0;
+}
+.rh-cs-pp-day.range-start,
+.rh-cs-pp-day.range-end {
+  background: var(--kh-accent);
+  color: var(--kh-bg);
+  font-weight: 700;
+  border-radius: 6px;
+}
+/* range-start かつ range-end (= 同じ日) は中央寄せの角丸 pill */
+.rh-cs-pp-day.range-start.range-end { border-radius: 50%; }
+
+/* 年月 picker (= 月名タップで開く、 カレンダーの上に積む) */
+.rh-cs-pp-ym {
+  margin-top: var(--kh-space-3);
+  padding: var(--kh-space-3);
+  background: var(--kh-bg-frame);
+  border: 1px solid var(--kh-border);
+  border-radius: 8px;
+}
+.rh-cs-pp-ym-h {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--kh-space-3);
+  margin-bottom: var(--kh-space-2);
+  font-size: var(--kh-font-size-md);
+  color: var(--kh-text);
+  font-weight: 700;
+}
+.rh-cs-pp-ym-h button {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid var(--kh-border);
+  border-radius: 50%;
+  color: var(--kh-text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.rh-cs-pp-ym-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--kh-space-2);
+}
+.rh-cs-pp-ym-cell {
+  padding: var(--kh-space-3) 0;
+  background: var(--kh-bg-input);
+  border: 1px solid var(--kh-border);
+  border-radius: 6px;
+  color: var(--kh-text);
+  font: inherit;
+  font-size: var(--kh-font-size-md);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.rh-cs-pp-ym-cell.active {
+  background: var(--kh-accent);
+  border-color: var(--kh-accent);
+  color: var(--kh-bg);
+}
+
+/* ───── picker ボトムシート 中身 (= リスナー / 配信枠) ───── */
+.rh-cs-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kh-space-2);
+}
+.rh-cs-picker-search-wrap {
+  position: sticky;
+  top: 0;
+  background: var(--kh-bg);
+  padding-bottom: var(--kh-space-2);
+  z-index: 2;
+}
+.rh-cs-picker-search {
+  width: 100%;
+  padding: var(--kh-space-2) var(--kh-space-3);
+  background: var(--kh-bg-input);
+  border: 1px solid var(--kh-border);
+  border-radius: 8px;
+  color: var(--kh-text);
+  font: inherit;
+  font-size: var(--kh-font-size-md);
+}
+.rh-cs-picker-tag-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rh-cs-picker-tag-label {
+  font-size: var(--kh-font-size-xs);
+  color: var(--kh-text-faint);
+  font-weight: 700;
+}
+.rh-cs-picker-tag-strip {
+  display: flex;
+  gap: var(--kh-space-2);
+  flex-wrap: wrap;
+}
+.rh-cs-picker-chip {
+  padding: 2px 10px;
+  background: var(--kh-bg-frame);
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-pill);
+  color: var(--kh-text-muted);
+  font: inherit;
+  font-size: var(--kh-font-size-sm);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.rh-cs-picker-chip.active {
+  background: var(--kh-accent);
+  border-color: var(--kh-accent);
+  color: var(--kh-bg);
+}
+.rh-cs-picker-empty-hint {
+  font-size: var(--kh-font-size-xs);
+  color: var(--kh-text-faint);
+  padding: 4px;
+}
+.rh-cs-picker-summary {
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-accent);
+  font-weight: 700;
+  padding-top: var(--kh-space-2);
+  border-top: 1px solid var(--kh-border);
+}
+.rh-cs-picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.rh-cs-picker-bulk {
+  display: flex;
+  gap: var(--kh-space-2);
+  align-items: center;
+  padding: var(--kh-space-2);
+  background: var(--kh-bg-frame);
+  border-radius: 6px;
+  margin-bottom: var(--kh-space-2);
+  font-size: var(--kh-font-size-sm);
+  flex-wrap: wrap;
+}
+.rh-cs-picker-bulk button {
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-pill);
+  color: var(--kh-text-muted);
+  font: inherit;
+  font-size: var(--kh-font-size-xs);
+  cursor: pointer;
+}
+.rh-cs-picker-row {
+  display: grid;
+  grid-template-columns: 24px 32px 1fr;
+  gap: var(--kh-space-2);
+  align-items: center;
+  padding: var(--kh-space-2);
+  background: var(--kh-bg-frame);
+  border-radius: 6px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  min-width: 0;
+}
+/* avatar 列を持たないバリアント (= checkbox + title の 2 カラム) */
+.rh-cs-picker-row.rh-cs-picker-row-no-avatar {
+  grid-template-columns: 24px 1fr;
+}
+/* 配信枠バリアント (= checkbox + 16:9 サムネ + title の 3 カラム) */
+.rh-cs-picker-row.rh-cs-picker-row-stream {
+  grid-template-columns: 24px 60px 1fr;
+}
+.rh-cs-picker-row-thumb {
+  width: 60px;
+  height: 34px;          /* 16:9 (60/16*9 ≒ 33.75) */
+  background-color: var(--kh-bg-input);
+  background-size: cover;
+  background-position: center;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.rh-cs-picker-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+.rh-cs-picker-row-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--kh-bg-input);
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--kh-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+.rh-cs-picker-row-name {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--kh-font-size-md);
+  color: var(--kh-text);
+  min-width: 0;
+}
+.rh-cs-picker-row-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rh-cs-picker-row-sub {
+  font-size: var(--kh-font-size-xs);
+  color: var(--kh-text-faint);
+}
+.rh-cs-picker-more {
+  padding: var(--kh-space-3);
+  text-align: center;
+  color: var(--kh-text-faint);
+  font-size: var(--kh-font-size-sm);
+}
+
+/* sheet footer 共通 (= 期間 / picker で再利用) */
+.rh-cs-sheet-footer {
+  display: flex;
+  gap: var(--kh-space-2);
+  width: 100%;
+}
+.rh-cs-sheet-clear,
+.rh-cs-sheet-apply {
+  flex: 1;
+  padding: var(--kh-space-3);
+  border-radius: 8px;
+  font: inherit;
+  font-size: var(--kh-font-size-md);
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.rh-cs-sheet-clear {
+  background: transparent;
+  border: 1px solid var(--kh-border);
+  color: var(--kh-text-muted);
+}
+.rh-cs-sheet-apply {
+  background: var(--kh-accent);
+  border: 1px solid var(--kh-accent);
+  color: var(--kh-bg);
+}
+
+/* ═════════════════ アーカイブ リスナー検索 (ls) ═════════════════ */
+.rh-arch-ls {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.rh-ls-result-cell {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  gap: var(--kh-space-3);
+  align-items: center;
+  padding: var(--kh-space-3);
+  background: var(--kh-bg-frame);
+  border: 1px solid var(--kh-border);
+  border-radius: 10px;
+  margin: var(--kh-space-1) var(--kh-space-4);
+  text-decoration: none;
+  color: var(--kh-text);
+  -webkit-tap-highlight-color: transparent;
+}
+.rh-ls-result-cell:active { border-color: var(--kh-accent); }
+.rh-ls-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--kh-bg-input);
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--kh-text-muted);
+  font-weight: 700;
+  font-size: 14px;
+}
+.rh-ls-meta {
+  min-width: 0;
+}
+.rh-ls-name {
+  font-size: var(--kh-font-size-md);
+  font-weight: 700;
+  color: var(--kh-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rh-ls-sub {
+  font-size: var(--kh-font-size-xs);
+  color: var(--kh-text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rh-ls-stats {
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ═════════════════ 配信詳細 (stream-detail) ═════════════════ */
+.rh-sd-shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+}
+.rh-sd-hero {
+  display: flex;
+  gap: var(--kh-space-3);
+  padding: var(--kh-space-4);
+  border-bottom: 1px solid var(--kh-border);
+  background: var(--kh-bg-frame);
+}
+.rh-sd-thumb {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--kh-bg-input);
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--kh-text-muted);
+  font-size: 24px;
+  flex-shrink: 0;
+}
+.rh-sd-hero-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  justify-content: center;
+}
+.rh-sd-title {
+  font-size: var(--kh-font-size-xl);
+  font-weight: 700;
+  color: var(--kh-text);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.rh-sd-subline {
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-text-muted);
+}
+.rh-sd-channel {
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rh-sd-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--kh-border);
+  border-bottom: 1px solid var(--kh-border);
+}
+.rh-sd-kpi {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: var(--kh-space-3) var(--kh-space-2);
+  background: var(--kh-bg-frame);
+}
+.rh-sd-kpi-label {
+  font-size: var(--kh-font-size-xs);
+  color: var(--kh-text-faint);
+}
+.rh-sd-kpi-value {
+  font-size: var(--kh-font-size-lg);
+  color: var(--kh-text);
+  font-weight: 700;
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+}
+.rh-sd-kpi.tone-cyan .rh-sd-kpi-value { color: var(--kh-accent-strong); }
+.rh-sd-kpi.tone-amber .rh-sd-kpi-value { color: #fbbf24; }
+.rh-sd-subtabs {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  background: var(--kh-bg-overlay-strong);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--kh-border);
+}
+.rh-sd-subtab {
+  flex: 1;
+  padding: var(--kh-space-3) var(--kh-space-2);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--kh-text-muted);
+  font: inherit;
+  font-size: var(--kh-font-size-md);
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.rh-sd-subtab.active {
+  color: var(--kh-accent);
+  border-bottom-color: var(--kh-accent);
+}
+.rh-sd-panels {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(80px + env(safe-area-inset-bottom));
+}
+.rh-sd-panel {
+  display: block;
+  padding: var(--kh-space-3) var(--kh-space-4);
+}
+.rh-sd-panel.inactive { display: none; }
+
+.rh-sd-section {
+  margin-bottom: var(--kh-space-6);
+}
+.rh-sd-section-title {
+  margin: 0 0 var(--kh-space-2);
+  font-size: var(--kh-font-size-md);
+  font-weight: 700;
+  color: var(--kh-text);
+}
+.rh-sd-desc {
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-text-muted);
+  white-space: pre-wrap;
+  line-height: 1.5;
+  max-height: 8em;
+  overflow-y: auto;
+}
+.rh-sd-link {
+  display: block;
+  padding: var(--kh-space-3);
+  margin-bottom: var(--kh-space-2);
+  background: var(--kh-bg-frame);
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-pill);
+  color: var(--kh-accent);
+  font-size: var(--kh-font-size-md);
+  font-weight: 700;
+  text-decoration: none;
+  text-align: center;
+}
+.rh-sd-link:active { background: var(--kh-accent-soft-strong); }
+.rh-sd-comment-list-inline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kh-space-1);
+}
+
+/* リスナー / コメ タブのフィルタ row */
+.rh-sd-filter-row {
+  display: flex;
+  gap: var(--kh-space-2);
+  margin-bottom: var(--kh-space-2);
+}
+.rh-sd-filter-input {
+  flex: 1;
+  padding: var(--kh-space-2) var(--kh-space-3);
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-pill);
+  background: var(--kh-bg-input);
+  color: var(--kh-text);
+  font: inherit;
+  font-size: var(--kh-font-size-md);
+}
+.rh-sd-chip-row {
+  display: flex;
+  gap: var(--kh-space-2);
+  margin-bottom: var(--kh-space-2);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: var(--kh-space-1);
+}
+.rh-sd-chip-row::-webkit-scrollbar { display: none; }
+.rh-sd-filter-chip {
+  flex-shrink: 0;
+  padding: var(--kh-space-1) var(--kh-space-3);
+  background: var(--kh-bg-frame);
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-pill);
+  color: var(--kh-text-muted);
+  font: inherit;
+  font-size: var(--kh-font-size-sm);
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.rh-sd-filter-chip.active {
+  background: var(--kh-accent);
+  border-color: var(--kh-accent);
+  color: var(--kh-bg);
+}
+.rh-sd-filter-chip .ct {
+  margin-left: 4px;
+  font-size: var(--kh-font-size-xs);
+  color: inherit;
+  opacity: 0.7;
+}
+.rh-sd-list-summary {
+  margin-bottom: var(--kh-space-2);
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-text-faint);
+}
+
+/* リスナーセル (= 配信詳細用、 shared listener-cell より簡素) */
+.rh-sd-listener-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kh-space-1);
+}
+.rh-sd-listener-cell {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: var(--kh-space-3);
+  align-items: center;
+  padding: var(--kh-space-2) var(--kh-space-3);
+  background: var(--kh-bg-frame);
+  border: 1px solid var(--kh-border);
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--kh-text);
+  -webkit-tap-highlight-color: transparent;
+}
+.rh-sd-listener-cell:active { border-color: var(--kh-accent); }
+.rh-sd-listener-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--kh-bg-input);
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--kh-text-muted);
+  font-weight: 700;
+  font-size: 13px;
+}
+.rh-sd-listener-meta {
+  min-width: 0;
+}
+.rh-sd-listener-name {
+  font-size: var(--kh-font-size-md);
+  font-weight: 700;
+  color: var(--kh-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rh-sd-listener-sub {
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rh-sd-listener-rank {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: var(--kh-radius-pill);
+  font-size: var(--kh-font-size-xs);
+  font-weight: 700;
+  background: var(--kh-bg-input);
+  border: 1px solid var(--kh-border);
+  color: var(--kh-text-muted);
+}
+.rh-sd-listener-rank.rank-first-time { color: #00e5ff; border-color: rgba(0,229,255,0.4); }
+.rh-sd-listener-rank.rank-returning { color: #94a3b8; }
+.rh-sd-listener-rank.rank-regular { color: #fbbf24; border-color: rgba(251,191,36,0.4); }
+.rh-sd-listener-rank.rank-veteran { color: #fbbf24; border-color: rgba(251,191,36,0.5); background: rgba(251,191,36,0.10); }
+.rh-sd-listener-rank.rank-comeback { color: #a78bfa; border-color: rgba(167,139,250,0.4); }
+.rh-sd-listener-rank.rank-abandoned { color: #ef4444; border-color: rgba(239,68,68,0.4); }
+
+/* 統計タブ */
+.rh-sd-timeline {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 80px;
+  margin-bottom: var(--kh-space-2);
+}
+.rh-sd-bar {
+  flex: 1;
+  min-width: 2px;
+  background: var(--kh-accent);
+  border-radius: 1px 1px 0 0;
+  opacity: 0.7;
+}
+.rh-sd-bar.peak {
+  background: #fbbf24;
+  opacity: 1;
+}
+.rh-sd-stats-summary {
+  font-size: var(--kh-font-size-sm);
+  color: var(--kh-text-muted);
+}
+.rh-sd-composition {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--kh-space-2);
+}
+.rh-sd-comp-cell {
+  padding: var(--kh-space-3);
+  background: var(--kh-bg-frame);
+  border: 1px solid var(--kh-border);
+  border-radius: 8px;
+  text-align: center;
+}
+.rh-sd-comp-cell .label {
+  font-size: var(--kh-font-size-xs);
+  color: var(--kh-text-faint);
+}
+.rh-sd-comp-cell .value {
+  font-size: var(--kh-font-size-xl);
+  font-weight: 700;
+  color: var(--kh-text);
+}
+.rh-sd-comp-cell .pct {
+  font-size: var(--kh-font-size-xs);
+  color: var(--kh-text-muted);
+}
+.rh-sd-comp-cell.tone-cyan .value { color: var(--kh-accent-strong); }
+.rh-sd-comp-cell.tone-amber .value { color: #fbbf24; }
+.rh-sd-top-words {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.rh-sd-tw-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: var(--kh-space-2) var(--kh-space-3);
+  background: var(--kh-bg-frame);
+  border-radius: 6px;
+}
+.rh-sd-tw-word {
+  color: var(--kh-text);
+  font-weight: 700;
+}
+.rh-sd-tw-count {
+  color: var(--kh-text-faint);
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  font-size: var(--kh-font-size-sm);
+}
+.rh-sd-misc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--kh-space-2);
+}
+.rh-sd-misc-cell {
+  padding: var(--kh-space-2) var(--kh-space-3);
+  background: var(--kh-bg-frame);
+  border-radius: 6px;
+}
+.rh-sd-misc-cell .label {
+  font-size: var(--kh-font-size-xs);
+  color: var(--kh-text-faint);
+}
+.rh-sd-misc-cell .value {
+  font-size: var(--kh-font-size-md);
+  color: var(--kh-text);
+}
+
+/* ═════════════════ bottom-sheet ═════════════════
+ * 設計: bottom-sheet.js のヘッダコメント
+ * - backdrop = 全画面の半透明オーバーレイ。 タップで閉じる
+ * - sheet = 下端から立ち上がる panel。 縦の最大 80vh、 内部スクロール
+ * - 表示時に transform を 0 に戻すスライドアップアニメ
+ */
+.rh-bs-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgba(0, 0, 0, 0);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  transition: background 200ms ease;
+  pointer-events: none;
+}
+.rh-bs-backdrop.open {
+  background: rgba(0, 0, 0, 0.55);
+  pointer-events: auto;
+}
+.rh-bs-sheet {
+  width: 100%;
+  max-width: 720px;
+  /* height を明示しないと flex column の中で .rh-bs-body (flex:1 1 0) が伸び先を
+   * 持たず 0 に潰れて中身が見えなくなる (= 2026-05-14 修正)。 max-height だけでは
+   * 不十分: 「最大」 を指定しても 「ターゲット高」 がないと flex-grow は 0 のまま。 */
+  height: 85vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--kh-bg);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4);
+  transform: translateY(100%);
+  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  padding-bottom: env(safe-area-inset-bottom);
+  overflow: hidden;
+}
+.rh-bs-backdrop.open .rh-bs-sheet { transform: translateY(0); }
+.rh-bs-handle {
+  width: 36px;
+  height: 4px;
+  margin: 8px auto 4px;
+  border-radius: 2px;
+  background: var(--kh-border);
+  flex-shrink: 0;
+}
+.rh-bs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--kh-space-2) var(--kh-space-4) var(--kh-space-3);
+  border-bottom: 1px solid var(--kh-border);
+  flex-shrink: 0;
+}
+.rh-bs-title {
+  font-size: var(--kh-font-size-lg);
+  font-weight: 700;
+  color: var(--kh-text);
+}
+.rh-bs-close {
+  background: transparent;
+  border: none;
+  color: var(--kh-text-muted);
+  font-size: 18px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.rh-bs-close:active { background: rgba(255, 255, 255, 0.05); }
+.rh-bs-body {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--kh-space-3) var(--kh-space-4);
+}
+.rh-bs-footer {
+  display: flex;
+  gap: var(--kh-space-2);
+  padding: var(--kh-space-3) var(--kh-space-4);
+  border-top: 1px solid var(--kh-border);
+  flex-shrink: 0;
+  background: var(--kh-bg-overlay-footer);
+}
+

@@ -1,0 +1,176 @@
+/* === KomehubShared.openRemote() 用モーダル スタイル === */
+/* 設計: ponout.css から抽出 (= ponout / リスナー閲覧 双方で共有) */
+
+.remote-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background: rgba(2, 6, 10, 0.78);
+}
+
+.remote-panel {
+  width: min(460px, 100%);
+  max-height: calc(100dvh - 24px);
+  overflow: hidden;
+  border: 1px solid rgba(0,188,212,0.34);
+  border-radius: 8px;
+  background: #071018;
+  box-shadow: 0 18px 48px rgba(0,0,0,0.42);
+  padding: 16px;
+  color: #d8e8e8;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.remote-panel h2 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.remote-panel p {
+  margin: 8px 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #b7c8c8;
+}
+
+.remote-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  color: #d8e8e8;
+  font-size: 13px;
+  line-height: 1.4;
+  cursor: pointer;
+  user-select: none;
+}
+
+.remote-check input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: #00bcd4;
+  flex-shrink: 0;
+}
+
+.remote-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+  flex-shrink: 0;
+}
+
+.remote-actions button {
+  min-height: 36px;
+  border-radius: 6px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.remote-confirm {
+  border: 1px solid rgba(0,188,212,0.75);
+  background: #00838f;
+  color: #ffffff;
+}
+
+.remote-confirm:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+.remote-cancel {
+  border: 1px solid #1a3a4a;
+  background: transparent;
+  color: #d8e8e8;
+}
+
+.remote-result {
+  text-align: center;
+}
+
+.remote-qr {
+  width: min(280px, 100%, 52dvh);
+  max-width: 100%;
+  margin: 4px auto 10px;
+  padding: 8px;
+  border-radius: 8px;
+  background: #ffffff;
+  flex-shrink: 1;
+  min-height: 0;
+}
+
+.remote-qr svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.remote-url {
+  display: block;
+  width: 100%;
+  overflow-wrap: anywhere;
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+  padding: 8px;
+  background: rgba(255,255,255,0.04);
+  color: #ffffff;
+  font-size: 11px;
+  line-height: 1.35;
+  flex-shrink: 0;
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  text-align: left;
+  cursor: pointer;
+}
+
+.remote-url:hover {
+  border-color: rgba(0,188,212,0.65);
+  background: rgba(0,188,212,0.08);
+}
+
+.remote-copy-hint {
+  margin-top: 6px;
+  color: #9eeaf4;
+  font-size: 11px;
+  line-height: 1.3;
+  flex-shrink: 0;
+}
+
+.remote-copy-hint.failed {
+  color: #fca5a5;
+}
+
+@media (max-height: 620px) {
+  .remote-panel {
+    padding: 12px;
+  }
+
+  .remote-panel h2 {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+
+  .remote-result p {
+    display: none;
+  }
+
+  .remote-qr {
+    width: min(220px, 100%, 46dvh);
+    margin-bottom: 8px;
+  }
+
+  .remote-actions button {
+    min-height: 34px;
+  }
+}

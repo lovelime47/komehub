@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' http://localhost:* data:;">
+  <title>ポン出し - Live Comment Hub</title>
+  <link rel="stylesheet" href="ponout.css">
+  <link rel="stylesheet" href="shared/remote-opener.css">
+</head>
+<body>
+  <div class="device" id="device">
+    <header class="hud">
+      <div class="brand">ポン出し</div>
+      <div class="scene-tabs-wrap" id="sceneTabsWrap">
+        <div class="scene-tabs" id="sceneTabs"></div>
+      </div>
+      <div class="hud-right">
+        <div class="conn" id="conn">
+          <span class="dot disconnected" id="connDot"></span>
+          <span class="conn-text" id="connText">未接続</span>
+        </div>
+      </div>
+    </header>
+    <div class="toolbar" id="toolbar">
+      <div class="tb-group">
+        <div class="perf-meta">
+          <span class="dot" id="perfDot"></span>
+          <span class="label">演出</span>
+          <span class="status" id="perfStatusText">通常</span>
+          <span class="edit-badge" id="editBadge">配置編集中</span>
+        </div>
+        <button class="edit-toggle" id="editToggle" type="button" title="ポン出しスロットの並び替え">編集</button>
+        <button class="pause-button" id="pauseButton" type="button" title="クリックで演出停止 / 再度クリックで再開">停止</button>
+        <button class="clear-button" id="clearButton" type="button" title="現在 scene の表示中演出と待機キューを消す">クリア</button>
+      </div>
+      <div class="tb-sep"></div>
+      <div class="tb-group">
+        <div class="tts-meta">
+          <span class="dot" id="ttsDot"></span>
+          <span class="label">TTS</span>
+          <span class="status" id="ttsStatusText">―</span>
+        </div>
+        <button class="tts-toggle" id="ttsToggle" type="button">OFF</button>
+        <button class="tts-pause" id="ttsPause" type="button" title="クリックで一時停止 / 再度クリックで再開">一時停止</button>
+        <button class="tts-clear" id="ttsClear" type="button">クリア</button>
+      </div>
+      <div class="tb-sep"></div>
+      <div class="tb-group">
+        <button class="remote-button" id="remoteButton" type="button" title="スマホで開くためのQRコードを表示">スマホで開く</button>
+      </div>
+    </div>
+    <div class="pad-shell"><div class="pad" id="pad"></div></div>
+    <div class="page-bar" id="pageBar"></div>
+  </div>
+
+  <div class="pool" id="pool">
+    <div class="pool-head">
+      <span>未割当のポン出し</span>
+      <span class="pool-hint">スロットへドラッグして配置 / スロットからここへドラッグして外す</span>
+    </div>
+    <div class="pool-list" id="poolList"></div>
+  </div>
+
+  <script src="shared/remote-opener.js"></script>
+  <script src="ponout.js"></script>
+</body>
+</html>

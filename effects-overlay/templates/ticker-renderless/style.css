@@ -1,0 +1,265 @@
+/* ── Reset ── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ── Base ── */
+body {
+  background: transparent;
+  /* 設定 UI の fontSize は --font-size に入ります。全体を大きく/小さくしたいときの基準値です。 */
+  font-family: 'M PLUS Rounded 1c', 'Noto Sans JP', 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI', sans-serif;
+  font-size: var(--font-size, 22px);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Container ── */
+#comments {
+  position: fixed;
+  /* positionY callback が bottom を px で上書きします。上下位置を固定したい場合は script.js 側も確認します。 */
+  bottom: 0px;
+  /* 左右に少し広げ、画面端でコメントや光彩が切れにくいようにしています。 */
+  left: -40px;
+  right: -40px;
+  padding: 40px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* ── Track ── */
+#track {
+  display: inline-flex;
+  align-items: flex-end;
+  /* コメント同士の横間隔です。狭くすると密に、広くするとゆったり流れます。 */
+  gap: 40px;
+  white-space: nowrap;
+  /* runtime が transform を更新し、この transition が右から左へのスクロール感を作ります。 */
+  transition: transform var(--anim-duration, 0.8s) cubic-bezier(0.12, 0, 0, 1);
+  will-change: transform;
+}
+
+/* ── Comment ── */
+.comment {
+  /* track 内で幅を縮めないことが重要です。縮むとコメント同士が詰まり、横流れの距離計算が崩れます。 */
+  flex-shrink: 0;
+  white-space: nowrap;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-weight: 700;
+  color: var(--text-color, #fff);
+  pointer-events: none;
+}
+
+/* ── Glow text ── */
+.text, .amount, .sticker, .membership-badge {
+  /* script.js の applyGlow() が --stroke-width / --glow-* / --blur-* を更新します。 */
+  -webkit-text-stroke: var(--stroke-width, 0.04em) var(--glow-core, rgba(255,255,255,0.9));
+  paint-order: stroke fill;
+  filter:
+    drop-shadow(0 0 0.05em var(--glow-core, rgba(255,255,255,0.9)))
+    drop-shadow(0 0 var(--blur-core, 0.15em) var(--glow-core, rgba(255,255,255,0.9)))
+    drop-shadow(0 0 var(--blur-main, 0.4em) var(--glow-main, rgba(255,255,255,0.3)));
+}
+
+/* ── Name row ── */
+.meta-row {
+  /* 名前/バッジは設定 UI で有効化されるまで非表示です。 */
+  display: none;
+  align-items: flex-start;
+  gap: 0.35em;
+  margin-bottom: 6px;
+}
+
+.show-name .meta-row,
+.show-badge .meta-row {
+  display: inline-flex;
+}
+
+/* ── Name ── */
+.name {
+  display: none;
+  font-size: 0.7em;
+  font-family: var(--name-font-family, inherit);
+  color: var(--name-color, #fff);
+  font-weight: 700;
+  -webkit-text-stroke: 0.04em var(--glow-core, rgba(255,255,255,0.9));
+  paint-order: stroke fill;
+  text-shadow:
+    0 0 0.06em var(--glow-core, rgba(255,255,255,0.9)),
+    0 0 0.12em var(--glow-core, rgba(255,255,255,0.9)),
+    0 0 0.2em var(--glow-core, rgba(255,255,255,0.9)),
+    0 0 0.3em var(--glow-core, rgba(255,255,255,0.9)),
+    0 0 0.45em var(--glow-core, rgba(255,255,255,0.9)),
+    0 0 0.7em var(--glow-main, rgba(255,255,255,0.3)),
+    0 0 1.0em var(--glow-main, rgba(255,255,255,0.3));
+}
+
+.show-name .name {
+  display: block;
+}
+
+/* ── Badge ── */
+.badge {
+  display: none;
+  height: 0.95em;
+  width: auto;
+  flex-shrink: 0;
+}
+
+.show-badge .badge {
+  display: block;
+}
+
+/* ── Name position ── */
+.name-bottom .comment {
+  /* 名前をコメント本文の下へ回す設定です。namePosition callback が .name-bottom を付け外しします。 */
+  flex-direction: column-reverse;
+}
+
+.name-bottom .meta-row {
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
+/* ── Text ── */
+.text {
+  font-family: var(--text-font-family, inherit), 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
+  line-height: 1.4;
+}
+
+.text img {
+  /* YouTube emoji など、本文内の画像を文字サイズに合わせます。 */
+  height: 1.4em;
+  vertical-align: middle;
+  margin: 0 1px;
+}
+
+/* ── Amount ── */
+.amount {
+  margin-right: 0.4em;
+  font-size: 0.9em;
+  opacity: 0.95;
+}
+
+/* ── Superchat ── */
+.comment.is-superchat {
+  /* .is-superchat は runtime が amount > 0 のコメントに自動で付けます。 */
+  font-size: 1.15em;
+  /* 長文スパチャは1行に伸ばさず、最大幅で折り返してカード状に表示します。
+     横流れは新着コメントの右端を画面右に揃えて止めるため、画面幅を超える
+     1行コメントは先頭(金額・名前)から左へはみ出して切れます。スパチャだけ
+     幅を上限で抑えて折り返すことで、誰がいくら送ったか + 本文全文が常に
+     画面内に収まります。 */
+  white-space: normal;
+  max-width: var(--superchat-max-width, 60vw);
+  overflow-wrap: anywhere;
+  /* 半透明の暗カードでにぎやかな配信映像の上でも全文を読みやすくします。
+     色味・不透明度・幅は customCss で上書き可能 (--superchat-card-bg /
+     --superchat-max-width)。 */
+  padding: 0.45em 0.65em;
+  background: var(--superchat-card-bg, rgba(8, 12, 26, 0.5));
+  border-radius: 0.5em;
+}
+
+.comment.is-superchat .text {
+  /* 親 .comment の nowrap を上書きし、本文を折り返します。 */
+  white-space: normal;
+}
+
+.comment.is-superchat .text,
+.comment.is-superchat .amount,
+.comment.is-superchat .sticker {
+  -webkit-text-stroke: var(--stroke-width, 0.06em) var(--glow-core, rgba(255,255,255,0.95));
+  filter:
+    drop-shadow(0 0 0.05em var(--glow-core, rgba(255,255,255,0.95)))
+    drop-shadow(0 0 var(--blur-core, 0.2em) var(--glow-core, rgba(255,255,255,0.95)))
+    drop-shadow(0 0 var(--blur-main, 0.5em) var(--glow-main, rgba(255,255,255,0.4)));
+}
+
+/* ── Superchat tiers ── */
+/* runtime は通常コメントにも tier-blue を既定付与する (superchatTier 空 → 'blue')。
+   tier 色は必ず .is-superchat でゲートし、通常コメント本文が淡色に染まるのを防ぐ。 */
+.comment.is-superchat.tier-blue    { color: #bbdefb; }
+.comment.is-superchat.tier-teal    { color: #b2dfdb; }
+.comment.is-superchat.tier-green   { color: #c8e6c9; }
+.comment.is-superchat.tier-yellow  { color: #fff9c4; }
+.comment.is-superchat.tier-orange  { color: #ffe0b2; }
+.comment.is-superchat.tier-magenta { color: #f8bbd0; }
+.comment.is-superchat.tier-red     { color: #ffcdd2; }
+
+/* ── Membership gift (= 贈った人) ── */
+/* メンバーシップギフトは課金イベントなので、スパチャと同格のカード表示にする。
+   自チャンネル枠では推定金額 (= membership_gift_pricing) が付き runtime が amount > 0 で
+   .is-superchat も付けるため、上の .is-superchat.tier-X で金額帯の色になる
+   (= スパチャと同様に金額で色が変わる)。推定金額の付かない他チャンネル枠
+   (amount=0、.is-superchat なし) のみ、ここで teal (= ギフトの tier フォールバック色) に
+   する。カード/グロー (= レイアウト) は両ケース共通で付ける。 */
+.comment.is-membership-gift {
+  font-size: 1.15em;
+  white-space: normal;
+  max-width: var(--superchat-max-width, 60vw);
+  overflow-wrap: anywhere;
+  padding: 0.45em 0.65em;
+  background: var(--superchat-card-bg, rgba(8, 12, 26, 0.5));
+  border-radius: 0.5em;
+}
+.comment.is-membership-gift .text {
+  white-space: normal;
+}
+/* 他チャンネル枠 (推定金額なし) のフォールバック色。自チャンネル枠は .is-superchat
+   の tier 色が勝つので、ここは :not(.is-superchat) でゲートして競合させない。 */
+.comment.is-membership-gift:not(.is-superchat) { color: var(--gift-color, #b2dfdb); }
+.comment.is-membership-gift:not(.is-superchat) .name { color: var(--gift-color, #b2dfdb); }
+.comment.is-membership-gift .text,
+.comment.is-membership-gift .amount {
+  -webkit-text-stroke: var(--stroke-width, 0.06em) var(--glow-core, rgba(255,255,255,0.95));
+  filter:
+    drop-shadow(0 0 0.05em var(--glow-core, rgba(255,255,255,0.95)))
+    drop-shadow(0 0 var(--blur-core, 0.2em) var(--glow-core, rgba(255,255,255,0.95)))
+    drop-shadow(0 0 var(--blur-main, 0.5em) var(--glow-main, rgba(255,255,255,0.4)));
+}
+
+/* ── Membership ── */
+.comment.is-membership {
+  color: #a5d6a7;
+}
+
+#comments.member-color .comment.is-member .name {
+  /* memberColor=true のときだけ、メンバー名を設定 UI の色にします。 */
+  color: var(--member-color, #2ba640);
+}
+
+.comment.is-moderator .name { color: #5e84f1; }
+.comment.is-owner .name { color: #ffd600; }
+.comment.is-membership .name { color: #a5d6a7; }
+
+/* ── Membership gift redemption (= 受け取った人) ── */
+/* 受領者は課金していない (= 贈り主が支払う) ので、色やカードは付けず通常コメント表示。
+   本文が「○○ さんが △△ さんからメンバーシップ ギフトを受け取りました」全文で受領者名から
+   始まるため、先頭に控えめな🎁を添えて識別印にする (= 名前の右に印 相当)。 */
+.comment.is-gift-redemption .text::before {
+  content: "🎁 ";
+  opacity: 0.85;
+}
+
+/* ── Membership badge text ── */
+.membership-badge {
+  font-size: 0.7em;
+  opacity: 0.8;
+  margin-right: 0.5em;
+}
+
+/* ── Empty values ── */
+.membership-badge:empty,
+.amount:empty,
+.text:empty,
+.sticker:empty {
+  /* data-kh-empty="hide" と合わせて、値がない要素が余白を持たないようにします。 */
+  display: none;
+}
+
+/* ── Sticker ── */
+.sticker img {
+  height: 1.6em;
+  vertical-align: middle;
+  filter: drop-shadow(0 0 6px rgba(255,255,255,0.5));
+}

@@ -1,0 +1,206 @@
+:root {
+  --font-size: 24px;
+  --accent-color: #38bdf8;
+  --avatar-display: block;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  color: #f8fafc;
+  font-family: "Noto Sans JP", sans-serif;
+}
+
+body {
+  box-sizing: border-box;
+  padding: 16px;
+}
+
+body.komehub-dev-preview-enabled {
+  padding-top: 88px;
+}
+
+#comments {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+}
+
+#comments.is-compact {
+  gap: 8px;
+}
+
+.comment {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.82);
+  border-left: 4px solid var(--accent-color);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.24);
+  font-size: var(--font-size);
+  line-height: 1.4;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+#comments.is-compact .comment {
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+.comment[data-kh-theme="theme-cyan"] {
+  --accent-color: #38bdf8;
+}
+
+.comment[data-kh-theme="theme-pink"] {
+  --accent-color: #f472b6;
+}
+
+.comment[data-kh-theme="theme-violet"] {
+  --accent-color: #a78bfa;
+}
+
+.comment.is-entering {
+  opacity: 0;
+  transform: translateY(10px) scale(0.98);
+}
+
+.comment.is-leaving {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.98);
+}
+
+.comment.is-membership {
+  background: rgba(22, 101, 52, 0.9);
+}
+
+.comment.is-membership-gift {
+  background: rgba(91, 33, 182, 0.9);
+}
+
+.comment.is-superchat {
+  background: rgba(29, 78, 216, 0.9);
+}
+
+.comment.is-superchat.tier-yellow {
+  background: rgba(161, 98, 7, 0.92);
+}
+
+.comment.is-superchat.tier-red {
+  background: rgba(153, 27, 27, 0.94);
+}
+
+.comment.is-moderator .name {
+  color: #93c5fd;
+}
+
+.comment.is-owner .name {
+  color: #fde047;
+}
+
+.avatar {
+  display: var(--avatar-display);
+  width: 1.9em;
+  height: 1.9em;
+  border-radius: 999px;
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+
+.body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.badge {
+  width: 1.2em;
+  height: 1.2em;
+  object-fit: contain;
+}
+
+.name {
+  color: var(--accent-color);
+  font-weight: 700;
+}
+
+.prefix {
+  font-size: 0.7em;
+  padding: 0.16em 0.55em;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  align-self: flex-start;
+}
+
+.membership-header {
+  font-size: 0.78em;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.text {
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.sticker {
+  width: min(9em, 100%);
+  height: auto;
+}
+
+.komehub-dev-preview-panel {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 9999;
+  width: min(420px, calc(100vw - 24px));
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+}
+
+.komehub-dev-preview-title {
+  margin-bottom: 8px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.komehub-dev-preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.komehub-dev-preview-button {
+  appearance: none;
+  border: 0;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+}
+
+.komehub-dev-preview-button.is-active {
+  background: #2563eb;
+}

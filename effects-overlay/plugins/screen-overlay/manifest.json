@@ -1,0 +1,27 @@
+{
+  "id": "com.comment-hub.screen-overlay",
+  "version": "1.0.0",
+  "name": "全画面オーバーレイ",
+  "emoji": "🔦",
+  "entry": "screen-overlay.js",
+  "globalName": "ScreenOverlay",
+  "interface": {
+    "methods": [
+      "show"
+    ],
+    "hasPause": true
+  },
+  "defaultAssets": [],
+  "defaultParams": {
+    "blendMode": "screen",
+    "opacity": 0.8,
+    "duration": 3000
+  },
+  "dependencies": [],
+  "migrations": {},
+  "uiSchema": [],
+  "badgeColor": {
+    "bg": "#312e81",
+    "fg": "#c4b5fd"
+  }
+}

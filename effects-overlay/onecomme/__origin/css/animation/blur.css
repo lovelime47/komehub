@@ -1,0 +1,13 @@
+.comment-enter-active,
+.comment-leave-active {
+  transition: opacity var(--lcv-enter-duration) var(--lcv-enter-easing),
+              filter var(--lcv-enter-duration) var(--lcv-enter-easing);
+}
+.comment-enter-from {
+  opacity: 0 !important;
+  filter: blur(12px) !important;
+}
+.comment-leave-to {
+  opacity: 0 !important;
+  filter: blur(12px) !important;
+}

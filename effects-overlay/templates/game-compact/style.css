@@ -1,0 +1,157 @@
+/*
+ * game-compact
+ *
+ * ゲーム配信向けの完成品テンプレートであり、Render 実装の最小サンプルです。
+ * 画面中央を隠さないよう、背景カードを持たない軽いコメント列にしています。
+ * script.js の config が CSS 変数と class を切り替え、この CSS はその値だけを読む構成です。
+ */
+
+/* ── Reset ── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: transparent;
+  font-size: var(--font-size, 18px);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+#comments {
+  /* OBS ブラウザソース全体をコメント表示領域として使います。 */
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--comment-gap, 1px);
+  padding: 12px;
+  overflow: hidden;
+}
+
+/* 表示位置 (左/右) + 横幅: 共通機構 (runtime applyCommonLayout) が body.kh-pos-* と
+   --kh-stage-width を付与する。common.css 未読込のため同一ルールを自前で持つ。
+   縦配置はテンプレ既定を尊重し、左右と横幅のみ上書き。 */
+body.kh-pos-left > #comments,
+body.kh-pos-right > #comments {
+  width: var(--kh-stage-width, 480px);
+  max-width: 100%;
+}
+body.kh-pos-left > #comments { left: var(--kh-stage-edge, 0px); right: auto; }
+body.kh-pos-right > #comments { left: auto; right: var(--kh-stage-edge, 0px); }
+
+#comments.direction-down { justify-content: flex-start; }
+
+/* ── 行の高さの基準値 ── */
+:root {
+  --line-h: calc(var(--line-height, 1.5) * 1em);
+  /* hhea メトリクス補正: (ascender-|descender|-emSquare)/(2*emSquare) ≈ 0.056em */
+  --glyph-offset: 0.056em;
+  /* ── 任意背景で読めるハロー ──
+     game-compact は背景カードを持たない設計なので、シャドウだけで明背景でも
+     可読性を保つ必要がある。2px 8 方向の硬い縁 + 大半径 blur の 11 層 stack で
+     雪面・白 UI のような明背景でも文字を背景から分離する。 */
+  --halo:
+    -2px -2px 0 rgba(0,0,0,0.92),
+     0   -2px 0 rgba(0,0,0,0.92),
+     2px -2px 0 rgba(0,0,0,0.92),
+    -2px  0   0 rgba(0,0,0,0.92),
+     2px  0   0 rgba(0,0,0,0.92),
+    -2px  2px 0 rgba(0,0,0,0.92),
+     0    2px 0 rgba(0,0,0,0.92),
+     2px  2px 0 rgba(0,0,0,0.92),
+     0 0 4px rgba(0,0,0,1),
+     0 0 12px rgba(0,0,0,0.85),
+     0 0 24px rgba(0,0,0,0.55);
+}
+
+.comment {
+  /* 1 コメント行。背景を持たず、ゲーム画面の上に文字だけを置く設計です。
+     text-shadow は子孫のテキスト要素に inherit される。 */
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-family: var(--font-family, 'Noto Sans JP', sans-serif);
+  line-height: var(--line-height, 1.5);
+  text-shadow: var(--halo);
+}
+
+.avatar {
+  --avatar-size: 1.4em;
+  width: var(--avatar-size); height: var(--avatar-size); border-radius: 50%; flex-shrink: 0;
+  display: var(--avatar-display, none);
+  border: 1.5px solid rgba(255,255,255,0.15);
+  /* 2ライン時: 名前行のグリフ視覚中心に揃える */
+  margin-top: calc((var(--line-height, 1.5) * var(--name-size, 0.9em) - var(--avatar-size)) / 2 + var(--glyph-offset) * var(--name-size, 0.9));
+}
+
+.name-wrap { display: flex; align-items: center; gap: 4px; }
+.badge {
+  width: 1em; height: 1em; border-radius: 2px; flex-shrink: 0;
+  display: var(--badge-display, none);
+  /* align-items:center 内では margin-top の半分しか効かないため 2倍 */
+  margin-top: calc(var(--glyph-offset) * 2);
+}
+
+.name {
+  font-size: var(--name-size, 0.9em);
+  font-family: var(--name-font-family, inherit);
+  color: var(--name-color, #7ec8e3);
+  font-weight: 600;
+  display: var(--name-display, inline);
+}
+.name::after {
+  content: ':';
+  margin-left: 0.1em;
+}
+
+/* body-wrap */
+.body-wrap { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+
+/* ── 1ライン（名前インライン） ── */
+.name-inline .body-wrap {
+  /* 1ライン表示。ゲーム画面では縦幅を節約するため、既定でこの形を使います。 */
+  flex-direction: row; flex-wrap: wrap; gap: 4px;
+  /* 全要素を y軸中央揃え */
+  align-items: center;
+}
+/* name-wrap を text と同じ行の高さに統一 */
+.name-inline .name-wrap {
+  min-height: var(--line-h);
+  align-items: center;
+}
+/* avatar を1行目のグリフ視覚中心に揃える */
+.name-inline .avatar {
+  margin-top: calc((var(--line-h) - var(--avatar-size)) / 2 + var(--glyph-offset));
+}
+.text {
+  font-size: 1em;
+  font-family: var(--text-font-family, inherit);
+  color: var(--text-color, #ffffff);
+  font-weight: 500;
+  line-height: var(--line-height, 1.5);
+}
+.text img { height: 1.4em; vertical-align: middle; margin: 0 1px; }
+.text a { color: var(--text-color, #ffffff); text-decoration: underline; }
+
+.amount { font-size: 0.8em; color: var(--name-color, rgba(255,255,255,0.5)); margin-left: 4px; font-weight: 600; }
+.membership-header { font-size: 0.8em; color: #a5d6a7; }
+.sticker { height: 2em; }
+
+/* runtime は通常コメントにも tier-blue を既定付与する (superchatTier 空 → 'blue')。
+   tier 色は必ず .is-superchat でゲートし、通常コメントの名前/金額が淡色に染まるのを防ぐ。 */
+.comment.is-superchat .name { font-weight: 700; }
+.comment.is-superchat.tier-blue .name { color: #90caf9; }
+.comment.is-superchat.tier-teal .name { color: #80cbc4; }
+.comment.is-superchat.tier-green .name { color: #a5d6a7; }
+.comment.is-superchat.tier-yellow .name { color: #fff176; }
+.comment.is-superchat.tier-orange .name { color: #ffb74d; }
+.comment.is-superchat.tier-magenta .name { color: #f48fb1; }
+.comment.is-superchat.tier-red .name { color: #ef9a9a; }
+.comment.is-superchat.tier-blue .amount, .comment.is-superchat.tier-teal .amount, .comment.is-superchat.tier-green .amount,
+.comment.is-superchat.tier-yellow .amount, .comment.is-superchat.tier-orange .amount,
+.comment.is-superchat.tier-magenta .amount, .comment.is-superchat.tier-red .amount { color: #ffb74d; }
+
+#comments.member-color .comment.is-member .name { color: var(--member-color, #2ba640); }
+.comment.is-moderator .name { color: #5e84f1; }
+.comment.is-owner .name { color: #ffd600; }
+.comment.is-membership .name { color: #a5d6a7; }

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>表示項目を増やす - ticker-renderless</title>
+<link rel="stylesheet" href="guide.css">
+</head>
+<body>
+<div class="page">
+  <header>
+    <p class="eyebrow"><a href="../structure.html">structure</a> / fields</p>
+    <h1>表示項目を増やす</h1>
+    <p class="lead">横流れでも表示項目の追加方法は list と同じです。<code>&lt;template id="ticker-item-template"&gt;</code> に <code>data-kh</code> を置きます。</p>
+  </header>
+
+  <section>
+    <h2><code>data-kh</code> の考え方</h2>
+    <div class="box">
+      <pre><code>&lt;span class="name" data-kh="name"&gt;&lt;/span&gt;
+&lt;span class="amount" data-kh="amount" data-kh-empty="hide"&gt;&lt;/span&gt;
+&lt;span class="text" data-kh="text"&gt;&lt;/span&gt;</code></pre>
+      <p><code>membershipHeader</code> や <code>amount</code> は runtime の標準 model にあるため、<code>beforeCommitComment()</code> なしで直接読めます。</p>
+    </div>
+  </section>
+
+  <section>
+    <h2><code>data-kh-empty="hide"</code> の意味</h2>
+    <div class="box">
+      <p>値が空のときに要素ごと隠します。横流れでは空要素が残ると横幅計算にも影響するため、任意項目には付けます。</p>
+      <pre><code>&lt;img class="badge" data-kh="badge" data-kh-empty="hide" alt=""&gt;</code></pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>例: 時刻を追加する</h2>
+    <div class="steps">
+      <div class="step">
+        <h3>HTML に追加する</h3>
+        <pre><code>&lt;span class="time" data-kh="timestamp" data-kh-empty="hide"&gt;&lt;/span&gt;</code></pre>
+      </div>
+      <div class="step">
+        <h3>CSS を追加する</h3>
+        <pre><code>.time {
+  margin-right: 0.35em;
+  font-size: 0.72em;
+  opacity: 0.75;
+}</code></pre>
+      </div>
+      <div class="step">
+        <h3>必要なら再計算する</h3>
+        <p>表示幅が変わる設定を追加した場合は、callback 内で <code>recalcTicker(helpers)</code> を呼びます。</p>
+      </div>
+    </div>
+  </section>
+</div>
+</body>
+</html>

@@ -1,0 +1,967 @@
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #0a1628;
+  color: #d8e8e8;
+  font-family: -apple-system, "Segoe UI", "Hiragino Kaku Gothic ProN", "Meiryo", system-ui, sans-serif;
+  font-size: 14px;
+  overflow: hidden;
+}
+
+body { display: flex; flex-direction: column; }
+
+/* === デバイス筐体 === */
+.device {
+  flex: 1 1 auto;
+  background: #0a1628;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  min-height: 0;
+}
+
+/* === HUD === */
+.hud {
+  padding: 0 16px;
+  border-bottom: 1px solid #1a3a4a;
+  background: #0d1b2a;
+  flex-shrink: 0;
+  display: grid;
+  /* hud-home が無いレイアウト (= desktop ponout.html) では auto は 0 になって
+   * 3 列 grid と等価。 hud-home が居る remote では 4 列。 */
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  column-gap: 14px;
+  align-items: center;
+  min-height: 48px;
+}
+
+/* リモートホームに戻るボタン (= ponout-remote.html 専用)。 .hud 直下の最初の子。 */
+.hud-home {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid #1a3a4a;
+  border-radius: 999px;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 120ms, color 120ms, border-color 120ms;
+}
+.hud-home:active {
+  background: rgba(0, 188, 212, 0.10);
+  color: #00bcd4;
+  border-color: rgba(0, 188, 212, 0.4);
+}
+
+.brand {
+  font-size: 16px;
+  letter-spacing: 0;
+  color: #00bcd4;
+  font-weight: 600;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  text-shadow: none;
+  margin: 0;
+}
+
+/* シーンタブ wrapper: 5 件まではフィット、6+ は横スクロール + 右端フェード */
+.scene-tabs-wrap {
+  position: relative;
+  min-width: 0;
+  align-self: end;
+}
+
+.scene-tabs-wrap::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 28px;
+  pointer-events: none;
+  background: linear-gradient(to right, transparent, #0d1b2a 70%);
+  opacity: 0;
+  transition: opacity 120ms;
+}
+
+.scene-tabs-wrap.overflow::after { opacity: 1; }
+
+.scene-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  align-items: center;
+  min-width: 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-behavior: smooth;
+}
+
+.scene-tabs::-webkit-scrollbar { display: none; }
+
+.scene-tab {
+  flex: 0 0 auto;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  color: #94a3b8;
+  padding: 14px 12px 13px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 100ms, border-color 100ms;
+  white-space: nowrap;
+}
+
+.scene-tab:hover {
+  color: #d8e8e8;
+}
+
+.scene-tab.active {
+  color: #00e5ff;
+  background: transparent;
+  border-bottom-color: #00bcd4;
+  box-shadow: none;
+}
+
+.scene-tab .live {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2a3a48;
+}
+
+.scene-tab.active .live {
+  background: #00bcd4;
+  box-shadow: 0 0 6px rgba(0,188,212,0.7);
+}
+
+.scene-tab .count {
+  font-size: 10px;
+  color: inherit;
+  opacity: 0.6;
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+}
+
+.hud-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+/* 接続状態 (main UI と同じ tri-state: gray=未接続 / yellow=接続中 / green=接続済) */
+.conn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #94a3b8;
+  min-width: 0;
+}
+
+.conn-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4a6a7a;
+  flex-shrink: 0;
+  transition: background 200ms, box-shadow 200ms;
+}
+
+.dot.disconnected { background: #4a6a7a; box-shadow: none; }
+
+.dot.connecting {
+  background: #ffab40;
+  box-shadow: 0 0 8px rgba(255,171,64,0.6);
+}
+
+.dot.connected {
+  background: #00e676;
+  box-shadow: 0 0 8px rgba(0,230,118,0.6);
+}
+
+.edit-toggle,
+.pause-button,
+.clear-button {
+  background: #1a2742;
+  border: 1px solid #1a3a4a;
+  color: #94a3b8;
+  border-radius: 4px;
+  padding: 5px 12px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 100ms, border-color 100ms, background 100ms;
+}
+
+.edit-toggle:hover,
+.pause-button:hover,
+.clear-button:hover {
+  color: #00e5ff;
+  border-color: #00bcd4;
+}
+
+.pause-button {
+  color: #fca5a5;
+  border-color: rgba(239,68,68,0.35);
+}
+
+.pause-button:hover {
+  color: #fecaca;
+  border-color: rgba(239,68,68,0.65);
+  background: rgba(239,68,68,0.08);
+}
+
+.pause-button.active {
+  color: #fca5a5;
+  background: rgba(239,68,68,0.14);
+  border-color: rgba(239,68,68,0.7);
+  box-shadow: 0 0 8px rgba(239,68,68,0.35);
+}
+
+.clear-button {
+  color: #fca5a5;
+  border-color: rgba(239,68,68,0.35);
+}
+
+.clear-button:hover {
+  color: #fecaca;
+  border-color: rgba(239,68,68,0.65);
+  background: rgba(239,68,68,0.08);
+}
+
+.pause-button:disabled,
+.clear-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.edit-toggle.active {
+  background: rgba(0,188,212,0.12);
+  border-color: rgba(0,188,212,0.7);
+  color: #00bcd4;
+}
+
+/* === 単一 toolbar (V2) === */
+/* header 直下に 1 段だけ。演出系 (編集/停止/クリア) と TTS 系 (ON/一時停止/クリア)
+   をひとつの帯に詰め、間に divider (.tb-sep) を入れて視覚分離する。
+   strip を 2 段持たないぶん、pad の縦面積を最大化できる。 */
+
+.toolbar {
+  padding: 6px 14px;
+  border-bottom: 1px solid #1a3a4a;
+  background: #061018;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.toolbar::-webkit-scrollbar { display: none; }
+
+.tb-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+}
+
+.tb-sep {
+  width: 1px;
+  height: 18px;
+  background: #112236;
+  flex-shrink: 0;
+  margin: 0 2px;
+}
+
+/* perf-meta / tts-meta は toolbar 内で再利用 (旧 strip 時代の class 名のまま) */
+
+.perf-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.perf-meta .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00e676;
+  box-shadow: 0 0 8px rgba(0,230,118,0.55);
+  flex-shrink: 0;
+  transition: background 200ms, box-shadow 200ms;
+}
+
+.perf-meta .dot.paused {
+  background: #ef4444;
+  box-shadow: 0 0 8px rgba(239,68,68,0.55);
+}
+
+.perf-meta .label {
+  color: #5a6a78;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.perf-meta .status {
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.perf-meta .status.paused { color: #fca5a5; }
+
+/* 編集モード時のみ表示するバッジ。perf strip 背景の tint と合わせて
+   「今は配置編集中」という状態を明示する。 */
+.perf-meta .edit-badge {
+  display: none;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #00e5ff;
+  background: rgba(0,229,255,0.12);
+  border: 1px solid rgba(0,229,255,0.5);
+  border-radius: 3px;
+  padding: 1px 7px;
+  margin-left: 6px;
+}
+
+.device.editing .perf-meta .edit-badge { display: inline-flex; }
+
+/* 編集モード時は toolbar 全体を薄シアンに tint。配置編集中バッジと合わせて
+   "今は配置編集中" を一目で示す。 */
+.device.editing .toolbar {
+  background: linear-gradient(180deg, rgba(0,188,212,0.10), rgba(0,188,212,0.04));
+  border-bottom-color: rgba(0,188,212,0.35);
+}
+
+/* toolbar 内のボタンは縦の幅を揃える (4px padding, 小型) */
+.toolbar .edit-toggle,
+.toolbar .pause-button,
+.toolbar .clear-button,
+.toolbar .remote-button,
+.toolbar .fullscreen-button {
+  padding: 4px 12px;
+  min-width: 56px;
+  text-align: center;
+}
+
+.remote-button,
+.fullscreen-button {
+  background: #1a2742;
+  border: 1px solid #1a3a4a;
+  color: #94a3b8;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.remote-button:hover,
+.fullscreen-button:hover {
+  color: #00e5ff;
+  border-color: #00bcd4;
+  background: #1a2742;
+}
+
+.remote-button:disabled,
+.fullscreen-button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.hud-right .fullscreen-button {
+  min-width: 58px;
+  padding: 4px 10px;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.tts-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tts-meta .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4a6a7a;
+  flex-shrink: 0;
+  transition: background 200ms, box-shadow 200ms;
+}
+
+.tts-meta .dot.on {
+  background: #00e676;
+  box-shadow: 0 0 8px rgba(0,230,118,0.55);
+}
+
+.tts-meta .dot.paused {
+  background: #ffab40;
+  box-shadow: 0 0 8px rgba(255,171,64,0.55);
+}
+
+.tts-meta .dot.error {
+  background: #ef4444;
+  box-shadow: 0 0 8px rgba(239,68,68,0.55);
+}
+
+.tts-meta .dot.checking {
+  background: #94a3b8;
+  box-shadow: 0 0 6px rgba(148,163,184,0.45);
+}
+
+.tts-meta .label {
+  color: #5a6a78;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.tts-meta .status {
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
+}
+
+.tts-meta .status.error { color: #ff8a8a; }
+.tts-meta .status.checking { color: #cbd5e1; }
+.tts-meta .status.on { color: #00bcd4; }
+
+.tts-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.tts-toggle,
+.tts-pause,
+.tts-clear {
+  background: #1a2742;
+  border: 1px solid #1a3a4a;
+  color: #94a3b8;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+  transition: color 100ms, border-color 100ms, background 100ms;
+}
+
+/* toggle のみ "処理中…" 表示で幅を保持するため広め。pause/clear はラベル固定なので
+   perf 側の toolbar ボタンと揃える。 */
+.tts-toggle { min-width: 72px; }
+.tts-pause { min-width: 64px; }
+.tts-clear { min-width: 56px; }
+
+.tts-toggle:hover,
+.tts-pause:hover,
+.tts-clear:hover {
+  color: #00bcd4;
+  border-color: rgba(0,188,212,0.45);
+}
+
+.tts-toggle.active {
+  color: #00bcd4;
+  background: rgba(0,188,212,0.12);
+  border-color: rgba(0,188,212,0.7);
+}
+
+.tts-pause.active {
+  color: #ffd07a;
+  background: rgba(255,171,64,0.14);
+  border-color: rgba(255,171,64,0.7);
+  box-shadow: 0 0 8px rgba(255,171,64,0.35);
+}
+
+.tts-toggle:disabled,
+.tts-pause:disabled,
+.tts-clear:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.tts-clear {
+  color: #fca5a5;
+  border-color: rgba(239,68,68,0.35);
+}
+
+.tts-clear:hover {
+  color: #fecaca;
+  border-color: rgba(239,68,68,0.65);
+  background: rgba(239,68,68,0.08);
+}
+
+/* === 直近発火バー === */
+.recent {
+  padding: 7px 18px;
+  border-bottom: 1px solid #000;
+  background: rgba(0,0,0,0.4);
+  flex-shrink: 0;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 11px;
+  overflow: hidden;
+}
+
+.recent .label {
+  color: #5a6a78;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+}
+
+.recent .item {
+  padding: 2px 9px;
+  background: #112236;
+  border-radius: 12px;
+  color: #94a3b8;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.recent .item .time {
+  color: #00bcd4;
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  font-size: 10px;
+  margin-right: 1px;
+}
+
+.recent .none {
+  color: #4a6a7a;
+  font-style: italic;
+}
+
+/* === パッド (V2: strip 2 段廃止 + 直近撤去で縦が ~70px 余ったぶん gap/icon を拡大) === */
+.pad-shell {
+  flex: 1;
+  padding: 14px 16px 8px;
+  background: #0a1628;
+  min-height: 0;
+  display: flex;
+}
+
+.pad {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.key {
+  position: relative;
+  border-radius: 8px;
+  background: #06101e;
+  border: 1px solid #1a3a4a;
+  box-shadow:
+    0 6px 22px rgba(0,0,0,0.35);
+  cursor: pointer;
+  user-select: none;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  color: #d8e8e8;
+  font-family: inherit;
+  transition: transform 80ms, box-shadow 80ms;
+}
+
+/* LCD 風 subtle スキャンライン */
+.key::before {
+  content: none;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0 2px,
+    rgba(255,255,255,0.012) 2px 3px
+  );
+}
+
+.key .icon {
+  font-size: 44px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  transition: filter 80ms;
+}
+
+.key .icon img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  display: block;
+}
+
+.key .name {
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.key .led {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #1a3a4a;
+  box-shadow: inset 0 0 2px rgba(0,0,0,0.6);
+}
+
+.key.ready .led {
+  background: #00bcd4;
+  box-shadow: 0 0 6px rgba(0,188,212,0.6);
+}
+
+.key:not(.empty):hover {
+  border-color: rgba(0,188,212,0.55);
+  box-shadow:
+    0 6px 22px rgba(0,0,0,0.35),
+    0 0 0 1px rgba(0,188,212,0.18);
+}
+
+.key:not(.empty):active,
+.key.firing {
+  transform: translateY(1px);
+  background: radial-gradient(120% 100% at 50% 0%, #006d7a, #004a55 70%);
+  box-shadow:
+    inset 0 0 24px rgba(0,229,255,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 0 18px rgba(0,229,255,0.5),
+    0 2px 4px rgba(0,0,0,0.4);
+  color: #fff;
+}
+
+.key:not(.empty):active .icon,
+.key.firing .icon {
+  filter: drop-shadow(0 0 8px rgba(0,229,255,0.7));
+}
+
+/* 空スロット */
+.key.empty {
+  background: transparent;
+  border: 1px dashed #1a3a4a;
+  box-shadow: none;
+  cursor: default;
+  color: #2a3a48;
+}
+
+.key.empty .name,
+.key.empty .led { display: none; }
+
+.key.empty .icon {
+  font-size: 24px;
+  opacity: 0.4;
+  filter: none;
+}
+
+/* 編集モード */
+.device.editing .key:not(.empty) { cursor: grab; }
+
+.device.editing .key:not(.empty):active {
+  cursor: grabbing;
+  transform: none;
+  box-shadow:
+    0 6px 22px rgba(0,0,0,0.35);
+  background: #06101e;
+  color: #d8e8e8;
+}
+
+.device.editing .key { border-color: rgba(0,188,212,0.35); }
+
+.device.editing .key.empty {
+  border-color: rgba(0,188,212,0.45);
+  border-style: dashed;
+}
+
+.key.dragging { opacity: 0.35; }
+
+/* ドラッグ中、現在ホバーしているスロットに pulse をかけて
+   「ここに置けるよ」を視覚で強調する。点滅ではなく緩い 800ms の rest-bright 振幅。 */
+@keyframes drop-target-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 2px #00bcd4,
+      0 0 16px rgba(0,188,212,0.5),
+      inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px #00e5ff,
+      0 0 24px rgba(0,229,255,0.85),
+      inset 0 0 16px rgba(0,229,255,0.18);
+  }
+}
+
+.key.drop-target {
+  animation: drop-target-pulse 800ms ease-in-out infinite;
+  border-color: rgba(0,229,255,0.9);
+}
+
+.key.empty.drop-target {
+  background: rgba(0,229,255,0.06);
+}
+
+/* === ページバー === */
+.page-bar {
+  flex-shrink: 0;
+  padding: 8px 14px 10px;
+  background: #0a1628;
+  border-top: 1px solid #1a3a4a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+}
+
+.page-bar.single { display: none; }
+.page-bar.single.editing-add { display: flex; }
+
+.page-chip {
+  background: #06101e;
+  border: 1px solid #1a3a4a;
+  color: #94a3b8;
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  font-family: inherit;
+  min-width: 84px;
+  text-align: center;
+  transition: color 100ms, border-color 100ms, background 100ms, box-shadow 100ms;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.25);
+}
+
+.page-chip:hover {
+  color: #d8e8e8;
+  border-color: rgba(0,188,212,0.45);
+}
+
+.page-chip.active {
+  color: #00e5ff;
+  background: rgba(0, 229, 255, 0.14);
+  border-color: rgba(0, 188, 212, 0.5);
+  box-shadow:
+    0 0 0 1px rgba(0,188,212,0.15),
+    0 1px 2px rgba(0,0,0,0.25);
+}
+
+.page-chip.active .num {
+  color: #00e5ff;
+  text-shadow: 0 0 6px rgba(0,229,255,0.5);
+}
+
+.page-chip .num {
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  color: #5a6a78;
+  font-size: 11px;
+}
+
+.page-chip.add {
+  background: transparent;
+  border: 1px dashed #1a3a4a;
+  color: #4a6a7a;
+  min-width: 44px;
+}
+
+.page-chip.add:hover {
+  color: #00bcd4;
+  border-color: rgba(0,188,212,0.6);
+}
+
+/* === 未割当 Pool === */
+.pool {
+  flex-shrink: 0;
+  background: #0d1b2a;
+  border-top: 1px solid #1a3a4a;
+  padding: 10px 14px 12px;
+  color: #d8e8e8;
+  display: none;
+  max-height: 40%;
+  overflow-y: auto;
+}
+
+.pool.visible { display: block; }
+
+.pool-head {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #00bcd4;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.pool-hint {
+  font-size: 10px;
+  color: #4a6a7a;
+  text-transform: none;
+  letter-spacing: 0;
+  text-align: right;
+}
+
+.pool-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 50px;
+  align-items: flex-start;
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px dashed transparent;
+  transition: border-color 100ms, background 100ms;
+}
+
+.pool-list.drop-active {
+  border-color: rgba(0,188,212,0.5);
+  background: rgba(0,188,212,0.04);
+}
+
+.pool-list:empty::before {
+  content: '未割当のポン出しはありません';
+  color: #4a6a7a;
+  font-size: 11px;
+  padding: 12px;
+}
+
+.pool-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #06101e;
+  border: 1px solid #1a3a4a;
+  border-radius: 6px;
+  padding: 7px 12px;
+  cursor: grab;
+  user-select: none;
+  font-size: 12px;
+}
+
+.pool-item:hover { border-color: #00bcd4; }
+.pool-item .icon { font-size: 18px; line-height: 1; }
+.pool-item .icon img { width: 18px; height: 18px; object-fit: contain; }
+.pool-item.dragging { opacity: 0.4; }
+
+body.remote-mode .edit-toggle,
+body.remote-mode .pool {
+  display: none !important;
+}
+
+/* .remote-modal / .remote-panel / .remote-* スタイルは shared/remote-opener.css に移管済み
+ * (= ponout / 本体メイン画面の双方で共有)。ponout.html で <link> 読み込む。 */
+
+/* ═══════════════ 縦スマホ対応 (= portrait + 狭幅) ═══════════════
+ * デフォルトの 4×2 grid + flex:1 だと、 縦スマホ (390px幅) ではセルが
+ * ~80px幅 × ~280px高 の極端に縦長になって絶望的に見栄えが悪い。
+ * - 縦時はセルを正方形ベース (= aspect-ratio: 1) にしてサイズを揃える
+ * - pad-shell の flex:1 を解除して content 高に従う
+ * - icon / font も狭幅に合わせて縮小 */
+@media (orientation: portrait) and (max-width: 600px) {
+  .pad-shell {
+    flex: 0 0 auto;
+    padding: 10px 12px;
+  }
+  .pad {
+    /* flex: 0 0 auto + grid-template 1fr の組合せは 1fr が計算不能になり
+     * 80px などの fallback 幅になって右側が空く。 親 (.pad-shell) の幅を
+     * 確実に継承するため width: 100% を明示。 */
+    flex: 0 0 auto;
+    width: 100%;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: auto auto;
+    gap: 8px;
+  }
+  .key {
+    aspect-ratio: 1;
+    padding: 6px;
+    gap: 4px;
+    border-radius: 8px;
+  }
+  .key .icon { font-size: 32px; }
+  .key .icon img { width: 36px; height: 36px; }
+  .key .name {
+    font-size: 11px;
+    line-height: 1.2;
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  /* 上部ツールバーも狭幅でつぶれないよう微調整 */
+  .toolbar {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  /* hud は狭幅で詰まるので brand を隠して hud-home + tabs + 接続 dot の 3 列に */
+  .hud {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    column-gap: 8px;
+    padding: 0 10px;
+  }
+  .brand { display: none; }
+  .hud-home {
+    padding: 5px 9px;
+    font-size: 12px;
+  }
+}
+
+/* さらに狭幅 (= 360px 級) では 4 列だと窮屈なので 3 列に */
+@media (orientation: portrait) and (max-width: 380px) {
+  .pad {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .key .icon { font-size: 30px; }
+  .key .icon img { width: 32px; height: 32px; }
+}

@@ -1,0 +1,563 @@
+{
+  "name": "歌枠",
+  "enabled": true,
+  "performancesEnabled": true,
+  "performances": [
+    {
+      "id": "penlight",
+      "name": "弾幕トリガーペンライト",
+      "enabled": true,
+      "effect": "com.comment-hub.screen-overlay",
+      "trigger": {
+        "type": "keyword",
+        "keywords": [
+          {
+            "text": "♪",
+            "regex": false
+          },
+          {
+            "text": "♫",
+            "regex": false
+          },
+          {
+            "text": "♬",
+            "regex": false
+          },
+          {
+            "text": "♩",
+            "regex": false
+          },
+          {
+            "text": "♭",
+            "regex": false
+          },
+          {
+            "text": "♮",
+            "regex": false
+          },
+          {
+            "text": "♯",
+            "regex": false
+          },
+          {
+            "text": "🎵",
+            "regex": false
+          },
+          {
+            "text": "🎶",
+            "regex": false
+          },
+          {
+            "text": "🎹",
+            "regex": false
+          },
+          {
+            "text": "🎸",
+            "regex": false
+          },
+          {
+            "text": "🎻",
+            "regex": false
+          },
+          {
+            "text": "🎺",
+            "regex": false
+          },
+          {
+            "text": "🎷",
+            "regex": false
+          },
+          {
+            "text": "🥁",
+            "regex": false
+          },
+          {
+            "text": "note",
+            "regex": false
+          },
+          {
+            "text": "✨",
+            "regex": false
+          },
+          {
+            "text": "💫",
+            "regex": false
+          },
+          {
+            "text": "🌟",
+            "regex": false
+          },
+          {
+            "text": "🔥",
+            "regex": false
+          },
+          {
+            "text": "❤",
+            "regex": false
+          },
+          {
+            "text": "🧡",
+            "regex": false
+          },
+          {
+            "text": "💛",
+            "regex": false
+          },
+          {
+            "text": "💚",
+            "regex": false
+          },
+          {
+            "text": "💙",
+            "regex": false
+          },
+          {
+            "text": "💜",
+            "regex": false
+          },
+          {
+            "text": "🖤",
+            "regex": false
+          },
+          {
+            "text": "🤍",
+            "regex": false
+          },
+          {
+            "text": "🤎",
+            "regex": false
+          },
+          {
+            "text": "♥",
+            "regex": false
+          },
+          {
+            "text": "💕",
+            "regex": false
+          },
+          {
+            "text": "💖",
+            "regex": false
+          },
+          {
+            "text": "💗",
+            "regex": false
+          },
+          {
+            "text": "💓",
+            "regex": false
+          },
+          {
+            "text": "💞",
+            "regex": false
+          },
+          {
+            "text": "💘",
+            "regex": false
+          },
+          {
+            "text": "💝",
+            "regex": false
+          },
+          {
+            "text": "onpu",
+            "regex": false
+          },
+          {
+            "text": "onnpu",
+            "regex": false
+          },
+          {
+            "text": "サイリウム",
+            "regex": false
+          },
+          {
+            "text": "pen",
+            "regex": false
+          },
+          {
+            "text": "light",
+            "regex": false
+          },
+          {
+            "text": "ペンライト",
+            "regex": false
+          }
+        ],
+        "regex": false,
+        "reactionTypes": [],
+        "minAmount": 0,
+        "includeMembership": true,
+        "listenerStatus": "",
+        "listenerHasPriorComment": "",
+        "listenerFirstCommentInStream": "",
+        "listenerRegular": ""
+      },
+      "cooldown": 0,
+      "assets": [],
+      "sounds": [],
+      "assetMeta": {},
+      "soundMeta": {},
+      "launchPosition": "both",
+      "ponout": true
+    },
+    {
+      "id": "clap",
+      "name": "拍手",
+      "enabled": true,
+      "effect": "com.comment-hub.cracker",
+      "trigger": {
+        "type": "keyword",
+        "keywords": [
+          {
+            "text": "888",
+            "regex": false
+          },
+          {
+            "text": "8888",
+            "regex": false
+          },
+          {
+            "text": "ぱちぱち",
+            "regex": false
+          },
+          {
+            "text": "🎉",
+            "regex": false
+          },
+          {
+            "text": "👏",
+            "regex": false
+          }
+        ],
+        "regex": false,
+        "reactionTypes": [],
+        "minAmount": 0,
+        "includeMembership": true,
+        "listenerStatus": "",
+        "listenerHasPriorComment": "",
+        "listenerFirstCommentInStream": "",
+        "listenerRegular": ""
+      },
+      "cooldown": 0,
+      "assets": [],
+      "sounds": [],
+      "assetMeta": {},
+      "soundMeta": {},
+      "launchPosition": "both",
+      "count": 0
+    },
+    {
+      "id": "heart",
+      "name": "かわいいコール",
+      "enabled": true,
+      "effect": "com.comment-hub.rise",
+      "trigger": {
+        "type": "keyword",
+        "keywords": [
+          {
+            "text": "❤",
+            "regex": false
+          },
+          {
+            "text": "♥",
+            "regex": false
+          },
+          {
+            "text": "かわいい",
+            "regex": false
+          }
+        ],
+        "regex": false,
+        "reactionTypes": [],
+        "minAmount": 0,
+        "includeMembership": true,
+        "listenerStatus": "",
+        "listenerHasPriorComment": "",
+        "listenerFirstCommentInStream": "",
+        "listenerRegular": ""
+      },
+      "cooldown": 0,
+      "assets": [],
+      "sounds": [],
+      "assetMeta": {},
+      "soundMeta": {},
+      "riseDistance": 35,
+      "originY": 100,
+      "spreadWidth": 50
+    },
+    {
+      "id": "praise",
+      "name": "称賛",
+      "enabled": true,
+      "effect": "com.comment-hub.rise",
+      "trigger": {
+        "type": "keyword",
+        "keywords": [
+          {
+            "text": "！",
+            "regex": false
+          },
+          {
+            "text": "!?",
+            "regex": false
+          },
+          {
+            "text": "すごい",
+            "regex": false
+          },
+          {
+            "text": "ナイス",
+            "regex": false
+          },
+          {
+            "text": "👏",
+            "regex": false
+          },
+          {
+            "text": "888",
+            "regex": false
+          }
+        ],
+        "regex": false,
+        "reactionTypes": [],
+        "minAmount": 0,
+        "includeMembership": true,
+        "listenerStatus": "",
+        "listenerHasPriorComment": "",
+        "listenerFirstCommentInStream": "",
+        "listenerRegular": ""
+      },
+      "cooldown": 0,
+      "assets": [
+        "⭐",
+        "✨"
+      ],
+      "sounds": [],
+      "assetMeta": {},
+      "soundMeta": {},
+      "spreadWidth": 100
+    },
+    {
+      "id": "laugh",
+      "name": "笑い",
+      "enabled": true,
+      "effect": "com.comment-hub.fall",
+      "trigger": {
+        "type": "keyword",
+        "keywords": [
+          {
+            "text": "ｗ",
+            "regex": false
+          },
+          {
+            "text": "草",
+            "regex": false
+          },
+          {
+            "text": "笑",
+            "regex": false
+          }
+        ],
+        "regex": false,
+        "reactionTypes": [],
+        "minAmount": 0,
+        "includeMembership": true,
+        "listenerStatus": "",
+        "listenerHasPriorComment": "",
+        "listenerFirstCommentInStream": "",
+        "listenerRegular": ""
+      },
+      "cooldown": 0,
+      "assets": [],
+      "sounds": [],
+      "assetMeta": {},
+      "soundMeta": {},
+      "confettiCount": 60
+    },
+    {
+      "id": "ponout-cracker",
+      "name": "紙吹雪",
+      "enabled": true,
+      "effect": "com.comment-hub.cracker",
+      "trigger": {
+        "type": "manual",
+        "keywords": [],
+        "regex": false,
+        "reactionTypes": [],
+        "minAmount": 0,
+        "includeMembership": true,
+        "listenerStatus": "",
+        "listenerHasPriorComment": "",
+        "listenerFirstCommentInStream": "",
+        "listenerRegular": ""
+      },
+      "cooldown": 0,
+      "assets": [],
+      "sounds": [],
+      "assetMeta": {},
+      "soundMeta": {},
+      "ponout": true,
+      "launchPosition": "both",
+      "count": 3,
+      "confettiCount": 60
+    },
+    {
+      "id": "comment-display",
+      "name": "コメント表示",
+      "enabled": false,
+      "effect": "com.comment-hub.sprout",
+      "trigger": {
+        "type": "keyword",
+        "keywords": [],
+        "regex": false,
+        "reactionTypes": [],
+        "minAmount": 0,
+        "includeMembership": true,
+        "listenerStatus": "",
+        "listenerHasPriorComment": "",
+        "listenerFirstCommentInStream": "",
+        "listenerRegular": ""
+      },
+      "cooldown": 0,
+      "assets": [],
+      "sounds": [],
+      "assetMeta": {},
+      "soundMeta": {},
+      "design": "wand",
+      "requiresContext": true,
+      "animSpeed": 100,
+      "centerExclusion": 20,
+      "displayWidth": 100,
+      "stayDuration": 2600
+    },
+    {
+      "id": "superchat-display",
+      "name": "初見歓迎",
+      "enabled": true,
+      "effect": "com.comment-hub.fixed",
+      "trigger": {
+        "type": "keyword",
+        "keywords": [],
+        "regex": false,
+        "reactionTypes": [],
+        "minAmount": 0,
+        "includeMembership": true,
+        "listenerStatus": "first-time",
+        "listenerHasPriorComment": "",
+        "listenerFirstCommentInStream": "",
+        "listenerRegular": ""
+      },
+      "cooldown": 0,
+      "assets": [],
+      "sounds": [],
+      "assetMeta": {},
+      "soundMeta": {},
+      "brandColor": "#f9a8d4",
+      "posX": 12,
+      "scale": 100,
+      "enterAnim": "slide",
+      "requiresContext": true,
+      "posY": 25,
+      "stayDuration": 5500,
+      "displayMessage": "初見さんいらっしゃい！",
+      "stampShape": "heart"
+    },
+    {
+      "id": "superchat-firework",
+      "name": "スパチャ花火",
+      "enabled": true,
+      "effect": "com.comment-hub.firework",
+      "trigger": {
+        "type": "superchat",
+        "keywords": [],
+        "regex": false,
+        "reactionTypes": [],
+        "minAmount": 0,
+        "includeMembership": true,
+        "listenerStatus": "",
+        "listenerHasPriorComment": "",
+        "listenerFirstCommentInStream": "",
+        "listenerRegular": ""
+      },
+      "cooldown": 0,
+      "assets": [],
+      "sounds": [],
+      "assetMeta": {},
+      "soundMeta": {},
+      "ponout": true,
+      "tier_blue": [
+        "small"
+      ],
+      "count": 3,
+      "tier_red": [
+        "grand"
+      ],
+      "tier_green": [
+        "medium"
+      ],
+      "nonScShows": [
+        "large"
+      ]
+    }
+  ],
+  "templatesEnabled": false,
+  "templates": [
+    {
+      "id": "com.comment-hub.template.ticker-renderless",
+      "name": "com.comment-hub.template.ticker-renderless",
+      "enabled": true,
+      "settings": {
+        "glowIntensity": 50,
+        "maxComments": 8,
+        "testBackgroundColor": "#111827",
+        "glowCustomColor": "#00dcff",
+        "namePosition": "bottom",
+        "paddingTop": 12,
+        "glowColor": "cyan",
+        "nameColor": "#ffffff",
+        "fontSize": 20,
+        "textFont": "",
+        "textColor": "#ffffff",
+        "animSpeed": "normal",
+        "paddingBottom": 12,
+        "customCss": "/* 全体の縦位置を調整 */\n/* #comments { bottom: 0px; } */\n\n/* コメント同士の横間隔を調整 */\n/* #track { gap: 24px; } */\n\n/* 名前とコメント本文の間隔を調整（名前が上にあるとき） */\n/* .meta-row { margin-bottom: 8px; } */\n\n/* 名前とコメント本文の間隔を調整（名前が下にあるとき） */\n/* .name-bottom .meta-row { margin-top: 10px; margin-bottom: 0; } */\n\n/* 名前文字のサイズや見た目を調整 */\n/* .name { font-size: 0.8em; } */\n\n/* メンバーバッジの大きさを調整 */\n/* .badge { height: 1.1em; } */\n\n/* コメント本文の行間や字間を調整 */\n/* .text { line-height: 1.5; letter-spacing: 0.02em; } */\n\n/* スパチャだけ少し大きく表示 */\n/* .comment.is-superchat { font-size: 1.2em; } */",
+        "nameFont": "",
+        "memberColorValue": "#2ba640",
+        "showName": true,
+        "paddingRight": 12,
+        "memberColor": false,
+        "paddingLeft": 12,
+        "positionY": 0,
+        "showBadge": false
+      }
+    },
+    {
+      "id": "com.comment-hub.template.singing-text",
+      "name": "com.comment-hub.template.singing-text",
+      "enabled": true,
+      "settings": {
+        "maxComments": 8,
+        "nameInline": false,
+        "textColor": "rgba(255,255,255,0.92)",
+        "memberColorValue": "#2ba640",
+        "width": 480,
+        "nameColor": "#ffffff",
+        "position": "left",
+        "memberColor": false,
+        "showAvatar": false,
+        "showBadge": false,
+        "direction": "up",
+        "fontSize": 30,
+        "showName": false
+      }
+    }
+  ],
+  "selectedTemplateId": "com.comment-hub.template.ticker-renderless",
+  "mascot": {
+    "frameInterval": 126,
+    "particles": {},
+    "patterns": {},
+    "reactDuration": 2000
+  }
+}

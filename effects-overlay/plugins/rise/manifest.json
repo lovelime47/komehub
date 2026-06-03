@@ -1,0 +1,89 @@
+{
+  "id": "com.comment-hub.rise",
+  "version": "1.0.0",
+  "name": "上昇",
+  "emoji": "💖",
+  "entry": "rise.js",
+  "globalName": "Rise",
+  "interface": {
+    "methods": [
+      "fire"
+    ],
+    "hasPause": false
+  },
+  "defaultAssets": [
+    "💖",
+    "💕",
+    "💗",
+    "💓"
+  ],
+  "defaultParams": {
+    "count": 6,
+    "speed": 4,
+    "sway": 3,
+    "sizeMin": 24,
+    "sizeMax": 48,
+    "duration": 2500
+  },
+  "dependencies": [],
+  "migrations": {},
+  "uiSchema": [
+    {
+      "key": "count",
+      "type": "slider",
+      "label": "個数",
+      "min": 0,
+      "max": 30,
+      "default": 1
+    },
+    {
+      "key": "scale",
+      "type": "slider",
+      "label": "サイズ",
+      "min": 10,
+      "max": 300,
+      "default": 100,
+      "suffix": "%"
+    },
+    {
+      "key": "originX",
+      "type": "slider",
+      "label": "表示位置 横（X）",
+      "min": 0,
+      "max": 100,
+      "default": 50,
+      "suffix": "%"
+    },
+    {
+      "key": "originY",
+      "type": "slider",
+      "label": "表示位置 縦（Y）",
+      "min": 0,
+      "max": 100,
+      "default": 100,
+      "suffix": "%"
+    },
+    {
+      "key": "spreadWidth",
+      "type": "slider",
+      "label": "発生横範囲",
+      "min": 0,
+      "max": 100,
+      "default": 40,
+      "suffix": "%"
+    },
+    {
+      "key": "riseDistance",
+      "type": "slider",
+      "label": "上昇距離",
+      "min": 10,
+      "max": 100,
+      "default": 50,
+      "suffix": "%"
+    }
+  ],
+  "badgeColor": {
+    "bg": "#1a3a2f",
+    "fg": "#4ade80"
+  }
+}

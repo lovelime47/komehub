@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <section class="frame-shell" aria-label="Live comments">
+    <header class="frame-header">
+      <div class="frame-title-wrap">
+        <p class="frame-kicker">SYSTEM v2.1</p>
+        <h1 class="frame-title">$ chat --live</h1>
+      </div>
+    </header>
+
+    <div
+      id="comments"
+      class="kh-anim-slide-up"
+      data-kh-start="list"
+      data-kh-template="#comment-template"
+      data-kh-style-id="frame-crt-terminal-config-style"
+      data-kh-options="#komehub-template-options"
+      data-kh-dev-preview="list-basic"></div>
+
+    <footer class="frame-footer">
+      <span class="frame-footer-text">$ waiting for input...</span>
+    </footer>
+  </section>
+
+  <template id="comment-template">
+    <article class="comment comment-body" data-kh="name" data-kh-attr="title">
+      <span class="theme-mark" aria-hidden="true">&gt;</span>
+      <img class="avatar" data-kh="avatar" data-kh-empty="hide" alt="">
+      <div class="comment-main">
+        <div class="comment-meta">
+          <img class="badge" data-kh="badge" data-kh-empty="hide" alt="">
+          <span class="name" data-kh="name"></span>
+          <span class="amount" data-kh="amount" data-kh-empty="hide"></span>
+        </div>
+        <div class="notice" data-kh="display.prefix" data-kh-empty="hide"></div>
+        <div class="membership-header" data-kh="membershipHeader" data-kh-empty="hide"></div>
+        <div class="comment-text" data-kh="display.html" data-kh-mode="html"></div>
+        <img class="sticker" data-kh="sticker" data-kh-empty="hide" alt="">
+      </div>
+    </article>
+  </template>
+
+  <script id="komehub-template-options" type="application/json">
+  {
+    "config": {
+      "maxComments": true,
+      "cssVars": {
+        "width": ["--panel-width", "px"],
+        "frameHeight": ["--frame-height", "px"],
+        "fontSize": ["--kh-font-size", "px"],
+        "accentColor": "--accent-color",
+        "textColor": "--text-color",
+        "bgColor": "--bg-color",
+        "highlightColor": "--highlight-color",
+        "borderColor": "--line-color",
+        "memberColorValue": "--member-color",
+        "frameOpacity": "--frame-opacity"
+      },
+      "toggleCssVars": {
+        "showAvatar": ["--avatar-display", "block", "none"],
+        "showBadge": ["--badge-display", "inline", "none"]
+      },
+      "toggleClasses": {
+        "dense": "dense-list",
+        "memberColor": "member-color",
+        "showScanlines": ["no-scanlines", "body", true],
+        "showHeader": ["hide-header", "body", true],
+        "showFooter": ["hide-footer", "body", true]
+      },
+      "customCss": true
+    },
+    "preview": {
+      "preset": "list-basic",
+      "title": "CRTターミナル",
+      "applyConfig": {
+        "maxComments": 8,
+        "width": 460,
+        "position": "left",
+        "frameHeight": 600,
+        "fontSize": 22,
+        "colorPreset": "green",
+        "accentColor": "#5fff5f",
+        "textColor": "#afffaf",
+        "bgColor": "#080d08",
+        "highlightColor": "#ffec40",
+        "borderColor": "#1f3a1f",
+        "frameOpacity": 0.92,
+        "showAvatar": false,
+        "showBadge": false,
+        "memberColor": true,
+        "memberColorValue": "#ffaa00",
+        "showScanlines": true,
+        "showHeader": true,
+        "showFooter": true,
+        "dense": false,
+        "kickerText": "SYSTEM v2.1",
+        "headerText": "$ chat --live",
+        "animationStyle": "slide-up"
+      }
+    }
+  }
+  </script>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+{
+  "id": "com.comment-hub.slide",
+  "version": "1.0.0",
+  "name": "スライド",
+  "emoji": "🐟",
+  "entry": "slide.js",
+  "globalName": "Slide",
+  "interface": {
+    "methods": [
+      "show"
+    ],
+    "hasPause": false
+  },
+  "defaultAssets": [
+    "🐟",
+    "🐡",
+    "🦑",
+    "🐙",
+    "🦐",
+    "🦀",
+    "🐳",
+    "🐋",
+    "🐬",
+    "🦈",
+    "🐠",
+    "🐢",
+    "🪼",
+    "🦭",
+    "🐧",
+    "🦩",
+    "🐚",
+    "🪸",
+    "🌊",
+    "🦞",
+    "🦪",
+    "🐊",
+    "🐸",
+    "🪺",
+    "🦆",
+    "🐉",
+    "🦕",
+    "🦖",
+    "🦎",
+    "🐍",
+    "🐲",
+    "🌿",
+    "🍀",
+    "🌸",
+    "🌺",
+    "🌻",
+    "🌼",
+    "🌹",
+    "🌷",
+    "💐",
+    "🎋",
+    "🎍",
+    "🍃",
+    "🍂",
+    "🍁",
+    "🌾",
+    "🪻",
+    "🫧",
+    "🧊",
+    "☁️"
+  ],
+  "defaultParams": {
+    "direction": "left",
+    "width": 40,
+    "duration": 4000,
+    "mode": "comment"
+  },
+  "dependencies": [],
+  "migrations": {},
+  "uiSchema": [
+    {
+      "key": "mode",
+      "type": "buttons",
+      "label": "モード",
+      "default": "comment",
+      "options": [
+        {
+          "value": "comment",
+          "label": "コメント"
+        },
+        {
+          "value": "asset",
+          "label": "素材・文字"
+        }
+      ]
+    },
+    {
+      "key": "commentFontFamily",
+      "type": "buttons",
+      "label": "文字フォント",
+      "default": "default",
+      "options": [
+        { "value": "default", "label": "標準" },
+        { "value": "\"Noto Sans JP\", sans-serif", "label": "Noto Sans JP" },
+        { "value": "\"M PLUS Rounded 1c\", sans-serif", "label": "丸文字" },
+        { "value": "\"Kiwi Maru\", serif", "label": "和風 (Kiwi Maru)" },
+        { "value": "\"Orbitron\", monospace", "label": "サイバー (Orbitron)" },
+        { "value": "monospace", "label": "等幅" }
+      ]
+    },
+    {
+      "key": "count",
+      "type": "slider",
+      "label": "個数",
+      "min": 0,
+      "max": 30,
+      "default": 1,
+      "showIf": { "key": "mode", "value": "asset" }
+    },
+    {
+      "key": "commentColor",
+      "type": "color",
+      "label": "コメントの色",
+      "default": "#ffffff",
+      "showIf": { "key": "mode", "value": "comment" }
+    },
+    {
+      "key": "commentStrokeWidth",
+      "type": "slider",
+      "label": "枠線の太さ",
+      "min": 0,
+      "max": 40,
+      "default": 30,
+      "step": 5,
+      "suffix": "%",
+      "showIf": { "key": "mode", "value": "comment" }
+    },
+    {
+      "key": "speedMultiplier",
+      "type": "slider",
+      "label": "移動速度",
+      "min": 0.2,
+      "max": 5,
+      "default": 1,
+      "step": 0.1,
+      "suffix": "倍"
+    },
+    {
+      "key": "scale",
+      "type": "slider",
+      "label": "サイズ",
+      "min": 10,
+      "max": 300,
+      "default": 100,
+      "suffix": "%"
+    },
+    {
+      "key": "direction",
+      "type": "buttons",
+      "label": "方向",
+      "default": "left",
+      "options": [
+        {
+          "value": "left",
+          "label": "← 右から左"
+        },
+        {
+          "value": "right",
+          "label": "→ 左から右"
+        }
+      ]
+    },
+    {
+      "key": "originY",
+      "type": "slider",
+      "label": "表示位置 縦（Y）",
+      "min": 0,
+      "max": 100,
+      "default": 75,
+      "suffix": "%"
+    },
+    {
+      "key": "spreadHeight",
+      "type": "slider",
+      "label": "表示高さ範囲",
+      "min": 0,
+      "max": 100,
+      "default": 50,
+      "suffix": "%"
+    }
+  ],
+  "badgeColor": {
+    "bg": "#1a2742",
+    "fg": "#94a3b8"
+  }
+}

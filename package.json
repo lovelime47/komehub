@@ -1,0 +1,107 @@
+{
+  "name": "live-comment-hub",
+  "version": "0.5.0",
+  "description": "Live Comment Hub (こめはぶ) - YouTube Live のコメントとリアクションをリアルタイムに取得・配信するツール",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:core": "cargo build --release --manifest-path core/Cargo.toml && node scripts/prepare-native-module.js",
+    "build": "npm run build:core && electron-builder",
+    "test": "node --test test/*.test.js",
+    "test:browser": "node --test test/template-browser.test.js",
+    "test:shared-memory:native-smoke": "node test/shared-memory-native-soak.js --profile smoke",
+    "test:shared-memory:native-soak": "node test/shared-memory-native-soak.js --profile soak"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "electron-store": "^8.2.0",
+    "electron-updater": "^6.8.3",
+    "matter-js": "^0.20.0"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^26.8.1",
+    "playwright": "^1.58.2"
+  },
+  "build": {
+    "appId": "com.livecommenthub.app",
+    "productName": "Live Comment Hub",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/**/*",
+      "effects-overlay/**/*",
+      "!effects-overlay/templates/chat-plastic/**",
+      "index.html",
+      "js/**/*",
+      "css/**/*",
+      "assets/**/*",
+      "node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "core/target/release/komehub_core.node",
+        "to": "komehub_core.node"
+      },
+      {
+        "from": "effects-overlay",
+        "to": "effects-overlay",
+        "filter": [
+          "**/*",
+          "!templates/chat-plastic/**"
+        ]
+      },
+      {
+        "from": "electron/defaults",
+        "to": "electron/defaults"
+      },
+      {
+        "from": "assets",
+        "to": "assets"
+      },
+      {
+        "from": "docs",
+        "to": "docs",
+        "filter": [
+          "template-authoring-guide.md",
+          "template-runtime.md",
+          "onecomme-migration-guide.md",
+          "examples/template-list-html-first/**",
+          "examples/template-ticker-basic/**",
+          "examples/template-list-basic/**",
+          "examples/template-custom-basic/**",
+          "!examples/template-chat-plastic/**",
+          "!examples/template-browser-colorful/**",
+          "!examples/template-register-basic/**",
+          "!architecture/**",
+          "!session-status.md",
+          "!step*-*.md",
+          "!template-debugging.md"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "assets/app-icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerLanguages": [
+        "ja"
+      ],
+      "language": "1041"
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable.exe"
+    },
+    "publish": {
+      "provider": "generic",
+      "url": "https://www.komehub.com/updates/"
+    }
+  }
+}

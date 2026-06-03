@@ -1,0 +1,211 @@
+@import url('/templates/__runtime/common.css');
+
+/* CRT Terminal: 緑文字 + スキャンライン + 内側グロー。
+   レトロ・コーディング配信・サイバー系演出向け。 */
+
+:root {
+  --panel-width: 460px;
+  --frame-height: 600px;
+  --frame-opacity: 0.92;
+  --accent-color: #5fff5f;
+  --text-color: #afffaf;
+  --bg-color: #080d08;
+  --highlight-color: var(--highlight-color);
+  --line-color: #1f3a1f;
+  /* surface-color = bg-color に frame-opacity を被せた半透明色。
+     color-mix(srgb) で hex + opacity → rgba 相当にする。 */
+  --surface-color: color-mix(in srgb, var(--bg-color) calc(var(--frame-opacity) * 100%), transparent);
+  /* 補助色: text-color から派生した薄バージョン (kicker / membership header 等) */
+  --muted-color: color-mix(in srgb, var(--text-color) 55%, transparent);
+  --avatar-display: none;
+  --kh-font-size: 22px;
+}
+
+html, body {
+  /* VT323 = 英数字レトロピクセル / DotGothic16 = 日本語ピクセル。
+     順番でブラウザが文字種ごとに使い分け、CJK でもレトロ統一感を保つ。 */
+  font-family: 'VT323', 'DotGothic16', 'Noto Sans JP', monospace;
+  color: var(--text-color);
+}
+
+body {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 24px;
+}
+
+/* 表示位置 (左/右) は共通機構 (applyCommonLayout) が body.kh-pos-left /
+   body.kh-pos-right を付与。フレームを body flex で左右に寄せる (縦は常に下寄せ)。 */
+body.kh-pos-left { justify-content: flex-start; }
+body.kh-pos-right { justify-content: flex-end; }
+
+body.komehub-dev-preview-enabled {
+  padding-top: 96px;
+}
+
+.frame-shell {
+  width: min(var(--panel-width), calc(100vw - 48px));
+  height: min(var(--frame-height), calc(100vh - 48px));
+  max-height: calc(100vh - 48px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  border: 2px solid var(--line-color);
+  border-radius: 0;
+  background: var(--surface-color);
+  box-shadow:
+    inset 0 0 30px color-mix(in srgb, var(--accent-color) 15%, transparent),
+    0 0 16px color-mix(in srgb, var(--accent-color) 20%, transparent);
+  position: relative;
+}
+
+/* スキャンライン: 走査線を上に重ねる。showScanlines=false で .no-scanlines 付与時は OFF */
+.frame-shell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(transparent 0 2px, color-mix(in srgb, var(--accent-color) 5%, transparent) 2px 3px);
+  z-index: 1;
+}
+body.no-scanlines .frame-shell::after { display: none; }
+
+.frame-header,
+.frame-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-color: var(--line-color);
+  background: color-mix(in srgb, var(--accent-color) 8%, transparent);
+  position: relative;
+  z-index: 2;
+}
+
+.frame-header { border-bottom: 1px solid var(--line-color); }
+.frame-footer { border-top: 1px solid var(--line-color); color: var(--muted-color); font-size: 0.7em; white-space: nowrap; }
+
+body.hide-header .frame-header,
+body.hide-footer .frame-footer { display: none; }
+
+.frame-title-wrap { display: flex; flex-direction: column; }
+.frame-kicker { margin: 0 0 2px; font-size: 0.5em; line-height: 1; color: var(--muted-color); letter-spacing: 0.1em; }
+.frame-title { margin: 0; font-size: 0.8em; line-height: 1.2; font-weight: 400; color: var(--accent-color); }
+.frame-status { flex: 0 0 auto; padding: 2px 8px; border: 1px solid var(--accent-color); color: var(--accent-color); font-size: 0.55em; }
+
+#comments {
+  /* position: relative は overflow 退場時の absolute containing block 固定 (必須) */
+  position: relative;
+  z-index: 2;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--kh-comment-gap, 4px);
+  padding: 12px;
+  overflow: hidden;
+}
+
+#comments.dense-list { --kh-comment-gap: 2px; --kh-comment-padding: 4px; }
+
+.comment {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: flex-start;
+  min-width: 0;
+  padding: var(--kh-comment-padding, 4px) 8px;
+  background: transparent;
+  color: var(--text-color);
+}
+
+.comment.is-entering { opacity: 0; transform: translateY(8px); }
+.comment.is-active {
+  opacity: 1; transform: translateY(0);
+  transition: opacity var(--kh-anim-base) var(--kh-ease-out), transform var(--kh-anim-base) var(--kh-ease-out);
+}
+.comment.is-leaving {
+  opacity: 0; transform: translateY(-6px);
+  transition: opacity var(--kh-anim-fast) var(--kh-ease-in-out), transform var(--kh-anim-fast) var(--kh-ease-in-out);
+}
+
+.comment.is-paid-highlight { color: var(--highlight-color); text-shadow: 0 0 8px rgba(255, 236, 64, 0.6); }
+
+.theme-mark {
+  width: 1.2em;
+  color: var(--accent-color);
+  font-size: 0.85em;
+  font-weight: 700;
+  align-self: center;
+}
+
+.avatar {
+  display: var(--avatar-display);
+  width: 1.5em; height: 1.5em;
+  border: 1px solid var(--accent-color);
+  border-radius: 0;
+  object-fit: cover;
+}
+
+.comment-main { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.comment-meta { min-width: 0; display: flex; align-items: center; gap: 6px; }
+
+.badge {
+  display: var(--badge-display, none);
+  width: 0.9em; height: 0.9em;
+  object-fit: contain;
+}
+
+.name {
+  min-width: 0;
+  color: var(--accent-color);
+  font-size: 0.7em;
+  font-weight: 400;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.name::after { content: '>'; margin-left: 4px; opacity: 0.7; }
+
+.amount, .notice {
+  flex: 0 0 auto;
+  color: var(--highlight-color);
+  font-size: 0.6em;
+  font-weight: 400;
+}
+.notice { padding: 0 4px; border: 1px solid var(--highlight-color); }
+
+.membership-header { color: var(--muted-color); font-size: 0.65em; }
+
+.comment-text {
+  min-width: 0;
+  color: var(--text-color);
+  font-size: 1em;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+.comment-text img { height: 1.1em; vertical-align: -0.18em; }
+
+.typing-char {
+  display: inline-block;
+  opacity: 0;
+  animation: typing-in 200ms var(--kh-ease-out) forwards;
+  animation-delay: calc(min(var(--char-index), 30) * 14ms);
+}
+
+.sticker { max-width: min(8em, 100%); height: auto; align-self: flex-start; border: 1px solid var(--line-color); }
+
+/* ロール色: ターミナル風に簡素化 */
+.comment.is-owner .name { color: var(--highlight-color); }
+.comment.is-moderator .name { color: #5fffff; }
+.comment.is-member .name { color: var(--accent-color); }
+/* memberColor=ON のときだけメンバー名を専用色で塗り分ける */
+#comments.member-color .comment.is-member .name { color: var(--member-color, var(--accent-color)); }
+.comment.is-membership { background: color-mix(in srgb, var(--accent-color) 8%, transparent); }
+.comment.is-membership-gift { background: color-mix(in srgb, var(--highlight-color) 10%, transparent); }
+
+@keyframes typing-in {
+  to { opacity: 1; }
+}

@@ -1,0 +1,17 @@
+node_modules/
+dist/
+out/
+.DS_Store
+Thumbs.db
+*.log
+
+# Rust build artifacts
+core/target/
+
+# Local runtime data (created at runtime, never committed)
+data/
+backups/
+
+# Editor / OS
+.vscode/
+.idea/

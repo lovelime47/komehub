@@ -1,0 +1,196 @@
+/* ── Reset ── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
+
+body {
+  background: transparent;
+  font-size: var(--font-size, 24px);
+  overflow: hidden;
+  -webkit-font-smoothing: subpixel-antialiased;
+  text-rendering: optimizeLegibility;
+  text-shadow: 0 0 1px rgba(0,0,0,0.1);
+}
+
+/* ── Container ── */
+#comments {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--comment-gap, 14px);
+  padding: var(--padding-top, 12px) var(--padding-right, 12px) var(--padding-bottom, 12px) var(--padding-left, 12px);
+  overflow: hidden;
+}
+
+/* 表示位置 (左/右) + 横幅: 共通機構 (runtime applyCommonLayout) が body.kh-pos-* と
+   --kh-stage-width を付与する。common.css 未読込のため同一ルールを自前で持つ。
+   縦配置はテンプレ既定を尊重し、左右と横幅のみ上書き。 */
+body.kh-pos-left > #comments,
+body.kh-pos-right > #comments {
+  width: var(--kh-stage-width, 480px);
+  max-width: 100%;
+}
+body.kh-pos-left > #comments { left: var(--kh-stage-edge, 0px); right: auto; }
+body.kh-pos-right > #comments { left: auto; right: var(--kh-stage-edge, 0px); }
+
+#comments.direction-down {
+  justify-content: flex-start;
+}
+
+/* ── 行の高さの基準値 ── */
+:root {
+  --line-h: calc(var(--line-height, 1.5) * 1em);
+  --glyph-offset: 0.056em;
+  /* 背景カードを持たないテンプレなので、文字色 (濃いめ) が配信画面に埋もれないよう
+     白の縁取り (ぷっくりステッカー風) を付ける。8 方向のハードシャドウで枠を作り、
+     外周ソフトシャドウで分離を補強。text-shadow なので文字本体は潰れず CJK 細部も残る。
+     色は --outline-color で customCss から差し替え可。 */
+  --outline-color: #ffffff;
+  --halo:
+    -2px -2px 0 var(--outline-color),
+     0   -2px 0 var(--outline-color),
+     2px -2px 0 var(--outline-color),
+    -2px  0   0 var(--outline-color),
+     2px  0   0 var(--outline-color),
+    -2px  2px 0 var(--outline-color),
+     0    2px 0 var(--outline-color),
+     2px  2px 0 var(--outline-color),
+     0 0 4px var(--outline-color),
+     0 0 8px rgba(255,255,255,0.7);
+}
+
+/* ── Comment ── */
+.comment {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-family: var(--font-family, 'M PLUS Rounded 1c', 'Noto Sans JP', sans-serif);
+  line-height: var(--line-height, 1.5);
+  text-shadow: var(--halo);
+}
+
+/* ── Avatar ── */
+.avatar {
+  --avatar-size: 1.3em;
+  width: var(--avatar-size);
+  height: var(--avatar-size);
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: var(--avatar-display, none);
+  /* 2ライン時: 名前行のグリフ視覚中心に揃える */
+  margin-top: calc((var(--line-height, 1.5) * var(--name-size, 0.72em) - var(--avatar-size)) / 2 + var(--glyph-offset));
+}
+
+/* ── Name wrap (badge + name + amount) ── */
+.name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Badge ── */
+.badge {
+  width: 1em;
+  height: 1em;
+  border-radius: 2px;
+  flex-shrink: 0;
+  display: var(--badge-display, none);
+  margin-top: calc(var(--glyph-offset) * 2);
+}
+
+/* ── Name ── */
+.name {
+  font-size: var(--name-size, 0.72em);
+  font-family: var(--name-font-family, inherit);
+  color: var(--name-color, #a07aa0);
+  font-weight: 500;
+  display: var(--name-display, inline);
+}
+
+/* ── body-wrap: アバターの横に名前+テキストを縦配置 ── */
+.body-wrap {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── 1ライン(name-inline): inline flow で name+text を同行に共存 ── */
+/* flex-row-wrap だと text が分割不可な flex item として丸ごと次行に押し出される。
+   block 化して name-wrap は inline-flex、text は inline にすることで、
+   name のすぐ後ろから text が始まり、コンテナ幅で text 内 inline 折り返しする。 */
+.name-inline .body-wrap {
+  display: block;
+}
+.name-inline .name-wrap {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-right: 4px;
+}
+.name-inline .avatar {
+  margin-top: calc((var(--line-h) - var(--avatar-size)) / 2 + var(--glyph-offset));
+}
+.name-inline .name {
+  font-weight: 600;
+}
+
+/* ── Text ── */
+.text {
+  font-size: 1em;
+  font-family: var(--text-font-family, inherit);
+  color: var(--text-color, #3a3a4a);
+  line-height: var(--line-height, 1.5);
+  font-weight: 500;
+}
+.text img {
+  height: 1.4em;
+  vertical-align: middle;
+  margin: 0 1px;
+}
+.text a {
+  color: var(--text-color, #3a3a4a);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+/* ── Amount ── */
+.amount {
+  font-size: 0.8em;
+  color: var(--name-color, rgba(255,255,255,0.5));
+  margin-left: 4px;
+  font-weight: 600;
+}
+
+/* ── Membership header ── */
+.membership-header {
+  font-size: 0.8em;
+  color: #a5d6a7;
+}
+
+/* ── Sticker ── */
+.sticker {
+  height: 2.4em;
+}
+
+/* ── Superchat tiers ── */
+/* runtime は通常コメントにも tier-blue を既定付与する (superchatTier 空 → 'blue')。
+   tier 名前色は必ず .is-superchat でゲートし、通常コメント名が淡色に染まるのを防ぐ。 */
+.comment.is-superchat .name { font-weight: 700; }
+.comment.is-superchat.tier-blue    .name { color: #90caf9; }
+.comment.is-superchat.tier-teal    .name { color: #80cbc4; }
+.comment.is-superchat.tier-green   .name { color: #a5d6a7; }
+.comment.is-superchat.tier-yellow  .name { color: #fff176; }
+.comment.is-superchat.tier-orange  .name { color: #ffb74d; }
+.comment.is-superchat.tier-magenta .name { color: #f48fb1; }
+.comment.is-superchat.tier-red     .name { color: #ef9a9a; }
+
+/* ── Member / Moderator / Owner name colors ── */
+#comments.member-color .comment.is-member .name { color: var(--member-color, #2ba640); }
+.comment.is-moderator .name { color: #5e84f1; }
+.comment.is-owner .name     { color: #ffd600; }
+
+/* ── Membership join ── */
+.comment.is-membership .name { color: #a5d6a7; }

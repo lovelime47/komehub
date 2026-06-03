@@ -1,0 +1,329 @@
+@import '/templates/__runtime/common.css';
+
+:root {
+  --card-width: 520px;
+  --card-font-size: 18px;
+  --name-font-size: 15px;
+  --card-gap: 12px;
+  --card-radius: 8px;
+  --accent-color: #2f8f83;
+  --avatar-display: block;
+  --rail-display: flex;
+  --card-bg: rgba(248, 250, 252, 0.94);
+  --card-border: rgba(18, 29, 35, 0.16);
+  --card-text: #172126;
+  --card-muted: #52636c;
+  --theme-a: #2f8f83;
+  --theme-b: #7cc7b9;
+  --theme-c: #f5f7f8;
+  font-family: "Inter", "Noto Sans JP", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background: transparent;
+  /* body を flex-end コンテナにして #comments を content-sized で下端に置く。
+     こうすると container の overflow:hidden が「カード分の高さ」だけをクリップ
+     範囲にするので、退場カードが translateY で上に動いた瞬間に container 外
+     = 即クリップ。frame-* テンプレと同じ振る舞いを実現する。 */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+/* 表示位置 (左/右) は共通機構 (applyCommonLayout) が body.kh-pos-left /
+   body.kh-pos-right を付与。body は column flex なので横方向は align-items で寄せる。 */
+body.kh-pos-left { align-items: flex-start; }
+body.kh-pos-right { align-items: flex-end; }
+
+/* common.css の `body > #comments { position: fixed; inset: 0 }` を override する。
+   body > #comments の specificity (0,1,1) より高くするため、同じ body > prefix に
+   .browser-card-list クラスを併記する (0,2,1)。
+   rigid-board layout backend は container を `position:relative / overflow:hidden /
+   height: <inline>` で扱う前提。body 下端固定 (body の flex-end) に乗せるため
+   ここで明示的に position: relative + inset: auto + height: auto に戻す。 */
+body > #comments.browser-card-list {
+  position: relative;
+  inset: auto;
+  height: auto;
+  width: min(var(--card-width), 100vw);
+  padding: 14px;
+  overflow: hidden;
+}
+
+.browser-card {
+  position: relative;
+  display: block;
+  width: 100%;
+  color: var(--card-text);
+  font-size: var(--card-font-size);
+  line-height: 1.38;
+  filter: drop-shadow(0 12px 24px rgba(11, 24, 31, 0.18));
+}
+
+.card-backdrop {
+  position: absolute;
+  inset: 8px 10px -5px 18px;
+  border-radius: var(--card-radius);
+  background: linear-gradient(135deg, var(--theme-a), var(--theme-b));
+  opacity: 0.26;
+  transform: translateY(0) scale(1);
+  transition:
+    opacity 240ms var(--kh-ease-out),
+    transform 280ms var(--kh-ease-out);
+}
+
+.card-shell {
+  position: relative;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  border-radius: var(--card-radius);
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.18), transparent 36%),
+    var(--card-bg);
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition:
+    opacity 240ms var(--kh-ease-out),
+    transform 280ms var(--kh-ease-out);
+}
+
+.browser-card.is-entering .card-backdrop,
+.browser-card.is-entering .card-shell {
+  opacity: 0;
+  transform: translateY(18px) scale(0.985);
+}
+
+/* rigid-board layout 採用後は退場アニメ (.is-leaving) と FLIP 移動 (.comment-move) を
+   削除済み。退場は rigid backend が scrollOffset を進めて container 上端を超えた
+   カードを自然消滅させる方式に統一されている。 */
+
+.meta-rail {
+  display: var(--rail-display);
+  min-height: 100%;
+  align-items: center;
+  justify-content: space-between;
+  flex-direction: column;
+  gap: 8px;
+  padding: 9px 7px;
+  background: linear-gradient(180deg, var(--theme-a), var(--theme-b));
+}
+
+.theme-icon {
+  width: 22px;
+  height: 22px;
+  background-color: rgba(255, 255, 255, 0.92);
+  background-image: var(--theme-icon-image);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 15px 15px;
+  border-radius: 999px;
+}
+
+.rail-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.card-content {
+  min-width: 0;
+  padding: 9px 13px 10px;
+  background:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--theme-b) 24%, transparent), transparent 38%),
+    transparent;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  margin-bottom: 4px;
+}
+
+.avatar {
+  display: var(--avatar-display);
+  width: 31px;
+  height: 31px;
+  flex: 0 0 31px;
+  border: 2px solid rgba(255, 255, 255, 0.84);
+  border-radius: 999px;
+  object-fit: cover;
+  background: var(--theme-c);
+}
+
+.identity {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.name-line,
+.sub-line {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 7px;
+}
+
+.badge {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+  object-fit: contain;
+}
+
+.name {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #0d1b20;
+  font-size: var(--name-font-size);
+  font-weight: 800;
+}
+
+.role-pill,
+.amount,
+.notice {
+  width: fit-content;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.role-pill {
+  flex: 0 0 auto;
+  padding: 4px 7px;
+  color: #ffffff;
+  background: var(--theme-a);
+}
+
+.sub-line {
+  margin-top: 2px;
+  color: var(--card-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.amount {
+  padding: 4px 7px;
+  color: #111827;
+  background: #ffd166;
+}
+
+.notice {
+  margin: 0 0 6px;
+  padding: 5px 8px;
+  color: #111827;
+  background: linear-gradient(90deg, #ffd166, #ffe9a8);
+}
+
+.membership-header {
+  margin: 0 0 5px;
+  color: var(--theme-a);
+  font-size: 0.82em;
+  font-weight: 800;
+}
+
+.comment-text {
+  overflow-wrap: anywhere;
+  color: var(--card-text);
+  font-weight: 700;
+  line-height: 1.36;
+}
+
+.sticker {
+  display: block;
+  max-width: 104px;
+  max-height: 104px;
+  margin-top: 8px;
+  object-fit: contain;
+}
+
+.typing-char {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(0.35em);
+  animation: typing-rise 260ms ease forwards;
+  animation-delay: min(calc(var(--char-index) * 24ms), 840ms);
+}
+
+#comments:not(.typing-enabled) .typing-char {
+  opacity: 1;
+  transform: none;
+  animation: none;
+}
+
+.compact-card .card-content {
+  padding: 9px 12px 10px;
+}
+
+.compact-card .card-header {
+  margin-bottom: 5px;
+}
+
+.compact-card .avatar {
+  width: 30px;
+  height: 30px;
+  flex-basis: 30px;
+}
+
+.comment[data-kh-theme="theme-teal"] {
+  --theme-a: #2f8f83;
+  --theme-b: #8dd6c9;
+  --theme-c: #e8fbf7;
+}
+
+.comment[data-kh-theme="theme-violet"] {
+  --theme-a: #7454b8;
+  --theme-b: #c0a7f1;
+  --theme-c: #f2edff;
+}
+
+.comment[data-kh-theme="theme-sunset"] {
+  --theme-a: #c76142;
+  --theme-b: #f5b06f;
+  --theme-c: #fff1df;
+}
+
+.comment.is-superchat .card-shell,
+.comment.is-sticker .card-shell {
+  border-color: rgba(212, 142, 33, 0.62);
+}
+
+.comment.is-paid-pulse .card-shell {
+  animation: paid-pulse 900ms ease;
+}
+
+@keyframes typing-rise {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes paid-pulse {
+  0% {
+    box-shadow: 0 0 0 rgba(255, 209, 102, 0);
+  }
+  38% {
+    box-shadow: 0 0 0 4px rgba(255, 209, 102, 0.42);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(255, 209, 102, 0);
+  }
+}

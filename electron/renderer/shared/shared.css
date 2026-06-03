@@ -1,0 +1,367 @@
+/* ===  KomehubShared 共通スタイル === */
+/* 設計正本: docs/architecture/remote-viewing-redesign.md §6 */
+/* 本体 (electron/renderer/index.html) と remote (将来) 両方から link する */
+
+/* === デザイントークン ===
+ * 本体 style.css と remote/style.css に hard-code されていた色 / 余白 / radius /
+ * typography を変数化。 remote/style.css は順次 var(--kh-*) 参照へ移行する。
+ * 本体 style.css は既存 hard-code をそのまま維持 (= 影響ゼロ)。
+ * 後から本体側を変数化する場合も、ここに定義を集約する設計。 */
+:root {
+  /* ── 背景 ── */
+  --kh-bg: #0a1628;                                   /* メイン背景 (body) */
+  --kh-bg-frame: #0d1b2a;                             /* カード / モーダル / リスト要素背景 */
+  --kh-bg-input: #06111a;                             /* 入力欄 / KPI セル背景 */
+  --kh-bg-overlay-strong: rgba(13, 27, 42, 0.95);     /* sticky header 背景 */
+  --kh-bg-overlay-weak: rgba(7, 17, 24, 0.85);        /* toolbar / footer 背景 */
+  --kh-bg-overlay-footer: rgba(7, 17, 24, 0.95);      /* fixed footer 背景 */
+
+  /* ── 文字色 ── */
+  --kh-text: #d8e8e8;
+  --kh-text-muted: #94a3b8;
+  --kh-text-faint: #4a6a7a;
+  --kh-text-strong: #ffffff;
+
+  /* ── アクセント (シアン系) ── */
+  --kh-accent: #00bcd4;
+  --kh-accent-hover: #4dd0e1;
+  --kh-accent-strong: #00e5ff;
+  --kh-accent-name: #26c6da;                          /* コメ名前色 */
+  --kh-accent-soft: rgba(0, 188, 212, 0.06);          /* hover bg */
+  --kh-accent-soft-strong: rgba(0, 188, 212, 0.16);   /* active bg */
+  --kh-accent-glow: rgba(0, 188, 212, 0.32);          /* focus ring / shadow */
+  --kh-accent-tinted-link: #80deea;                   /* link hover */
+
+  /* ── ボーダー ── */
+  --kh-border: #1a3a4a;
+  --kh-border-strong: #31505d;
+  --kh-border-faint: rgba(74, 106, 122, 0.4);
+
+  /* ── ステータス色 ── */
+  --kh-live: #ef4444;                                 /* LIVE バッジ赤 */
+  --kh-live-glow: rgba(239, 68, 68, 0.6);
+  --kh-success: #34d399;                              /* 対応済み等 */
+  --kh-success-soft: rgba(52, 211, 153, 0.5);
+  --kh-warning: #facc15;                              /* member 黄 */
+  --kh-warning-soft: rgba(250, 204, 21, 0.5);
+  --kh-member-green: #86efac;                         /* メンバーコメ名前色 */
+
+  /* ── ランクバッジ色 (= 新規 / 新参 / 古参 / 復帰 / 離脱、 常連は default amber) ── */
+  /* 本体 style.css の .lst-bg.tag-system.* と完全に同じ値。 詳細は Phase A-4 で
+     .kh-rank-badge.* を shared.css に追加する */
+  --kh-rank-default-fg: #fbbf24;                      /* 常連 (= 既定値) */
+  --kh-rank-default-border: #f59e0b;
+  --kh-rank-default-bg: rgba(245, 158, 11, 0.12);
+  --kh-rank-first-fg: #bbf7d0;                        /* 新規 */
+  --kh-rank-first-border: #22c55e;
+  --kh-rank-first-bg: rgba(34, 197, 94, 0.12);
+  --kh-rank-returning-fg: #bae6fd;                    /* 新参 */
+  --kh-rank-returning-border: #38bdf8;
+  --kh-rank-returning-bg: rgba(56, 189, 248, 0.12);
+  --kh-rank-veteran-fg: #d8b4fe;                      /* 古参 */
+  --kh-rank-veteran-border: #a855f7;
+  --kh-rank-veteran-bg: rgba(168, 85, 247, 0.18);
+  --kh-rank-comeback-fg: #fda4af;                     /* 復帰 */
+  --kh-rank-comeback-border: #f43f5e;
+  --kh-rank-comeback-bg: rgba(244, 63, 94, 0.16);
+  --kh-rank-abandoned-fg: #94a3b8;                    /* 離脱 */
+  --kh-rank-abandoned-border: #475569;
+  --kh-rank-abandoned-bg: rgba(100, 116, 139, 0.18);
+
+  /* ── 余白 (4 の倍数 + 細粒度) ── */
+  --kh-space-1: 4px;
+  --kh-space-2: 6px;
+  --kh-space-3: 8px;
+  --kh-space-4: 10px;
+  --kh-space-5: 12px;
+  --kh-space-6: 14px;
+  --kh-space-7: 16px;
+  --kh-space-8: 20px;
+  --kh-space-9: 24px;
+  --kh-space-10: 32px;
+
+  /* ── 角丸 ── */
+  --kh-radius-sm: 4px;
+  --kh-radius-md: 6px;
+  --kh-radius-lg: 8px;
+  --kh-radius-xl: 10px;
+  --kh-radius-pill: 999px;
+
+  /* ── タイポグラフィ ── */
+  --kh-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --kh-font-size-xs: 10px;                            /* badge / 補助テキスト */
+  --kh-font-size-sm: 11px;                            /* meta / status */
+  --kh-font-size-base: 12px;                          /* 標準コントロール */
+  --kh-font-size-md: 13px;                            /* リンク / ボタン */
+  --kh-font-size-lg: 14px;                            /* リスト主文 */
+  --kh-font-size-xl: 15px;                            /* 見出し小 */
+  --kh-font-size-2xl: 16px;                           /* 見出し中 */
+  --kh-line-height-tight: 1.2;
+  --kh-line-height-normal: 1.4;
+
+  /* ── タップ領域 (= スマホ 44x44 ガイドライン) ── */
+  --kh-touch-target: 44px;
+
+  /* ── shadow ── */
+  --kh-shadow-snackbar: 0 6px 24px rgba(0, 0, 0, 0.5);
+  --kh-shadow-float: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --kh-shadow-focus-ring: 0 0 0 2px var(--kh-accent-glow);
+
+  /* ── transition ── */
+  --kh-transition-fast: 120ms;
+  --kh-transition-base: 200ms;
+}
+
+/* === ランクバッジ (= 新規 / 新参 / 常連 / 古参 / 復帰 / 離脱) ===
+ * 本体側 .lst-bg.tag-system.{first|returning|veteran|comeback|abandoned} と
+ * 同じ色を使う独立クラス。 本体既存 selector を残したまま、 specificity を
+ * 意図的に低く (0,0,1,0) して、 本体側に影響を与えない設計。
+ *
+ * regular (常連) は modifier クラス無し = .kh-rank-badge 単独で default amber 色。
+ * これは本体側 .lst-bg.tag-system (modifier 無し) と同じ配色。
+ *
+ * 使い方:
+ *   <span class="kh-rank-badge">常連</span>
+ *   <span class="kh-rank-badge first">新規</span>
+ *   <span class="kh-rank-badge returning">新参</span>
+ *   <span class="kh-rank-badge veteran">古参</span>
+ *   <span class="kh-rank-badge comeback">復帰</span>
+ *   <span class="kh-rank-badge abandoned">離脱</span>
+ *
+ * DOM ファクトリは shared/listener-badges.js の createRankBadge を使う */
+.kh-rank-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 17px;
+  padding: 0 var(--kh-space-2);
+  border: 1px solid var(--kh-rank-default-border);
+  border-radius: var(--kh-radius-lg);
+  background: var(--kh-rank-default-bg);
+  color: var(--kh-rank-default-fg);
+  font-size: var(--kh-font-size-xs);
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+.kh-rank-badge.first {
+  color: var(--kh-rank-first-fg);
+  border-color: var(--kh-rank-first-border);
+  background: var(--kh-rank-first-bg);
+}
+.kh-rank-badge.returning {
+  color: var(--kh-rank-returning-fg);
+  border-color: var(--kh-rank-returning-border);
+  background: var(--kh-rank-returning-bg);
+}
+.kh-rank-badge.veteran {
+  color: var(--kh-rank-veteran-fg);
+  border-color: var(--kh-rank-veteran-border);
+  background: var(--kh-rank-veteran-bg);
+}
+.kh-rank-badge.comeback {
+  color: var(--kh-rank-comeback-fg);
+  border-color: var(--kh-rank-comeback-border);
+  background: var(--kh-rank-comeback-bg);
+}
+.kh-rank-badge.abandoned {
+  color: var(--kh-rank-abandoned-fg);
+  border-color: var(--kh-rank-abandoned-border);
+  background: var(--kh-rank-abandoned-bg);
+}
+
+/* === メンバー / モデレーター / ラベル バッジ ===
+ * 本体側 .lst-bg.is-member / is-mod / is-label と同色だが、 独立クラス。 */
+.kh-listener-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 17px;
+  padding: 0 var(--kh-space-2);
+  border: 1px solid var(--kh-border);
+  border-radius: var(--kh-radius-sm);
+  background: #102b36;
+  color: var(--kh-text-muted);
+  font-size: var(--kh-font-size-xs);
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+.kh-listener-badge.member {
+  color: var(--kh-warning);
+  border-color: var(--kh-warning-soft);
+  background: rgba(250, 204, 21, 0.08);
+}
+.kh-listener-badge.moderator {
+  color: #67e8f9;
+  border-color: rgba(0, 229, 255, 0.5);
+  background: rgba(0, 229, 255, 0.08);
+}
+.kh-listener-badge.label {
+  color: #d8b4fe;
+  border-color: rgba(168, 85, 247, 0.45);
+  background: rgba(168, 85, 247, 0.15);
+}
+.kh-listener-badge.greeted {
+  color: var(--kh-success);
+  border-color: var(--kh-success-soft);
+  background: rgba(52, 211, 153, 0.08);
+}
+/* ユーザー設定タグ (= listener_tags 経由)。 本体 .lst-bg.tag-user 移植、 紫系 */
+.kh-listener-badge.user-tag {
+  color: #d8b4fe;
+  border-color: rgba(168, 85, 247, 0.45);
+  background: rgba(168, 85, 247, 0.15);
+}
+
+/* === Snackbar Undo === */
+/* 設計: §7.1 即時トグル + Snackbar Undo (5 秒) */
+.kh-snackbar {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  z-index: 10000;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 280px;
+  max-width: min(480px, calc(100vw - 32px));
+  padding: 10px 14px;
+  border: 1px solid #1a3a4a;
+  border-radius: 8px;
+  background: #0d1b2a;
+  color: #d8e8e8;
+  font-size: 13px;
+  line-height: 1.4;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.kh-snackbar.kh-snackbar-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+.kh-snackbar-message {
+  flex: 1 1 auto;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.kh-snackbar-action {
+  flex: 0 0 auto;
+  border: 1px solid #1a3a4a;
+  border-radius: 4px;
+  background: transparent;
+  color: #00bcd4;
+  padding: 4px 10px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.kh-snackbar-action:hover {
+  border-color: #00bcd4;
+  background: rgba(0, 188, 212, 0.08);
+}
+.kh-snackbar-action:active {
+  background: rgba(0, 188, 212, 0.16);
+}
+
+/* === コメ cell の対応済みボタン === */
+/* 設計: §5.3 / §7.2 cell 右上に分離配置で誤タップ低減 */
+/* 本体 (PC) は 28x28、remote (スマホ) は 44x44 (= remote shell の CSS で override) */
+.kh-toggle-responded {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #1a3a4a;
+  border-radius: 4px;
+  background: transparent;
+  color: #4a6a7a;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+.kh-toggle-responded:hover {
+  color: #00bcd4;
+  border-color: #00bcd4;
+}
+.kh-toggle-responded[data-responded="1"] {
+  background: #00bcd4;
+  border-color: #00bcd4;
+  color: #0d1b2a;
+  box-shadow: 0 0 0 2px rgba(0, 188, 212, 0.32);
+}
+.kh-toggle-responded[data-responded="1"]:hover {
+  background: #4dd0e1;
+  border-color: #4dd0e1;
+  color: #0d1b2a;
+}
+
+/* 対応済みコメは視覚的にミュート。hover でも opacity 復帰させない
+ * (= 「対応済み」状態を hover 中も明示し続け、未対応との混同を防ぐ)。 */
+.comment-item[data-responded="1"] {
+  opacity: 0.6;
+}
+
+/* スーパーステッカー画像。コメ本文の下に表示。
+ * 高さを 80px までに抑え、コメ一覧の行密度を保つ (= 大きすぎるとスクロール過剰)。 */
+.comment-sticker {
+  display: block;
+  max-width: 80px;
+  max-height: 80px;
+  margin-top: 4px;
+  border-radius: 4px;
+}
+
+/* === リスナー詳細モーダルの「対応済み」トグル === */
+/* 設計: §5.5 / §7.1 (即時トグル + Snackbar Undo)
+ * 本体側は .ld-hero (= flex + align-items: center) の右端独立カラムに置く想定で、
+ * 縦中央配置は親 flex に任せる (= margin-top は不要)。flex-shrink: 0 で
+ * avatar + meta カラムの伸縮に巻き込まれずピル幅を保つ。 */
+.ld-greeted-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border: 1px solid #00bcd4;
+  border-radius: 6px;
+  background: rgba(0, 188, 212, 0.08);
+  color: #00bcd4;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 120ms, border-color 120ms, color 120ms, box-shadow 120ms;
+}
+.ld-greeted-toggle:hover {
+  background: rgba(0, 188, 212, 0.18);
+  box-shadow: 0 0 0 1px rgba(0, 188, 212, 0.4);
+}
+/* 対応済み: 塗りつぶし accent + ダーク文字で「完了」感を強く */
+.ld-greeted-toggle[data-greeted="1"] {
+  background: #00bcd4;
+  border-color: #00bcd4;
+  color: #0a1628;
+  box-shadow: 0 0 0 1px rgba(0, 188, 212, 0.5);
+}
+.ld-greeted-toggle[data-greeted="1"]:hover {
+  background: #4dd0e1;
+  border-color: #4dd0e1;
+}
+.ld-greeted-toggle .ld-greeted-icon {
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1;
+}

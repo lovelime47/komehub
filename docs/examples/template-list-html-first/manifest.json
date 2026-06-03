@@ -1,0 +1,57 @@
+{
+  "id": "com.comment-hub.template.sample.list-html-first",
+  "name": "list-html-first-sample",
+  "displayName": "List HTML-first Starter",
+  "version": "1.0.0",
+  "obsHint": "OBS幅 420px 前後 / 高さは任意",
+  "fonts": ["Noto Sans JP"],
+  "uiSchema": [
+    {
+      "key": "maxComments",
+      "type": "slider",
+      "label": "最大表示数",
+      "min": 3,
+      "max": 30,
+      "step": 1,
+      "default": 10
+    },
+    {
+      "key": "fontSize",
+      "type": "slider",
+      "label": "文字サイズ",
+      "min": 14,
+      "max": 48,
+      "step": 1,
+      "default": 24,
+      "suffix": "px"
+    },
+    {
+      "key": "accentColor",
+      "type": "color",
+      "label": "アクセント色",
+      "default": "#38bdf8"
+    },
+    {
+      "key": "showAvatar",
+      "type": "toggle",
+      "label": "アバター表示",
+      "default": true,
+      "onLabel": "表示",
+      "offLabel": "非表示"
+    },
+    {
+      "key": "compact",
+      "type": "toggle",
+      "label": "コンパクト表示",
+      "default": false,
+      "onLabel": "ON",
+      "offLabel": "OFF"
+    },
+    {
+      "key": "customCss",
+      "type": "textarea",
+      "label": "カスタムCSS",
+      "placeholder": ".comment { letter-spacing: 0.05em; }"
+    }
+  ]
+}

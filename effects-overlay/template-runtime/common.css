@@ -1,0 +1,500 @@
+/*
+ * こめはぶ TemplateKit 共通 CSS (v2)
+ *
+ * 目的:
+ *   cellTemplate で自動付与される class（`.comment`, `.avatar`, `.comment-body`,
+ *   `.badge`, `.name`, `.amount`, `.comment-text`, `.sticker`）を前提に、
+ *   テンプレ作者が毎回書きたくない「骨格」だけを肩代わりする。
+ *
+ * 参照方法 (opt-in):
+ *   テンプレの style.css 先頭で下を書く。
+ *     @import url('/templates/__runtime/common.css');
+ *   @import しないテンプレは何の影響も受けない（既存テンプレの後方互換を保証）。
+ *
+ * v2 の追加内容:
+ *   - レイアウト既定値（font-size / line-height / avatar-size / padding 等）を
+ *     `--kh-*` 変数で宣言。テンプレ側は変数を上書きするだけで調整できる
+ *   - `body > #comments` を fixed overlay に配置（`body` 直下のときのみ）
+ *   - YouTube スパチャ tier 色 / 役職色を `--kh-tier-*` / `--kh-role-*` で提供
+ *   - opt-in 色プリセット `kh-chat-colors` (名前色) / `kh-superchat-cards`
+ *     (吹き出し背景色) を用意
+ *
+ * 含めるもの / 含めないもの:
+ *   色変数とプリセットはテンプレの個性に影響するが、いずれも opt-in（class
+ *   を付けたときだけ適用）なので、付けないテンプレには一切影響しない。
+ *   プリセットを使わない場合は変数宣言のみで、ユーザー側の装飾を阻害しない。
+ *
+ * カスタムプロパティ命名:
+ *   `--kh-*` プレフィックスで統一（Komehub）。
+ */
+
+/* ---- reset ---- */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-size: var(--kh-font-size);
+  line-height: var(--kh-line-height);
+}
+
+[hidden] {
+  display: none;
+}
+
+/* ---- animation timing variables ----
+   テンプレ側の transition / animation で `var(--kh-anim-base)` 等を参照すると、
+   全体のテンポを一箇所で揃えられる。テンプレ側は `:root { --kh-anim-base: 200ms }`
+   で上書き可能。
+*/
+:root {
+  --kh-anim-fast: 160ms;
+  --kh-anim-base: 280ms;
+  --kh-anim-slow: 560ms;
+  --kh-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --kh-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* コメント流入 / 退場 / 移動のデフォルト transition 設定。
+     createListController (animate: true, 既定) が要素に
+     `comment-enter-*` / `comment-leave-*` / `comment-move` class を動的に付与し、
+     これらの class が対応する transition を発動する。テンプレ側で変数を
+     上書きすれば duration / easing を変えられる（例: `:root { --kh-enter-duration: 400ms }`）。
+  */
+  --kh-enter-duration: var(--kh-anim-base);
+  --kh-enter-easing: var(--kh-ease-out);
+  --kh-leave-duration: var(--kh-anim-fast);
+  --kh-leave-easing: var(--kh-ease-in-out);
+  --kh-move-duration: var(--kh-anim-base);
+  --kh-move-easing: var(--kh-ease-out);
+
+  /* ---- レイアウト既定値 ----
+     テンプレ側で `:root { --kh-font-size: 22px }` 等で上書きすれば
+     全体のベース寸法を 1 箇所で調整できる。既存テンプレ互換のため、
+     以下の値を body / `body > #comments` / `.avatar` / `.name` /
+     `.comment-text img` / `.sticker` に適用する。
+  */
+  --kh-font-size: 20px;
+  --kh-line-height: 1.5;
+  --kh-comment-gap: 10px;
+  --kh-comment-padding: 12px;
+  --kh-avatar-size: 1.8em;
+  --kh-name-size: inherit;
+  --kh-inline-image-height: 1.2em;
+  --kh-sticker-height: 2.4em;
+
+  /* ---- YouTube スパチャ tier 色 ----
+     YouTube のスパチャ UI が実際に表示する色を標準として提供する。
+     テンプレ側で上書きも可能。用途別に 3 系統:
+       - `--kh-tier-*-bg`:     吹き出し背景 (カード型テンプレ用)
+       - `--kh-tier-*-header`: 背景の上部ヘッダー帯 (カード型テンプレ用)
+       - `--kh-tier-*-ink`:    名前テキスト色 (暗い overlay 上で読める薄い派生色)
+  */
+  --kh-tier-blue-bg: #1565c0;
+  --kh-tier-blue-header: #0d47a1;
+  --kh-tier-blue-ink: #90caf9;
+  --kh-tier-teal-bg: #00e5ff;
+  --kh-tier-teal-header: #00b8d4;
+  --kh-tier-teal-ink: #80cbc4;
+  --kh-tier-green-bg: #1de9b6;
+  --kh-tier-green-header: #00bfa5;
+  --kh-tier-green-ink: #a5d6a7;
+  --kh-tier-yellow-bg: #ffca28;
+  --kh-tier-yellow-header: #ffb300;
+  --kh-tier-yellow-ink: #fff176;
+  --kh-tier-orange-bg: #f57c00;
+  --kh-tier-orange-header: #e65100;
+  --kh-tier-orange-ink: #ffb74d;
+  --kh-tier-magenta-bg: #e91e63;
+  --kh-tier-magenta-header: #c2185b;
+  --kh-tier-magenta-ink: #f48fb1;
+  --kh-tier-red-bg: #d00000;
+  --kh-tier-red-header: #9d0000;
+  --kh-tier-red-ink: #ef9a9a;
+
+  /* ---- YouTube 役職色 ----
+     YouTube が各役職に当てているブランド色。メンバーシップ参加通知も
+     member 色と同系統にしている。
+  */
+  --kh-role-owner: #ffd600;
+  --kh-role-moderator: #5e84f1;
+  --kh-role-member: #2ba640;
+  --kh-role-membership-join: #2ba640;
+}
+
+/* ---- comment enter / leave / move animations (opt-in via @import) ----
+   デフォルトは slide-up: 要素高さ分 (`translateY(100%)`) の下から滑り込んで出現し、
+   要素高さ分 (`translateY(-100%)`) 上に抜けて退場する。わんコメ __origin の
+   slide-up.css と同等の挙動。
+   fade を併用したい場合はテンプレ側で `.comment-enter-from { opacity: 0 }` 等を
+   重ねればよい。
+*/
+.comment-enter-active {
+  transition: transform var(--kh-enter-duration) var(--kh-enter-easing);
+}
+.comment-leave-active {
+  transition: transform var(--kh-leave-duration) var(--kh-leave-easing);
+}
+.comment-move {
+  transition: transform var(--kh-move-duration) var(--kh-move-easing);
+}
+.comment-enter-from {
+  transform: translateY(100%);
+}
+.comment-enter-to {
+  transform: translateY(0);
+}
+.comment-leave-from {
+  transform: translateY(0);
+}
+.comment-leave-to {
+  transform: translateY(-100%);
+}
+
+/* ---- animation presets (opt-in via class on #comments) ----
+   `<div id="comments" class="kh-anim-fade-in">` のように class を付けると、
+   デフォルトの slide-up がそのプリセットで上書きされる。uiSchema の
+   `buttons` 型と `config.callbacks` で `kh-anim-*` の付け替えを書くと、
+   設定画面からアニメを動的切替できる。
+   わんコメ __origin/css/animation/*.css と同カテゴリの 12 種 + move 変種。
+*/
+
+/* none: アニメーションしない（transition 無し、即時切替） */
+#comments.kh-anim-none .comment-enter-active,
+#comments.kh-anim-none .comment-leave-active {
+  transition: none;
+}
+#comments.kh-anim-none .comment-enter-from,
+#comments.kh-anim-none .comment-enter-to,
+#comments.kh-anim-none .comment-leave-from,
+#comments.kh-anim-none .comment-leave-to {
+  transform: none;
+  opacity: 1;
+  filter: none;
+}
+
+/* fade-in: opacity のみ */
+#comments.kh-anim-fade-in .comment-enter-from { transform: none; opacity: 0; }
+#comments.kh-anim-fade-in .comment-enter-to   { transform: none; opacity: 1; }
+#comments.kh-anim-fade-in .comment-leave-from { transform: none; opacity: 1; }
+#comments.kh-anim-fade-in .comment-leave-to   { transform: none; opacity: 0; }
+#comments.kh-anim-fade-in .comment-enter-active,
+#comments.kh-anim-fade-in .comment-leave-active {
+  transition: opacity var(--kh-enter-duration) var(--kh-enter-easing);
+}
+
+/* pop: scale 0 → 1 */
+#comments.kh-anim-pop .comment-enter-from { transform: scale(0); opacity: 0; }
+#comments.kh-anim-pop .comment-enter-to   { transform: scale(1); opacity: 1; }
+#comments.kh-anim-pop .comment-leave-from { transform: scale(1); opacity: 1; }
+#comments.kh-anim-pop .comment-leave-to   { transform: scale(0); opacity: 0; }
+#comments.kh-anim-pop .comment-enter-active,
+#comments.kh-anim-pop .comment-leave-active {
+  transition:
+    transform var(--kh-enter-duration) var(--kh-enter-easing),
+    opacity var(--kh-enter-duration) var(--kh-enter-easing);
+}
+
+/* scale-in: scale 0.8 → 1 + fade */
+#comments.kh-anim-scale-in .comment-enter-from { transform: scale(0.8); opacity: 0; }
+#comments.kh-anim-scale-in .comment-enter-to   { transform: scale(1); opacity: 1; }
+#comments.kh-anim-scale-in .comment-leave-from { transform: scale(1); opacity: 1; }
+#comments.kh-anim-scale-in .comment-leave-to   { transform: scale(0.8); opacity: 0; }
+#comments.kh-anim-scale-in .comment-enter-active,
+#comments.kh-anim-scale-in .comment-leave-active {
+  transition:
+    transform var(--kh-enter-duration) var(--kh-enter-easing),
+    opacity var(--kh-enter-duration) var(--kh-enter-easing);
+}
+
+/* purun: bouncy overshoot scale */
+#comments.kh-anim-purun .comment-enter-from { transform: scale(0.3); opacity: 0; }
+#comments.kh-anim-purun .comment-enter-to   { transform: scale(1); opacity: 1; }
+#comments.kh-anim-purun .comment-leave-from { transform: scale(1); opacity: 1; }
+#comments.kh-anim-purun .comment-leave-to   { transform: scale(0.3); opacity: 0; }
+#comments.kh-anim-purun .comment-enter-active {
+  transition:
+    transform var(--kh-enter-duration) cubic-bezier(0.2, 1.6, 0.3, 1),
+    opacity var(--kh-enter-duration) var(--kh-enter-easing);
+}
+#comments.kh-anim-purun .comment-leave-active {
+  transition:
+    transform var(--kh-leave-duration) var(--kh-leave-easing),
+    opacity var(--kh-leave-duration) var(--kh-leave-easing);
+}
+
+/* blur: opacity + filter */
+#comments.kh-anim-blur .comment-enter-from { transform: none; opacity: 0; filter: blur(12px); }
+#comments.kh-anim-blur .comment-enter-to   { transform: none; opacity: 1; filter: blur(0); }
+#comments.kh-anim-blur .comment-leave-from { transform: none; opacity: 1; filter: blur(0); }
+#comments.kh-anim-blur .comment-leave-to   { transform: none; opacity: 0; filter: blur(12px); }
+#comments.kh-anim-blur .comment-enter-active,
+#comments.kh-anim-blur .comment-leave-active {
+  transition:
+    opacity var(--kh-enter-duration) var(--kh-enter-easing),
+    filter var(--kh-enter-duration) var(--kh-enter-easing);
+}
+
+/* flip-x: rotateX */
+#comments.kh-anim-flip-x .comment-enter-from { transform: rotateX(90deg); opacity: 0; }
+#comments.kh-anim-flip-x .comment-enter-to   { transform: rotateX(0); opacity: 1; }
+#comments.kh-anim-flip-x .comment-leave-from { transform: rotateX(0); opacity: 1; }
+#comments.kh-anim-flip-x .comment-leave-to   { transform: rotateX(-90deg); opacity: 0; }
+#comments.kh-anim-flip-x .comment-enter-active,
+#comments.kh-anim-flip-x .comment-leave-active {
+  transition:
+    transform var(--kh-enter-duration) var(--kh-enter-easing),
+    opacity var(--kh-enter-duration) var(--kh-enter-easing);
+  transform-origin: center center;
+  backface-visibility: hidden;
+}
+
+/* flip-y: rotateY */
+#comments.kh-anim-flip-y .comment-enter-from { transform: rotateY(90deg); opacity: 0; }
+#comments.kh-anim-flip-y .comment-enter-to   { transform: rotateY(0); opacity: 1; }
+#comments.kh-anim-flip-y .comment-leave-from { transform: rotateY(0); opacity: 1; }
+#comments.kh-anim-flip-y .comment-leave-to   { transform: rotateY(-90deg); opacity: 0; }
+#comments.kh-anim-flip-y .comment-enter-active,
+#comments.kh-anim-flip-y .comment-leave-active {
+  transition:
+    transform var(--kh-enter-duration) var(--kh-enter-easing),
+    opacity var(--kh-enter-duration) var(--kh-enter-easing);
+  transform-origin: center center;
+  backface-visibility: hidden;
+}
+
+/* slide-up は既定（class なし）。以下は方向違いの同系統 */
+
+/* slide-down: 上から滑り込み、下へ抜ける（`.direction-down` リスト方向とは別物） */
+#comments.kh-anim-slide-down .comment-enter-from { transform: translateY(-100%); }
+#comments.kh-anim-slide-down .comment-enter-to   { transform: translateY(0); }
+#comments.kh-anim-slide-down .comment-leave-from { transform: translateY(0); }
+#comments.kh-anim-slide-down .comment-leave-to   { transform: translateY(100%); }
+
+/* slide-left: 右から滑り込み、左へ抜ける */
+#comments.kh-anim-slide-left .comment-enter-from { transform: translateX(100%); }
+#comments.kh-anim-slide-left .comment-enter-to   { transform: translateX(0); }
+#comments.kh-anim-slide-left .comment-leave-from { transform: translateX(0); }
+#comments.kh-anim-slide-left .comment-leave-to   { transform: translateX(-100%); }
+
+/* slide-right: 左から滑り込み、右へ抜ける */
+#comments.kh-anim-slide-right .comment-enter-from { transform: translateX(-100%); }
+#comments.kh-anim-slide-right .comment-enter-to   { transform: translateX(0); }
+#comments.kh-anim-slide-right .comment-leave-from { transform: translateX(0); }
+#comments.kh-anim-slide-right .comment-leave-to   { transform: translateX(100%); }
+
+/* ---- move 変種 ---- */
+
+/* kh-move-none: 他要素の押し動かしアニメを無効化（FLIP 移動を切る）
+   push された瞬間に最終位置へ瞬間移動する。slide-up 的に入ってくる新要素は
+   そのままアニメーションするが、既存要素の上下移動だけ無くなる。
+*/
+#comments.kh-move-none .comment-move {
+  transition: none;
+}
+
+/* ---- comments list ---- */
+#comments {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 0;
+}
+
+/* body 直下の #comments は viewport をまるごと埋める（standard-renderless 系の構造）。
+   枠入りテンプレで `<div id="comments">` を absolute 配置するケースでは、この rule は
+   自動で効かず、テンプレ側の top/bottom 指定が尊重される（chat-plastic 系の構造）。
+
+   fixed + inset:0 で overlay 配置も兼ねる。ほとんどのビルトインテンプレが
+   `#comments { position: fixed; inset: 0 }` を毎回書いていたのをここで吸収する。
+*/
+body > #comments {
+  position: fixed;
+  inset: 0;
+  height: auto;
+  gap: var(--kh-comment-gap);
+  padding: var(--kh-comment-padding);
+}
+
+/* ---- 共通レイアウト: 表示位置 (左/右) + 横幅 ----
+   runtime (applyCommonLayout) が共通 uiSchema の position / width を
+   body.kh-pos-left / body.kh-pos-right と --kh-stage-width に流す。
+   pos class が無いデフォルト (= 対象外テンプレ / 設定前) は上の inset:0 全面のまま。
+   pos class が付くと #comments を横幅 var で左右に寄せる。
+   `body.kh-pos-* > #comments` は specificity (0,2,1) なので、各テンプレが
+   `body > #comments` (0,1,1) で書く left/right/width を確実に上書きする。
+   縦方向 (top/bottom/height) はテンプレ側の指定をそのまま尊重する。
+   この機構は body 直下に #comments を fixed 配置する Group A 系で効く。
+   panel 配置の Group B 系は各テンプレ CSS が body.kh-pos-* / --kh-stage-width を解釈する。 */
+body.kh-pos-left > #comments,
+body.kh-pos-right > #comments {
+  width: var(--kh-stage-width, 480px);
+  max-width: 100%;
+}
+body.kh-pos-left > #comments {
+  left: var(--kh-stage-edge, 0px);
+  right: auto;
+}
+body.kh-pos-right > #comments {
+  left: auto;
+  right: var(--kh-stage-edge, 0px);
+}
+
+/* 方向切替:
+ *   既定 (`.direction-up` またはクラスなし) = 新しいコメントを下に追加して下詰め表示
+ *   `.direction-down` = 新しいコメントを上に追加して上詰め表示
+ *  既存ビルトインの慣例に合わせて `.direction-down` 判定のみ出す。
+ */
+#comments.direction-down {
+  flex-direction: column-reverse;
+  justify-content: flex-start;
+}
+
+/* ---- comment row ---- */
+.comment {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+/* ---- avatar ----
+   円形クリップの器を作る。内側の img は親サイズにフィット。
+   テンプレ側でサイズやボーダーを上書きできる（例: chat-plastic は 38px で
+   白縁の img を中央配置）。
+*/
+.avatar {
+  flex: 0 0 auto;
+  width: var(--kh-avatar-size);
+  height: var(--kh-avatar-size);
+  border-radius: 50%;
+  overflow: hidden;
+}
+.avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---- comment body ----
+   短文は内容依存幅、長文は親幅に縮んで折り返す。
+   親幅いっぱいの吹き出しにしたいテンプレは `.comment-body { flex-grow: 1 }` で上書き。
+*/
+.comment-body {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+/* ---- badge ---- */
+.badge {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+.badge img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---- name / amount ---- */
+.name {
+  font-size: var(--kh-name-size);
+  font-weight: 600;
+}
+.amount {
+  font-weight: 700;
+}
+
+/* role 強調: 色ではなく weight で区別を付ける。色は opt-in preset または
+   テンプレ側で上書き。 */
+.is-superchat .name,
+.is-membership .name,
+.is-owner .name {
+  font-weight: 700;
+}
+.is-moderator .name {
+  font-weight: 600;
+}
+
+/* ---- comment text ----
+   本文中のインライン画像（絵文字・ギフト画像等）を文字高さに揃える。
+*/
+.comment-text {
+  word-break: break-word;
+}
+.comment-text img {
+  height: var(--kh-inline-image-height);
+  vertical-align: middle;
+  margin: 0 1px;
+}
+
+/* ---- links ----
+   本文中のリンクは周囲の色を継承し、装飾は下線のみにする。テンプレ側で
+   `.comment-text a { color: ... }` 等で上書き可能。
+*/
+.comment-text a,
+.comment-body a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+
+/* ---- sticker ----
+   `data-kh="sticker"` で注入される stamp 画像の基本寸法。
+   テンプレ側で `.sticker { height: 4em }` 等に上書き可能。
+*/
+.sticker {
+  height: var(--kh-sticker-height);
+  max-width: 100%;
+}
+
+/* ==== opt-in 色プリセット ====
+   `<div id="comments" class="kh-chat-colors">` または `kh-superchat-cards` を
+   付けたときだけ YouTube 標準色を自動適用する。付けなければ変数宣言のみで
+   何も塗らない（テンプレ側装飾を阻害しない）。
+*/
+
+/* kh-chat-colors: YouTube チャット風。tier/役職色を `.name` に適用する。
+   standard-renderless 系の「名前色で tier を示す」パターン。
+*/
+#comments.kh-chat-colors .is-superchat.tier-blue    .name { color: var(--kh-tier-blue-ink); }
+#comments.kh-chat-colors .is-superchat.tier-teal    .name { color: var(--kh-tier-teal-ink); }
+#comments.kh-chat-colors .is-superchat.tier-green   .name { color: var(--kh-tier-green-ink); }
+#comments.kh-chat-colors .is-superchat.tier-yellow  .name { color: var(--kh-tier-yellow-ink); }
+#comments.kh-chat-colors .is-superchat.tier-orange  .name { color: var(--kh-tier-orange-ink); }
+#comments.kh-chat-colors .is-superchat.tier-magenta .name { color: var(--kh-tier-magenta-ink); }
+#comments.kh-chat-colors .is-superchat.tier-red     .name { color: var(--kh-tier-red-ink); }
+#comments.kh-chat-colors .is-owner        .name { color: var(--kh-role-owner); }
+#comments.kh-chat-colors .is-moderator    .name { color: var(--kh-role-moderator); }
+#comments.kh-chat-colors .is-member       .name { color: var(--kh-role-member); }
+#comments.kh-chat-colors .is-membership   .name { color: var(--kh-role-membership-join); }
+
+/* kh-superchat-cards: YouTube スパチャカード風。tier 色を `.comment-body`
+   背景に適用し、本文は白文字（yellow だけ黒文字）で読める色にする。
+   chat-plastic 系の「吹き出しごと色を塗る」パターン。
+*/
+#comments.kh-superchat-cards .is-superchat.tier-blue    .comment-body { background: var(--kh-tier-blue-bg);    color: #fff; }
+#comments.kh-superchat-cards .is-superchat.tier-teal    .comment-body { background: var(--kh-tier-teal-bg);    color: #fff; }
+#comments.kh-superchat-cards .is-superchat.tier-green   .comment-body { background: var(--kh-tier-green-bg);   color: #fff; }
+#comments.kh-superchat-cards .is-superchat.tier-yellow  .comment-body { background: var(--kh-tier-yellow-bg);  color: #000; }
+#comments.kh-superchat-cards .is-superchat.tier-orange  .comment-body { background: var(--kh-tier-orange-bg);  color: #fff; }
+#comments.kh-superchat-cards .is-superchat.tier-magenta .comment-body { background: var(--kh-tier-magenta-bg); color: #fff; }
+#comments.kh-superchat-cards .is-superchat.tier-red     .comment-body { background: var(--kh-tier-red-bg);     color: #fff; }
+#comments.kh-superchat-cards .is-membership .comment-body {
+  background: var(--kh-role-membership-join);
+  color: #fff;
+}

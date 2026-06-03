@@ -1,0 +1,57 @@
+{
+  "id": "com.comment-hub.template.sample.custom-basic",
+  "name": "custom-basic-sample",
+  "displayName": "Custom Starter",
+  "version": "1.0.0",
+  "obsHint": "OBS幅 1280px 前後 / 高さ 720px 前後",
+  "fonts": ["Noto Sans JP"],
+  "fontSources": [
+    {
+      "family": "Bundled Sample Font",
+      "type": "assetCss",
+      "css": "fonts/bundled-font.css"
+    }
+  ],
+  "exportPolicy": {
+    "allowTemplateExport": false,
+    "note": "同梱フォントや画像などの再配布ライセンスを確認してから true にしてください。"
+  },
+  "uiSchema": [
+    {
+      "key": "fontSize",
+      "type": "slider",
+      "label": "本文サイズ",
+      "min": 18,
+      "max": 72,
+      "step": 1,
+      "default": 36,
+      "suffix": "px"
+    },
+    {
+      "key": "accentColor",
+      "type": "color",
+      "label": "アクセント色",
+      "default": "#f472b6"
+    },
+    {
+      "key": "panelColor",
+      "type": "color",
+      "label": "パネル色",
+      "default": "rgba(15, 23, 42, 0.78)"
+    },
+    {
+      "key": "showAvatar",
+      "type": "toggle",
+      "label": "アバター表示",
+      "default": true,
+      "onLabel": "表示",
+      "offLabel": "非表示"
+    },
+    {
+      "key": "customCss",
+      "type": "textarea",
+      "label": "カスタムCSS",
+      "placeholder": ".latest-card { backdrop-filter: blur(12px); }"
+    }
+  ]
+}

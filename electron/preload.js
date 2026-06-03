@@ -394,6 +394,9 @@ contextBridge.exposeInMainWorld('api', {
   getBetaChannel: function () {
     return ipcRenderer.invoke('get-beta-channel');
   },
+  getAppVersion: function () {
+    return ipcRenderer.invoke('get-app-version');
+  },
   setBetaChannel: function (enabled) {
     return ipcRenderer.invoke('set-beta-channel', enabled);
   },

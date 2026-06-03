@@ -151,13 +151,13 @@
       "enabled": true,
       "effect": "com.comment-hub.fixed",
       "trigger": {
-        "type": "superchat",
+        "type": "keyword",
         "keywords": [],
         "regex": false,
         "reactionTypes": [],
         "minAmount": 0,
         "includeMembership": true,
-        "listenerStatus": "",
+        "listenerStatus": "first-time",
         "listenerHasPriorComment": "",
         "listenerFirstCommentInStream": "",
         "listenerRegular": ""

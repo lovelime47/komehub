@@ -257,4 +257,60 @@ describe('migration run', function () {
     assert.equal(fakeStore.get('lastVersion'), '0.2.0');
     assert.equal(fakeStore.get('bannedUsers').length, 0);
   });
+
+  it('0.5.1: fixes game first-time-welcome trigger (superchat -> first-time)', function () {
+    fakeStore._data.lastVersion = '0.5.0'; // 0.5.1 マイグレーションだけ走らせる
+    var sceneDir = path.join(tmpDir, 'scenes', 'game');
+    fs.mkdirSync(sceneDir, { recursive: true });
+    fs.writeFileSync(path.join(sceneDir, 'scene.json'), JSON.stringify({
+      name: 'ゲーム',
+      performances: [
+        {
+          id: 'first-time-welcome', name: '初見歓迎', effect: 'com.comment-hub.fixed',
+          trigger: { type: 'superchat', keywords: [], listenerStatus: '' }
+        }
+      ]
+    }, null, 2));
+
+    run(fakeStore, tmpDir, '0.5.1');
+
+    var s = JSON.parse(fs.readFileSync(path.join(sceneDir, 'scene.json'), 'utf-8'));
+    var p = s.performances.find(function (x) { return x.id === 'first-time-welcome'; });
+    assert.equal(p.trigger.type, 'keyword');
+    assert.equal(p.trigger.listenerStatus, 'first-time');
+    assert.equal(fakeStore.get('lastVersion'), '0.5.1');
+  });
+
+  it('0.5.1: leaves an already-correct first-time-welcome unchanged', function () {
+    fakeStore._data.lastVersion = '0.5.0';
+    var sceneDir = path.join(tmpDir, 'scenes', 'chat');
+    fs.mkdirSync(sceneDir, { recursive: true });
+    fs.writeFileSync(path.join(sceneDir, 'scene.json'), JSON.stringify({
+      performances: [
+        { id: 'first-time-welcome', trigger: { type: 'keyword', listenerStatus: 'first-time' } }
+      ]
+    }, null, 2));
+
+    run(fakeStore, tmpDir, '0.5.1');
+
+    var s = JSON.parse(fs.readFileSync(path.join(sceneDir, 'scene.json'), 'utf-8'));
+    assert.equal(s.performances[0].trigger.type, 'keyword');
+    assert.equal(s.performances[0].trigger.listenerStatus, 'first-time');
+  });
+
+  it('0.5.1: does not touch a non-welcome superchat perf', function () {
+    fakeStore._data.lastVersion = '0.5.0';
+    var sceneDir = path.join(tmpDir, 'scenes', 'game');
+    fs.mkdirSync(sceneDir, { recursive: true });
+    fs.writeFileSync(path.join(sceneDir, 'scene.json'), JSON.stringify({
+      performances: [
+        { id: 'superchat-display', name: 'スパチャ宝箱', trigger: { type: 'superchat', listenerStatus: '' } }
+      ]
+    }, null, 2));
+
+    run(fakeStore, tmpDir, '0.5.1');
+
+    // 初見歓迎ではない (id 違い) ので変更されない
+    assert.equal(JSON.parse(fs.readFileSync(path.join(sceneDir, 'scene.json'), 'utf-8')).performances[0].trigger.type, 'superchat');
+  });
 });

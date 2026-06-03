@@ -328,6 +328,15 @@ window.api.onUpdateError(function () {
   updateBar.style.display = 'none';
 });
 
+// ブランド表示のバージョンを実バージョンから動的に設定 (= ハードコード防止。preload で
+// require 不可なので main から IPC で取得)。
+if (window.api.getAppVersion) {
+  window.api.getAppVersion().then(function (v) {
+    var el = document.getElementById('brand-version');
+    if (el && v) el.textContent = 'v' + v;
+  }).catch(function () { /* 取得失敗時は HTML の既定表示のまま */ });
+}
+
 // ログイン警告
 var loginWarning = document.getElementById('login-warning');
 window.api.onLoginWarning(function (notLoggedIn) {

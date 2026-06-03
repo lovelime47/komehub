@@ -165,6 +165,47 @@ var MIGRATIONS = [
         L.info('Cleared legacy bannedUsers (= 演出フィルタ廃止に伴い再設定が必要、UI から再登録してください)');
       }
     }
+  },
+  {
+    // 2026-06-04: 出荷バグ修正。ゲーム scene の初見歓迎 (id=first-time-welcome) の trigger が
+    // 誤って「スパチャ発火」(type=superchat / listenerStatus 空) になっていた。本来は「初見さんの
+    // 初コメント発火」(type=keyword / listenerStatus=first-time、chat/singing と同じ)。デフォルト
+    // scene は 0.5.1 で修正済みだが、既にインストール済みユーザーの scene.json は古い誤設定が残る
+    // ため修正する。誤設定の指紋 (id + superchat + 空 listenerStatus) に一致するものだけ直す
+    // (= ユーザーが意図的に変えた設定は触らない)。データ形式変更ではなく値の修正。
+    version: '0.5.1',
+    run: function (ctx) {
+      L.info('Running 0.5.1: ゲーム初見歓迎の trigger 誤設定 (superchat→first-time) を修正');
+      var scenesDir = path.join(ctx.userDataDir, 'scenes');
+      if (!fs.existsSync(scenesDir)) return;
+
+      var sceneIds = fs.readdirSync(scenesDir).filter(function (f) {
+        try { return fs.statSync(path.join(scenesDir, f)).isDirectory(); } catch (e) { return false; }
+      });
+
+      sceneIds.forEach(function (sceneId) {
+        var sceneJsonPath = path.join(scenesDir, sceneId, 'scene.json');
+        var sceneData;
+        try { sceneData = JSON.parse(fs.readFileSync(sceneJsonPath, 'utf-8')); } catch (e) { return; }
+        if (!Array.isArray(sceneData.performances)) return;
+
+        var changed = false;
+        sceneData.performances.forEach(function (p) {
+          // 誤設定の指紋: 初見歓迎 perf (id=first-time-welcome) が superchat 発火 + listenerStatus 空。
+          if (p && p.id === 'first-time-welcome' && p.trigger &&
+              p.trigger.type === 'superchat' && !p.trigger.listenerStatus) {
+            p.trigger.type = 'keyword';
+            p.trigger.listenerStatus = 'first-time';
+            changed = true;
+          }
+        });
+
+        if (changed) {
+          fs.writeFileSync(sceneJsonPath, JSON.stringify(sceneData, null, 2));
+          L.info('Fixed first-time-welcome trigger (superchat->first-time) in scene:', sceneId);
+        }
+      });
+    }
   }
 ];
 

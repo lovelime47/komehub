@@ -128,10 +128,11 @@ var FireworkEngine = (function () {
 
   // ===== バースト =====
   function flashAt(x, y) { if (FLASH <= 0.01) return; var n = FLASH < 0.5 ? 1 : 2; for (var i = 0; i < n; i++) PT({ x: x, y: y, vx: 0, vy: 0, r: rand(7, 11) * FLASH, color: '#fff', life: 130, drag: 0.7, grav: 0, bpow: 1 }); }
-  // しだれ: 横を圧縮 (vx*0.5) して人物にかからない幅にし、 重力を強め (0.09) て枝垂れ落とす。
+  // しだれ: 横を圧縮 (vx*0.5) して人物にかからない幅にし、 重力をやや弱め (0.06) + 低ドラッグ (0.978) で
+  // 「開く→伸びながら減速→ゆっくり垂れる」 枝垂れに (= mock で合意した調整値、 2026-06-04 製品反映)。
   // 上向きに軽く打ち上げ → 重力で弧を描いて下垂、 長寿命 + 低 bpow で金の尾を長く引く。
   function burstWillow(x, y, pal, size) { flashAt(x, y); var n = 54, base = size / 150;
-    for (var i = 0; i < n; i++) { var a = (i / n) * Math.PI * 2 + rand(-0.12, 0.12), sp = rand(2.0, 4.5) * base; PT({ x: x, y: y, vx: Math.cos(a) * sp * 0.5, vy: Math.sin(a) * sp - rand(0.5, 1.5), grav: 0.09, drag: 0.988, life: rand(3400, 5200), r: rand(1.3, 2.0), color: pick(pal), bpow: 0.28 }); } }
+    for (var i = 0; i < n; i++) { var a = (i / n) * Math.PI * 2 + rand(-0.12, 0.12), sp = rand(2.6, 5.6) * base; PT({ x: x, y: y, vx: Math.cos(a) * sp * 0.5, vy: Math.sin(a) * sp - rand(0.5, 1.5), grav: 0.06, drag: 0.978, life: rand(3400, 5200), r: rand(1.3, 2.0), color: pick(pal), bpow: 0.28 }); } }
   function burstRound(x, y, pal, size) { flashAt(x, y); var n = 66, base = size / 150;
     for (var i = 0; i < n; i++) { var a = (i / n) * Math.PI * 2 + rand(-0.05, 0.05), sp = rand(5, 11) * base; PT({ x: x, y: y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, grav: 0.05, drag: 0.90, life: rand(1150, 1900), r: rand(1.5, 2.4), color: pick(pal), bpow: 0.7 }); }
     for (var j = 0; j < 18; j++) { var a2 = rand(0, Math.PI * 2), s2 = rand(2, 5) * base; PT({ x: x, y: y, vx: Math.cos(a2) * s2, vy: Math.sin(a2) * s2, grav: 0.05, drag: 0.9, life: rand(750, 1250), r: rand(1.3, 1.9), color: pick(pal), bpow: 0.8 }); } }

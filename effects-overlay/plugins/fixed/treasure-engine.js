@@ -142,9 +142,9 @@ var TreasureEngine = (function () {
     60% { opacity: 1; transform: translateX(-50%) scale(1.18); }
     100% { opacity: 1; transform: translateX(-50%) scale(1); }
   }
-  .rarity .stars { font-family: 'Press Start 2P', monospace; font-size: 22px; letter-spacing: 3px; text-shadow: 2px 2px 0 #000; }
+  .rarity .stars { font-family: 'Press Start 2P', monospace; font-size: 30px; letter-spacing: 3px; text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; }
   .rarity .stars .off { opacity: 0.25; }
-  .rarity .rank { font-family: 'DotGothic16', sans-serif; font-size: 25px; margin-top: 5px; text-shadow: 2px 2px 0 #000, 0 0 8px currentColor; }
+  .rarity .rank { font-family: 'DotGothic16', sans-serif; font-size: 34px; margin-top: 6px; text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 0 0 10px currentColor; }
   /* 最高レア時は中央の剣を避けて右上へ */
   .rarity.tr { left: auto; right: 18px; top: 16px; transform: scale(0); }
   .rarity.tr.show { animation: rarity-pop-tr 0.5s cubic-bezier(0.34,1.7,0.5,1) forwards; }
@@ -156,8 +156,11 @@ var TreasureEngine = (function () {
 
   /* ===== 最高レア (MYTHIC): ホールドアロフト ===== */
   .dim {
-    position: absolute; inset: 0; z-index: 7; pointer-events: none; opacity: 0;
-    background: radial-gradient(circle at 50% 26%, transparent 15%, rgba(0,0,0,0.64) 62%);
+    position: absolute; inset: -25%; z-index: 7; pointer-events: none; opacity: 0;
+    background: radial-gradient(circle at 50% 34%, transparent 12%, rgba(0,0,0,0.64) 42%, transparent 70%);
+    /* 箱の四角い端をぼかして背景に溶かす (= 長方形の黒パッチに見えないよう端をグラデで透明化) */
+    -webkit-mask-image: radial-gradient(circle at 50% 36%, #000 34%, transparent 72%);
+            mask-image: radial-gradient(circle at 50% 36%, #000 34%, transparent 72%);
     transition: opacity 0.6s ease;
   }
   .dim.show { opacity: 1; }
@@ -192,8 +195,8 @@ var TreasureEngine = (function () {
   .legend-name {
     position: absolute; left: 50%; top: 230px; transform: translateX(-50%) scale(0);
     z-index: 11; white-space: nowrap; opacity: 0;
-    font-family: 'DotGothic16', sans-serif; font-size: 19px; color: #ffe24a;
-    padding: 6px 16px; border-radius: 3px;
+    font-family: 'DotGothic16', sans-serif; font-size: 26px; color: #ffe24a;
+    padding: 7px 18px; border-radius: 3px;
     background: rgba(8,10,24,0.9);
     border: 3px solid #ffd24a;
     box-shadow: 0 0 0 2px #0b1024, 3px 3px 0 rgba(0,0,0,0.5), 0 0 14px rgba(255,180,40,0.5);
@@ -218,31 +221,34 @@ var TreasureEngine = (function () {
 
   /* ===== アイテム名 (常時表示・レアリティで見せ方が変化) ===== */
   .itemname {
-    position: absolute; left: 50%; top: 130px; transform: translateX(-50%) scale(0);
+    position: absolute; left: 50%; top: 160px; transform: translateX(-50%) scale(0);
     z-index: 11; opacity: 0; white-space: nowrap; pointer-events: none;
     font-family: 'DotGothic16', sans-serif; text-align: center; line-height: 1.1;
   }
   .itemname.show { animation: rarity-pop 0.5s cubic-bezier(0.34,1.7,0.5,1) forwards; }
   /* r1 COMMON: 素朴な白文字 */
-  .itemname.r1 { font-size: 19px; color: #cfd6e6; text-shadow: 1px 1px 0 #000, 0 0 4px rgba(0,0,0,0.85); }
+  .itemname.r1 { font-size: 26px; color: #eef2fb;
+    padding: 3px 14px; border-radius: 11px; background: rgba(10,14,24,0.66);
+    text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; }
   /* r2 UNCOMMON: 緑の細ピル */
-  .itemname.r2 { font-size: 20px; color: #d8ffe4;
-    padding: 3px 13px; border-radius: 11px;
-    background: rgba(18,38,26,0.72); border: 1px solid #4fd17a; text-shadow: 1px 1px 0 #000; }
+  .itemname.r2 { font-size: 27px; color: #d8ffe4;
+    padding: 4px 15px; border-radius: 13px;
+    background: rgba(18,38,26,0.78); border: 2px solid #4fd17a;
+    text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; }
   /* r3 RARE: 青のプレート + 枠 */
-  .itemname.r3 { font-size: 21px; color: #e4f3ff; font-weight: bold;
+  .itemname.r3 { font-size: 28px; color: #e4f3ff; font-weight: bold;
     padding: 4px 15px; border-radius: 3px;
     background: rgba(10,22,40,0.82); border: 2px solid #4fb6ff;
     box-shadow: 0 0 0 2px #07101e, 0 0 12px rgba(80,180,255,0.45);
     text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; }
   /* r4 EPIC: 紫金のプレート + グロー */
-  .itemname.r4 { font-size: 22px; color: #ffeaf6; font-weight: bold;
+  .itemname.r4 { font-size: 29px; color: #ffeaf6; font-weight: bold;
     padding: 5px 17px; border-radius: 3px;
     background: rgba(28,12,34,0.86); border: 2px solid #d77dff;
     box-shadow: 0 0 0 2px #120820, 3px 3px 0 rgba(0,0,0,0.5), 0 0 16px rgba(200,110,255,0.55);
     text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; }
   /* r5 LEGENDARY: 大きな金バナー */
-  .itemname.r5 { font-size: 24px; color: #ffe24a; top: 96px;
+  .itemname.r5 { font-size: 32px; color: #ffe24a; top: 96px;
     padding: 7px 19px; border-radius: 3px;
     background: rgba(8,10,24,0.92); border: 3px solid #ffd24a;
     box-shadow: 0 0 0 2px #0b1024, 3px 3px 0 rgba(0,0,0,0.5), 0 0 16px rgba(255,180,40,0.55);
@@ -2244,7 +2250,7 @@ var TreasureEngine = (function () {
     { key: 'yellow',  amt: '¥1,000',  color: '#ffcf33', coins: 14, gems: 3, big: 1, crown: false, rainbow: false, stars: 4, rank: 'SUPER RARE' },
     { key: 'orange',  amt: '¥2,000',  color: '#ff9a3c', coins: 18, gems: 4, big: 1, crown: false, rainbow: false, stars: 4, rank: 'EPIC' },
     { key: 'magenta', amt: '¥5,000',  color: '#ff4db8', coins: 24, gems: 5, big: 2, crown: true,  rainbow: false, stars: 5, rank: 'LEGENDARY' },
-    { key: 'red',     amt: '¥10,000', color: '#ff3b3b', coins: 32, gems: 7, big: 2, crown: true,  rainbow: true,  stars: 5, rank: '★ MYTHIC ★' }
+    { key: 'red',     amt: '¥10,000', color: '#ff3b3b', coins: 32, gems: 7, big: 2, crown: true,  rainbow: true,  stars: 6, rank: 'MYTHIC' }
   ];
 
   // アイテム名 + 固有レアリティ (1=COMMON .. 5=LEGENDARY)。 名前の見せ方はこの r で変わる
@@ -2757,10 +2763,12 @@ var TreasureEngine = (function () {
     later(function () {
       var on = ''; for (var i = 0; i < tier.stars; i++) on += '★';
       var off = ''; for (var j = 0; j < 5 - tier.stars; j++) off += '☆';
-      rarityEl.style.color = tier.color;
+      // 最高レアは暗転(黒背景)の上に出るため、純赤(#ff3b3b)だと輝度が低く沈む。
+      // レアリティ表示だけ高輝度の明るい赤に上げて視認性を確保する (loot 等は tier.color のまま)。
+      rarityEl.style.color = legendary ? '#ff7a66' : tier.color;
       rarityEl.innerHTML = '<div class="stars">' + on + '<span class="off">' + off + '</span></div>'
         + '<div class="rank">' + tier.rank + '</div>';
-      rarityEl.style.top = legendary ? '12px' : '60px';   // R1-R4 は少し下げ / 最高レアは上(掲げる剣の上)に維持
+      rarityEl.style.top = legendary ? '-18px' : '34px';   // R1-R4: 上の空きへ寄せてアイテム名(top:160)との被りを防ぐ / 最高レアは掲げる剣の更に上へ
       rarityEl.classList.add('show');
     }, legendary ? 3700 : 2500);
     // (4.5) アイテム名 (常時表示・固有レアリティで見せ方変化)。 最高レアは spawnLegendary のバナーが担当

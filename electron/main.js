@@ -2303,6 +2303,11 @@ ipcMain.handle('set-beta-channel', function (_event, enabled) {
   return true;
 });
 
+// IPC: アプリバージョン (= ブランド表示等に使う。preload で require 不可なので main から渡す)
+ipcMain.handle('get-app-version', function () {
+  return app.getVersion();
+});
+
 // IPC: renderer process からの log event を Rust 側 renderer.log に転送
 // 詳細仕様: docs/logging.md (= 3 経路構成 / 専用 mpsc + writer task)
 // fire-and-forget (= ipcMain.on、 invoke ではない、 renderer は await 不要)。

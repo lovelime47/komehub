@@ -61,7 +61,7 @@ cargo test --manifest-path core/Cargo.toml
 ## 貢献
 
 Issue / Pull Request を歓迎します。開発の進め方・ブランチ運用は
-[CONTRIBUTING.md](CONTRIBUTING.md) を参照してください。
+[CONTRIBUTING.md](CONTRIBUTING.md)、コードの全体像は [ARCHITECTURE.md](ARCHITECTURE.md) を参照してください。
 
 ## ライセンス
 

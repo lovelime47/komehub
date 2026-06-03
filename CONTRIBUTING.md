@@ -38,6 +38,8 @@ Live Comment Hub への関心をありがとうございます。Issue / Pull Re
 `npm test` が緑であることを確認してください。Rust を変更した場合は
 `cargo check --manifest-path core/Cargo.toml` も実行してください。
 
+全体像をつかむには [ARCHITECTURE.md](ARCHITECTURE.md)（高レベルな設計概要）も参照してください。
+
 ## コーディング規約
 
 - 既存のコードのスタイル・命名・パターンに合わせてください。

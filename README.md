@@ -48,7 +48,11 @@ npm start
 
 ## テスト
 
+テンプレートの smoke テストは Playwright（ヘッドレスブラウザ）を使うため、初回のみブラウザを
+取得してください。
+
 ```sh
+npx playwright install chromium
 npm test
 ```
 

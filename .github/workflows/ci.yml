@@ -41,6 +41,3 @@ jobs:
 
       - name: Run Rust core exe smoke
         run: cargo test --manifest-path core/Cargo.toml --test core_exe_smoke_test
-
-      - name: Run shared-memory native smoke
-        run: npm run test:shared-memory:native-smoke

@@ -1,5 +1,8 @@
 # Live Comment Hub (こめはぶ)
 
+[![CI](https://github.com/lovelime47/komehub/actions/workflows/ci.yml/badge.svg)](https://github.com/lovelime47/komehub/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 YouTube Live のコメント・リアクションをリアルタイムに取得し、SSE API で外部へ配信する
 Electron アプリケーションです。アバターオーバーレイ、コメント表示テンプレート、リスナー
 分析などの機能を備えます。

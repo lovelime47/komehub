@@ -67,6 +67,8 @@
           "template-authoring-guide.md",
           "template-runtime.md",
           "onecomme-migration-guide.md",
+          "api-spec.md",
+          "effect-plugin-guide.md",
           "examples/template-list-html-first/**",
           "examples/template-ticker-basic/**",
           "examples/template-list-basic/**",
